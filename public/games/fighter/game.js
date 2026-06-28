@@ -569,12 +569,21 @@ setInterval(botThink, 600);
 
 // ════════ SOCKET EVENTS ════════
 socket.on("connect", () => {
-  console.log("Connected!");
+  console.log("✅ Connected to server!");
   socket.emit("create-room");
 });
 
+socket.on("connect_error", (err) => {
+  console.error("❌ Connection error:", err);
+  document.getElementById("room-code").textContent = "ERR!";
+});
+
 socket.on("room-created", (data) => {
-  document.getElementById("room-code").textContent = data.roomCode;
+  console.log("🏠 Room created:", data.roomCode);
+  const roomEl = document.getElementById("room-code");
+  if (roomEl) {
+    roomEl.textContent = data.roomCode;
+  }
 });
 
 socket.on("player-joined", (player) => {
