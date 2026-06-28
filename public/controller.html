@@ -5,34 +5,73 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <title>Fun Match - Controller</title>
   <link rel="stylesheet" href="controller.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
 
   <div id="join-screen">
-    <h1>🎮 Fun Match</h1>
+    <h1>FUN MATCH</h1>
     <p>Join the game</p>
 
     <input type="text" id="name-input" placeholder="Your Name" maxlength="10">
     <input type="text" id="code-input" placeholder="ROOM CODE" maxlength="4">
 
     <button id="join-btn">JOIN GAME</button>
-
     <p id="error-msg"></p>
   </div>
 
-  <div id="controller-screen" class="hidden">
+  <!-- Survive Controller (D-pad) -->
+  <div id="survive-controller" class="controller hidden">
     <h2 id="welcome">Welcome!</h2>
-
     <div class="dpad">
-      <button class="btn up" data-dir="up">▲</button>
-      <button class="btn left" data-dir="left">◄</button>
-      <button class="btn right" data-dir="right">►</button>
-      <button class="btn down" data-dir="down">▼</button>
+      <button class="ctrl-btn dpad-btn up" data-dir="up">▲</button>
+      <button class="ctrl-btn dpad-btn left" data-dir="left">◄</button>
+      <button class="ctrl-btn dpad-btn right" data-dir="right">►</button>
+      <button class="ctrl-btn dpad-btn down" data-dir="down">▼</button>
     </div>
   </div>
 
-  <script src="https://fun-match-production.up.railway.app/socket.io/socket.io.js"></script>
-  <script src="controller.js"></script>
+  <!-- Fighter Controller -->
+  <div id="fighter-controller" class="controller hidden">
+    <h2 id="fighter-welcome">FIGHT!</h2>
 
+    <div class="fighter-layout">
+      <div class="movement-pad">
+        <button class="ctrl-btn fight-dpad up" data-dir="up">▲</button>
+        <button class="ctrl-btn fight-dpad left" data-dir="left">◄</button>
+        <button class="ctrl-btn fight-dpad right" data-dir="right">►</button>
+        <button class="ctrl-btn fight-dpad down" data-dir="down">▼</button>
+      </div>
+
+      <div class="action-pad">
+        <button class="ctrl-btn action-btn punch" data-dir="punch">
+          <span class="action-letter">P</span>
+          <span class="action-label">PUNCH</span>
+        </button>
+        <button class="ctrl-btn action-btn kick" data-dir="kick">
+          <span class="action-letter">K</span>
+          <span class="action-label">KICK</span>
+        </button>
+        <button class="ctrl-btn action-btn special" data-dir="special">
+          <span class="action-letter">SP</span>
+          <span class="action-label">SPECIAL</span>
+        </button>
+        <button class="ctrl-btn action-btn block" data-dir="block">
+          <span class="action-letter">BL</span>
+          <span class="action-label">BLOCK</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Game Selection -->
+  <div id="game-select" class="hidden">
+    <h2>Pick Controller Type</h2>
+    <button class="select-btn" data-game="survive">Survive Mode</button>
+    <button class="select-btn" data-game="fighter">Fighter Mode</button>
+  </div>
+
+  <script src="https://fun-match.onrender.com/socket.io/socket.io.js"></script>
+  <script src="controller.js"></script>
 </body>
 </html>

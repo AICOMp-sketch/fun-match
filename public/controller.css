@@ -7,9 +7,9 @@
 }
 
 body {
-  background: #0f0f1e;
+  background: #050810;
   color: white;
-  font-family: 'Arial', sans-serif;
+  font-family: 'Inter', sans-serif;
   min-height: 100vh;
   display: flex;
   justify-content: center;
@@ -18,80 +18,105 @@ body {
   touch-action: manipulation;
 }
 
-.hidden {
-  display: none !important;
-}
+.hidden { display: none !important; }
 
-#join-screen {
+#join-screen, #game-select {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 18px;
   width: 100%;
   max-width: 400px;
 }
 
-#join-screen h1 {
-  font-size: 2.5rem;
+#join-screen h1, #game-select h2 {
+  font-size: 2.2rem;
+  background: linear-gradient(135deg, #00e0ff, #aaff00);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 900;
+  letter-spacing: 2px;
 }
 
 #join-screen p {
-  color: #888;
+  color: #94a3b8;
 }
 
 input {
   width: 100%;
-  padding: 15px;
-  font-size: 1.2rem;
-  background: #1a1a2e;
+  padding: 16px;
+  font-size: 1.1rem;
+  background: rgba(255, 255, 255, 0.05);
   color: white;
-  border: 2px solid #16213e;
-  border-radius: 10px;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
   text-align: center;
+  font-family: 'Inter', sans-serif;
 }
 
 #code-input {
   text-transform: uppercase;
   letter-spacing: 8px;
-  font-weight: bold;
-  font-size: 1.5rem;
+  font-weight: 700;
+  font-size: 1.4rem;
 }
 
-#join-btn {
+#join-btn, .select-btn {
   width: 100%;
-  padding: 18px;
-  font-size: 1.3rem;
-  font-weight: bold;
-  background: #e94560;
-  color: white;
+  padding: 16px;
+  font-size: 1.1rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #00e0ff, #0099ff);
+  color: #050810;
   border: none;
-  border-radius: 10px;
+  border-radius: 12px;
   cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  letter-spacing: 1px;
 }
 
-#join-btn:active {
-  background: #c93550;
-  transform: scale(0.98);
+#join-btn:active, .select-btn:active {
+  transform: scale(0.97);
 }
 
 #error-msg {
-  color: #e94560;
-  font-weight: bold;
+  color: #ff3860;
+  font-weight: 600;
   min-height: 24px;
 }
 
-#controller-screen {
+.controller {
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 50px;
+  gap: 30px;
 }
 
-#welcome {
+.controller h2 {
   font-size: 1.5rem;
-  color: #e94560;
+  color: #00e0ff;
 }
 
+.ctrl-btn {
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  touch-action: manipulation;
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  transition: all 0.1s;
+}
+
+.ctrl-btn:active {
+  background: linear-gradient(135deg, #00e0ff, #0099ff);
+  color: #050810;
+  transform: scale(0.95);
+}
+
+/* Survive D-pad */
 .dpad {
   display: grid;
   grid-template-areas:
@@ -101,24 +126,77 @@ input {
   gap: 12px;
 }
 
-.btn {
+.dpad-btn {
   width: 90px;
   height: 90px;
   font-size: 2.5rem;
-  background: #1a1a2e;
-  color: white;
-  border: 3px solid #16213e;
-  border-radius: 15px;
-  cursor: pointer;
-  touch-action: manipulation;
-}
-
-.btn:active {
-  background: #e94560;
-  transform: scale(0.95);
+  border-radius: 16px;
 }
 
 .up    { grid-area: up; }
 .down  { grid-area: down; }
 .left  { grid-area: left; }
 .right { grid-area: right; }
+
+/* Fighter Layout */
+.fighter-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  width: 100%;
+  max-width: 500px;
+}
+
+.movement-pad {
+  display: grid;
+  grid-template-areas:
+    ".    up    ."
+    "left .     right"
+    ".    down  .";
+  gap: 8px;
+}
+
+.fight-dpad {
+  width: 70px;
+  height: 70px;
+  font-size: 1.8rem;
+  border-radius: 14px;
+}
+
+.action-pad {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.action-btn {
+  height: 90px;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.action-letter {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: #00e0ff;
+}
+
+.action-label {
+  font-size: 0.65rem;
+  color: #94a3b8;
+  letter-spacing: 1px;
+}
+
+.action-btn.punch:active { background: linear-gradient(135deg, #ff7b00, #ff3860); }
+.action-btn.kick:active { background: linear-gradient(135deg, #aaff00, #00ff88); }
+.action-btn.special:active { background: linear-gradient(135deg, #7c3aed, #ff3860); }
+.action-btn.block:active { background: linear-gradient(135deg, #00e0ff, #0099ff); }
+
+.action-btn:active .action-letter,
+.action-btn:active .action-label {
+  color: #050810;
+}
