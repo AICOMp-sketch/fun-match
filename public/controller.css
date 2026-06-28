@@ -1,202 +1,432 @@
 * {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  -webkit-tap-highlight-color: transparent;
-  user-select: none;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
 }
 
 body {
-  background: #050810;
-  color: white;
-  font-family: 'Inter', sans-serif;
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 20px;
-  touch-action: manipulation;
+    background: #050810;
+    color: white;
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    touch-action: manipulation;
 }
 
-.hidden { display: none !important; }
-
-#join-screen, #game-select {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 18px;
-  width: 100%;
-  max-width: 400px;
+.hidden {
+    display: none !important;
 }
 
-#join-screen h1, #game-select h2 {
-  font-size: 2.2rem;
-  background: linear-gradient(135deg, #00e0ff, #aaff00);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  font-weight: 900;
-  letter-spacing: 2px;
+#join-screen,
+#game-select {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
+    width: 100%;
+    max-width: 400px;
+}
+
+#join-screen h1,
+#game-select h2 {
+    font-size: 2.2rem;
+    background: linear-gradient(135deg, #00e0ff, #aaff00);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 900;
+    letter-spacing: 2px;
 }
 
 #join-screen p {
-  color: #94a3b8;
+    color: #94a3b8;
 }
 
 input {
-  width: 100%;
-  padding: 16px;
-  font-size: 1.1rem;
-  background: rgba(255, 255, 255, 0.05);
-  color: white;
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  border-radius: 12px;
-  text-align: center;
-  font-family: 'Inter', sans-serif;
+    width: 100%;
+    padding: 16px;
+    font-size: 1.1rem;
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    text-align: center;
+    font-family: 'Inter', sans-serif;
 }
 
 #code-input {
-  text-transform: uppercase;
-  letter-spacing: 8px;
-  font-weight: 700;
-  font-size: 1.4rem;
+    text-transform: uppercase;
+    letter-spacing: 8px;
+    font-weight: 700;
+    font-size: 1.4rem;
 }
 
-#join-btn, .select-btn {
-  width: 100%;
-  padding: 16px;
-  font-size: 1.1rem;
-  font-weight: 700;
-  background: linear-gradient(135deg, #00e0ff, #0099ff);
-  color: #050810;
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  font-family: 'Inter', sans-serif;
-  letter-spacing: 1px;
+#join-btn,
+.select-btn {
+    width: 100%;
+    padding: 16px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #00e0ff, #0099ff);
+    color: #050810;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: 1px;
 }
 
-#join-btn:active, .select-btn:active {
-  transform: scale(0.97);
+#join-btn:active,
+.select-btn:active {
+    transform: scale(0.97);
 }
 
 #error-msg {
-  color: #ff3860;
-  font-weight: 600;
-  min-height: 24px;
+    color: #ff3860;
+    font-weight: 600;
+    min-height: 24px;
 }
 
 .controller {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 30px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 30px;
 }
 
 .controller h2 {
-  font-size: 1.5rem;
-  color: #00e0ff;
+    font-size: 1.5rem;
+    color: #00e0ff;
 }
 
 .ctrl-btn {
-  background: rgba(255, 255, 255, 0.05);
-  color: white;
-  border: 2px solid rgba(255, 255, 255, 0.1);
-  cursor: pointer;
-  touch-action: manipulation;
-  font-family: 'Inter', sans-serif;
-  font-weight: 700;
-  transition: all 0.1s;
+    background: rgba(255, 255, 255, 0.05);
+    color: white;
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    cursor: pointer;
+    touch-action: manipulation;
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    transition: all 0.1s;
 }
 
 .ctrl-btn:active {
-  background: linear-gradient(135deg, #00e0ff, #0099ff);
-  color: #050810;
-  transform: scale(0.95);
+    background: linear-gradient(135deg, #00e0ff, #0099ff);
+    color: #050810;
+    transform: scale(0.95);
 }
 
 /* Survive D-pad */
 .dpad {
-  display: grid;
-  grid-template-areas:
-    ".    up    ."
-    "left .     right"
-    ".    down  .";
-  gap: 12px;
+    display: grid;
+    grid-template-areas:
+        ".    up    ."
+        "left .     right"
+        ".    down  .";
+    gap: 12px;
 }
 
 .dpad-btn {
-  width: 90px;
-  height: 90px;
-  font-size: 2.5rem;
-  border-radius: 16px;
+    width: 90px;
+    height: 90px;
+    font-size: 2.5rem;
+    border-radius: 16px;
 }
 
-.up    { grid-area: up; }
-.down  { grid-area: down; }
-.left  { grid-area: left; }
-.right { grid-area: right; }
+.up {
+    grid-area: up;
+}
+
+.down {
+    grid-area: down;
+}
+
+.left {
+    grid-area: left;
+}
+
+.right {
+    grid-area: right;
+}
 
 /* Fighter Layout */
 .fighter-layout {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-  width: 100%;
-  max-width: 500px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    width: 100%;
+    max-width: 500px;
 }
 
 .movement-pad {
-  display: grid;
-  grid-template-areas:
-    ".    up    ."
-    "left .     right"
-    ".    down  .";
-  gap: 8px;
+    display: grid;
+    grid-template-areas:
+        ".    up    ."
+        "left .     right"
+        ".    down  .";
+    gap: 8px;
 }
 
 .fight-dpad {
-  width: 70px;
-  height: 70px;
-  font-size: 1.8rem;
-  border-radius: 14px;
+    width: 70px;
+    height: 70px;
+    font-size: 1.8rem;
+    border-radius: 14px;
 }
 
 .action-pad {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
 }
 
 .action-btn {
-  height: 90px;
-  border-radius: 14px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
+    height: 90px;
+    border-radius: 14px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
 }
 
 .action-letter {
-  font-size: 1.5rem;
-  font-weight: 900;
-  color: #00e0ff;
+    font-size: 1.5rem;
+    font-weight: 900;
+    color: #00e0ff;
 }
 
 .action-label {
-  font-size: 0.65rem;
-  color: #94a3b8;
-  letter-spacing: 1px;
+    font-size: 0.65rem;
+    color: #94a3b8;
+    letter-spacing: 1px;
 }
 
-.action-btn.punch:active { background: linear-gradient(135deg, #ff7b00, #ff3860); }
-.action-btn.kick:active { background: linear-gradient(135deg, #aaff00, #00ff88); }
-.action-btn.special:active { background: linear-gradient(135deg, #7c3aed, #ff3860); }
-.action-btn.block:active { background: linear-gradient(135deg, #00e0ff, #0099ff); }
+.action-btn.punch:active {
+    background: linear-gradient(135deg, #ff7b00, #ff3860);
+}
+
+.action-btn.kick:active {
+    background: linear-gradient(135deg, #aaff00, #00ff88);
+}
+
+.action-btn.special:active {
+    background: linear-gradient(135deg, #7c3aed, #ff3860);
+}
+
+.action-btn.block:active {
+    background: linear-gradient(135deg, #00e0ff, #0099ff);
+}
 
 .action-btn:active .action-letter,
 .action-btn:active .action-label {
-  color: #050810;
+    color: #050810;
+}
+
+/* Racer Controller */
+.racer-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+    max-width: 500px;
+}
+
+.steering {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+}
+
+.steer-btn {
+    flex: 1;
+    height: 120px;
+    font-size: 3rem;
+    border-radius: 16px;
+}
+
+.left-steer:active {
+    background: linear-gradient(135deg, #00e0ff, #0099ff);
+    color: #050810;
+}
+
+.right-steer:active {
+    background: linear-gradient(135deg, #aaff00, #00ff88);
+    color: #050810;
+}
+
+.pedals {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.pedal {
+    height: 110px;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.pedal-icon {
+    font-size: 2rem;
+}
+
+.pedal-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.gas-btn:active {
+    background: linear-gradient(135deg, #aaff00, #00ff88);
+    color: #050810;
+}
+
+.brake-btn:active {
+    background: linear-gradient(135deg, #ff7b00, #ff3860);
+    color: white;
+}
+
+.boost-btn {
+    height: 90px;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    background: rgba(255, 170, 0, 0.1);
+    border-color: rgba(255, 170, 0, 0.3);
+}
+
+.boost-icon {
+    font-size: 2rem;
+    color: #ffaa00;
+}
+
+.boost-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: #ffaa00;
+}
+
+.boost-btn:active {
+    background: linear-gradient(135deg, #ffaa00, #ff7b00);
+}
+
+.boost-btn:active .boost-icon,
+.boost-btn:active .boost-label {
+    color: #050810;
+}
+
+/* Racer Controller */
+.racer-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+    max-width: 500px;
+}
+
+.steering {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
+}
+
+.steer-btn {
+    flex: 1;
+    height: 120px;
+    font-size: 3rem;
+    border-radius: 16px;
+}
+
+.left-steer:active {
+    background: linear-gradient(135deg, #00e0ff, #0099ff);
+    color: #050810;
+}
+
+.right-steer:active {
+    background: linear-gradient(135deg, #aaff00, #00ff88);
+    color: #050810;
+}
+
+.pedals {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.pedal {
+    height: 110px;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.pedal-icon {
+    font-size: 2rem;
+}
+
+.pedal-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.gas-btn:active {
+    background: linear-gradient(135deg, #aaff00, #00ff88);
+    color: #050810;
+}
+
+.brake-btn:active {
+    background: linear-gradient(135deg, #ff7b00, #ff3860);
+    color: white;
+}
+
+.boost-btn {
+    height: 90px;
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    background: rgba(255, 170, 0, 0.1);
+    border-color: rgba(255, 170, 0, 0.3);
+}
+
+.boost-icon {
+    font-size: 2rem;
+    color: #ffaa00;
+}
+
+.boost-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: #ffaa00;
+}
+
+.boost-btn:active {
+    background: linear-gradient(135deg, #ffaa00, #ff7b00);
+}
+
+.boost-btn:active .boost-icon,
+.boost-btn:active .boost-label {
+    color: #050810;
 }

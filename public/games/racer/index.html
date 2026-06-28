@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Neon Racers - Fun Match</title>
+  <link rel="stylesheet" href="game.css">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- ════════ WAITING SCREEN ════════ -->
+  <div id="waiting-screen" class="screen active">
+    <a href="../../" class="back-btn">← Back to Hub</a>
+
+    <div class="waiting-content">
+      <div class="title-wrap">
+        <h1 class="game-title">NEON <span>RACERS</span></h1>
+        <div class="speed-lines">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+      <p class="game-subtitle">Top-down arcade racing at neon speeds</p>
+
+      <div class="room-display">
+        <p class="room-label">ROOM CODE</p>
+        <h2 class="room-code-big" id="room-code">. . . .</h2>
+        <p class="room-hint">Join on phone: <span>fun-match.pages.dev/controller.html</span></p>
+      </div>
+
+      <div class="racers-grid">
+        <div class="racer-slot" id="slot-1">
+          <div class="car-preview color-1">
+            <div class="car-body"></div>
+          </div>
+          <p>Player 1</p>
+          <span class="status">Waiting...</span>
+        </div>
+        <div class="racer-slot" id="slot-2">
+          <div class="car-preview color-2">
+            <div class="car-body"></div>
+          </div>
+          <p>Player 2</p>
+          <span class="status">Waiting...</span>
+        </div>
+        <div class="racer-slot" id="slot-3">
+          <div class="car-preview color-3">
+            <div class="car-body"></div>
+          </div>
+          <p>Player 3</p>
+          <span class="status">Waiting...</span>
+        </div>
+        <div class="racer-slot" id="slot-4">
+          <div class="car-preview color-4">
+            <div class="car-body"></div>
+          </div>
+          <p>Player 4</p>
+          <span class="status">Waiting...</span>
+        </div>
+      </div>
+
+      <div class="action-buttons">
+        <button id="bot-race-btn" class="action-btn primary">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+            <path d="M14 9V5a3 3 0 00-6 0v4M5 9h14l1 12H4L5 9z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+          </svg>
+          RACE 3 BOTS
+        </button>
+        <button id="start-race-btn" class="action-btn secondary" disabled>
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+            <path d="M5 3l14 9-14 9V3z" stroke="currentColor" stroke-width="2" stroke-linejoin="round" fill="currentColor"/>
+          </svg>
+          START RACE
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ RACING SCREEN ════════ -->
+  <div id="race-screen" class="screen">
+
+    <!-- Top HUD -->
+    <div class="race-hud">
+      <div class="hud-left">
+        <div class="hud-item">
+          <p class="hud-label">LAP</p>
+          <p class="hud-value"><span id="current-lap">1</span>/<span id="total-laps">3</span></p>
+        </div>
+        <div class="hud-item">
+          <p class="hud-label">TIME</p>
+          <p class="hud-value" id="race-time">00:00</p>
+        </div>
+      </div>
+
+      <div class="hud-center">
+        <div class="position-display">
+          <p class="position-label">POSITION</p>
+          <p class="position-value" id="position">--</p>
+        </div>
+      </div>
+
+      <div class="hud-right">
+        <div class="leaderboard" id="leaderboard">
+          <!-- Filled by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Race Arena -->
+    <div class="arena">
+      <canvas id="gameCanvas"></canvas>
+
+      <!-- Countdown Overlay -->
+      <div id="countdown" class="countdown hidden">
+        <h1 id="countdown-text">3</h1>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ════════ FINISH SCREEN ════════ -->
+  <div id="finish-screen" class="screen">
+    <div class="finish-content">
+      <h1 class="finish-title" id="finish-title">RACE COMPLETE!</h1>
+
+      <div class="podium">
+        <div class="podium-place second">
+          <div class="podium-medal">2</div>
+          <p class="podium-name" id="place-2">-</p>
+          <div class="podium-bar"></div>
+        </div>
+        <div class="podium-place first">
+          <div class="podium-medal">1</div>
+          <p class="podium-name" id="place-1">-</p>
+          <div class="podium-bar"></div>
+        </div>
+        <div class="podium-place third">
+          <div class="podium-medal">3</div>
+          <p class="podium-name" id="place-3">-</p>
+          <div class="podium-bar"></div>
+        </div>
+      </div>
+
+      <div class="finish-stats" id="finish-stats">
+        <!-- Filled by JS -->
+      </div>
+
+      <div class="finish-buttons">
+        <button class="action-btn primary" onclick="location.reload()">RACE AGAIN</button>
+        <a href="../../" class="action-btn secondary">BACK TO HUB</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://fun-match-production.up.railway.app/socket.io/socket.io.js"></script>
+  <script src="sounds.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
