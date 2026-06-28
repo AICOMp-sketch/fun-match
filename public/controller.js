@@ -4,6 +4,7 @@ const joinScreen = document.getElementById("join-screen");
 const gameSelect = document.getElementById("game-select");
 const surviveCtrl = document.getElementById("survive-controller");
 const fighterCtrl = document.getElementById("fighter-controller");
+const racerCtrl = document.getElementById("racer-controller");
 const errorMsg = document.getElementById("error-msg");
 
 const urlParams = new URLSearchParams(window.location.search);
@@ -34,13 +35,15 @@ socket.on("join-success", (data) => {
     gameSelect.classList.remove("hidden");
     document.getElementById("welcome").textContent = `Hi ${data.playerName}!`;
     document.getElementById("fighter-welcome").textContent = `${data.playerName.toUpperCase()} FIGHTS!`;
+    if (document.getElementById("racer-welcome")) {
+        document.getElementById("racer-welcome").textContent = `${data.playerName.toUpperCase()} RACES!`;
+    }
 });
 
 socket.on("join-error", (data) => {
     errorMsg.textContent = data.message;
 });
 
-// Game type selection
 document.querySelectorAll('.select-btn').forEach(btn => {
     btn.addEventListener('click', () => {
         const game = btn.dataset.game;
@@ -50,48 +53,65 @@ document.querySelectorAll('.select-btn').forEach(btn => {
             surviveCtrl.classList.remove('hidden');
         } else if (game === 'fighter') {
             fighterCtrl.classList.remove('hidden');
-        } else if (game === 'racer') {
-            document.getElementById('racer-controller').classList.remove('hidden');
+        } else if (game === 'racer' && racerCtrl) {
+            racerCtrl.classList.remove('hidden');
         }
     });
 });
 
-// Button controls
-let movementInterval = null;
+// ════════ CONTINUOUS INPUT - FIXED ════════
+// Send signal repeatedly while button is held (every 100ms)
+const activeButtons = {};
 
-function sendAction(direction, hold = false) {
+function sendAction(direction) {
     socket.emit("move", { direction });
-
-    if (hold) {
-        movementInterval = setInterval(() => {
-            socket.emit("move", { direction });
-        }, 50);
-    }
 }
 
-function stopMoving() {
-    if (movementInterval) {
-        clearInterval(movementInterval);
-        movementInterval = null;
+function startHolding(direction) {
+    if (activeButtons[direction]) return;
+
+    sendAction(direction);
+
+    activeButtons[direction] = setInterval(() => {
+        sendAction(direction);
+    }, 100);
+}
+
+function stopHolding(direction) {
+    if (activeButtons[direction]) {
+        clearInterval(activeButtons[direction]);
+        activeButtons[direction] = null;
     }
 }
 
 document.querySelectorAll('.ctrl-btn').forEach(btn => {
     const dir = btn.dataset.dir;
-    const isMovement = ['up', 'down', 'left', 'right'].includes(dir);
-    const isHoldable = btn.classList.contains('dpad-btn') || btn.classList.contains('fight-dpad');
 
+    // Touch events for phone
     btn.addEventListener("touchstart", (e) => {
         e.preventDefault();
-        sendAction(dir, isHoldable && isMovement);
-    });
+        startHolding(dir);
+    }, { passive: false });
 
     btn.addEventListener("touchend", (e) => {
         e.preventDefault();
-        stopMoving();
-    });
+        stopHolding(dir);
+    }, { passive: false });
 
-    btn.addEventListener("mousedown", () => sendAction(dir, isHoldable && isMovement));
-    btn.addEventListener("mouseup", stopMoving);
-    btn.addEventListener("mouseleave", stopMoving);
+    btn.addEventListener("touchcancel", (e) => {
+        e.preventDefault();
+        stopHolding(dir);
+    }, { passive: false });
+
+    // Mouse events for testing
+    btn.addEventListener("mousedown", () => startHolding(dir));
+    btn.addEventListener("mouseup", () => stopHolding(dir));
+    btn.addEventListener("mouseleave", () => stopHolding(dir));
+});
+
+// Stop all holds when page is hidden
+document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+        Object.keys(activeButtons).forEach(dir => stopHolding(dir));
+    }
 });

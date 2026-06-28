@@ -6,22 +6,19 @@ function resizeCanvas() {
   const rect = canvas.getBoundingClientRect();
   canvas.width = rect.width || window.innerWidth;
   canvas.height = rect.height || window.innerHeight - 100;
-  console.log('📐 Canvas:', canvas.width, 'x', canvas.height);
 }
 
 // ════════ GAME STATE ════════
 const GAME = {
   state: 'waiting',
   totalLaps: 3,
-  raceTime: 0,
   raceStartTime: 0,
   isBotMode: false,
   particles: [],
   skidMarks: []
 };
 
-// Camera follows the local player
-const camera = { x: 0, y: 0, scale: 1 };
+const camera = { x: 0, y: 0 };
 
 // ════════ TRACK ════════
 const TRACK = {
@@ -30,16 +27,14 @@ const TRACK = {
   outerRX: 800,
   outerRY: 550,
   innerRX: 450,
-  innerRY: 300,
-  startLine: { x1: 1000, y1: 150, x2: 1000, y2: 400 }
+  innerRY: 300
 };
 
-// ════════ CARS ════════
 const COLORS = ['#00e0ff', '#ff7b00', '#aaff00', '#ff3860'];
 const cars = {};
-
 let LOCAL_PLAYER_ID = null;
 
+// ════════ CAR CLASS ════════
 class Car {
   constructor(id, name, colorIndex, isBot = false) {
     this.id = id;
@@ -48,21 +43,20 @@ class Car {
     this.colorIndex = colorIndex;
     this.isBot = isBot;
 
-    // Starting position on start line
+    // Starting position
     const startX = TRACK.cx + (colorIndex - 1.5) * 60;
     this.x = startX;
     this.y = TRACK.cy - TRACK.outerRY + 100;
     this.angle = 0;
 
-    this.vx = 0;
-    this.vy = 0;
     this.speed = 0;
     this.maxSpeed = 4;
     this.acceleration = 0.12;
     this.friction = 0.96;
     this.turnSpeed = 0.06;
 
-    this.input = { accel: false, brake: false, left: false, right: false, boost: false };
+    // Input - now uses HELD state (no auto-release)
+    this.input = { accel: false, brake: false, left: false, right: false };
 
     this.lap = 0;
     this.checkpoint = 0;
@@ -72,15 +66,26 @@ class Car {
     this.finishTime = 0;
     this.position = 1;
 
-    this.boostFuel = 0;
+    this.boostFuel = 100;
     this.boosting = false;
     this.crashed = false;
     this.crashTimer = 0;
+
+    // For phone controls - timer-based release
+    this.inputTimers = { accel: 0, brake: 0, left: 0, right: 0 };
   }
 
   update() {
+    // Decrement input timers (for phone)
+    Object.keys(this.inputTimers).forEach(k => {
+      if (this.inputTimers[k] > 0) {
+        this.inputTimers[k]--;
+        if (this.inputTimers[k] === 0) this.input[k] = false;
+      }
+    });
+
     if (this.finished) {
-      this.speed *= 0.9;
+      this.speed *= 0.92;
       this.x += Math.cos(this.angle) * this.speed;
       this.y += Math.sin(this.angle) * this.speed;
       return;
@@ -120,12 +125,8 @@ class Car {
       }
     }
 
-    if (this.input.accel) {
-      this.speed += this.acceleration;
-    }
-    if (this.input.brake) {
-      this.speed -= this.acceleration * 1.5;
-    }
+    if (this.input.accel) this.speed += this.acceleration;
+    if (this.input.brake) this.speed -= this.acceleration * 1.5;
 
     this.speed = Math.max(-1, Math.min(currentMaxSpeed, this.speed));
     this.speed *= this.friction;
@@ -153,29 +154,76 @@ class Car {
     }
   }
 
+  // ════════ IMPROVED BOT AI ════════
   botThink() {
+    // Calculate ideal racing line position
+    // Look ahead 0.3 radians on the track for smoother turning
     const dx = this.x - TRACK.cx;
     const dy = this.y - TRACK.cy;
-    const angleToCenter = Math.atan2(dy, dx);
-    const targetAngle = angleToCenter + Math.PI / 2;
+    const angleFromCenter = Math.atan2(dy, dx);
 
-    let angleDiff = targetAngle - this.angle;
+    // Look ahead position on the track
+    const lookAhead = angleFromCenter + 0.3;
+
+    // Ideal radius (middle of track)
+    const idealRX = (TRACK.outerRX + TRACK.innerRX) / 2;
+    const idealRY = (TRACK.outerRY + TRACK.innerRY) / 2;
+
+    // Target point on racing line ahead
+    const targetX = TRACK.cx + Math.cos(lookAhead) * idealRX;
+    const targetY = TRACK.cy + Math.sin(lookAhead) * idealRY;
+
+    // Calculate angle to target
+    const angleToTarget = Math.atan2(targetY - this.y, targetX - this.x);
+
+    // Normalize angle difference
+    let angleDiff = angleToTarget - this.angle;
     while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
     while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
 
-    this.input.left = angleDiff < -0.1;
-    this.input.right = angleDiff > 0.1;
-    this.input.accel = true;
+    // Steer towards target
+    this.input.left = angleDiff < -0.05;
+    this.input.right = angleDiff > 0.05;
 
-    if (this.boostFuel > 50 && Math.random() < 0.01) {
+    // Always accelerate (slow down only on very sharp turns)
+    if (Math.abs(angleDiff) > 1.2) {
+      this.input.accel = false;
+      this.input.brake = true;
+    } else {
+      this.input.accel = true;
+      this.input.brake = false;
+    }
+
+    // Anti-stuck: if too slow for too long, force boost or random turn
+    if (Math.abs(this.speed) < 0.5) {
+      if (!this.stuckTimer) this.stuckTimer = 0;
+      this.stuckTimer++;
+      if (this.stuckTimer > 60) {
+        // Force a hard turn and boost to get unstuck
+        this.input.left = Math.random() > 0.5;
+        this.input.right = !this.input.left;
+        this.input.accel = true;
+        this.input.brake = false;
+        if (this.boostFuel > 30 && !this.boosting) {
+          this.boosting = true;
+          setTimeout(() => this.boosting = false, 1000);
+        }
+        this.stuckTimer = 0;
+      }
+    } else {
+      this.stuckTimer = 0;
+    }
+
+    // Use boost randomly when on straight sections
+    if (Math.abs(angleDiff) < 0.2 && this.boostFuel > 70 && Math.random() < 0.01 && !this.boosting) {
       this.boosting = true;
+      setTimeout(() => this.boosting = false, 1500);
     }
   }
 
   checkTrackCollision() {
     const dx = this.x - TRACK.cx;
     const dy = this.y - TRACK.cy;
-
     const outerDist = (dx * dx) / (TRACK.outerRX * TRACK.outerRX) + (dy * dy) / (TRACK.outerRY * TRACK.outerRY);
     const innerDist = (dx * dx) / (TRACK.innerRX * TRACK.innerRX) + (dy * dy) / (TRACK.innerRY * TRACK.innerRY);
 
@@ -183,26 +231,22 @@ class Car {
 
     if (outerDist > 0.98) {
       const factor = 0.98 / outerDist;
-      const newX = TRACK.cx + dx * Math.sqrt(factor);
-      const newY = TRACK.cy + dy * Math.sqrt(factor);
-      this.x = newX;
-      this.y = newY;
+      this.x = TRACK.cx + dx * Math.sqrt(factor);
+      this.y = TRACK.cy + dy * Math.sqrt(factor);
       hitWall = true;
     }
 
     if (innerDist < 1.02 && innerDist > 0) {
       const factor = 1.02 / innerDist;
-      const newX = TRACK.cx + dx * Math.sqrt(factor);
-      const newY = TRACK.cy + dy * Math.sqrt(factor);
-      this.x = newX;
-      this.y = newY;
+      this.x = TRACK.cx + dx * Math.sqrt(factor);
+      this.y = TRACK.cy + dy * Math.sqrt(factor);
       hitWall = true;
     }
 
     if (hitWall) {
       this.speed *= 0.5;
       if (Math.abs(this.speed) > 1.5 && !this.crashed) {
-        if (typeof Sounds !== 'undefined') Sounds.crash();
+        if (this.id === LOCAL_PLAYER_ID && typeof Sounds !== 'undefined') Sounds.crash();
         this.crashed = true;
         this.crashTimer = 20;
         for (let i = 0; i < 10; i++) {
@@ -302,39 +346,28 @@ class Car {
 
     ctx.restore();
 
-    if (!this.isBot || this.id === LOCAL_PLAYER_ID) {
-      ctx.fillStyle = 'white';
-      ctx.font = 'bold 12px Inter';
-      ctx.textAlign = 'center';
-      ctx.fillText(this.name, this.x, this.y - 30);
-    }
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 12px Inter';
+    ctx.textAlign = 'center';
+    ctx.fillText(this.name, this.x, this.y - 30);
   }
 }
 
 // ════════ TRACK DRAWING ════════
 function drawTrack() {
-  // Grass background - covers entire visible area based on camera position
   ctx.fillStyle = '#0a1a0a';
-  ctx.fillRect(
-    camera.x - 500,
-    camera.y - 500,
-    canvas.width + 1000,
-    canvas.height + 1000
-  );
+  ctx.fillRect(camera.x - 500, camera.y - 500, canvas.width + 1000, canvas.height + 1000);
 
-  // Outer track boundary (asphalt)
   ctx.fillStyle = '#1f2937';
   ctx.beginPath();
   ctx.ellipse(TRACK.cx, TRACK.cy, TRACK.outerRX, TRACK.outerRY, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Inner grass area
   ctx.fillStyle = '#0d4a1a';
   ctx.beginPath();
   ctx.ellipse(TRACK.cx, TRACK.cy, TRACK.innerRX, TRACK.innerRY, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Skid marks (drawn BEFORE white lines so they don't cover them)
   ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
   GAME.skidMarks.forEach(s => {
     ctx.globalAlpha = (s.life / 200) * 0.6;
@@ -342,7 +375,6 @@ function drawTrack() {
   });
   ctx.globalAlpha = 1;
 
-  // Track edges (white lines)
   ctx.strokeStyle = '#ffffff';
   ctx.lineWidth = 4;
   ctx.beginPath();
@@ -353,19 +385,16 @@ function drawTrack() {
   ctx.ellipse(TRACK.cx, TRACK.cy, TRACK.innerRX, TRACK.innerRY, 0, 0, Math.PI * 2);
   ctx.stroke();
 
-  // Red/white kerbs on inner edge
   ctx.lineWidth = 8;
-  const segments = 60;
-  for (let i = 0; i < segments; i++) {
-    const a1 = (i / segments) * Math.PI * 2;
-    const a2 = ((i + 1) / segments) * Math.PI * 2;
+  for (let i = 0; i < 60; i++) {
+    const a1 = (i / 60) * Math.PI * 2;
+    const a2 = ((i + 1) / 60) * Math.PI * 2;
     ctx.strokeStyle = i % 2 === 0 ? '#ff3860' : '#ffffff';
     ctx.beginPath();
     ctx.ellipse(TRACK.cx, TRACK.cy, TRACK.innerRX + 6, TRACK.innerRY + 6, 0, a1, a2);
     ctx.stroke();
   }
 
-  // Start/Finish line (checkered)
   const lineY = TRACK.cy - TRACK.outerRY + 50;
   for (let i = 0; i < 12; i++) {
     for (let j = 0; j < 2; j++) {
@@ -374,7 +403,6 @@ function drawTrack() {
     }
   }
 
-  // Particles
   GAME.particles.forEach(p => {
     ctx.globalAlpha = p.life / 30;
     ctx.fillStyle = p.color;
@@ -383,14 +411,11 @@ function drawTrack() {
   ctx.globalAlpha = 1;
 }
 
-// ════════ CAMERA ════════
 function updateCamera() {
   const localCar = cars[LOCAL_PLAYER_ID];
   if (localCar) {
-    // Camera centers exactly on the player car
     const targetX = localCar.x - canvas.width / 2;
     const targetY = localCar.y - canvas.height / 2;
-    // Smooth follow
     camera.x += (targetX - camera.x) * 0.15;
     camera.y += (targetY - camera.y) * 0.15;
   } else {
@@ -399,16 +424,13 @@ function updateCamera() {
   }
 }
 
-// ════════ UI UPDATES ════════
 function updateLeaderboard() {
   const sorted = Object.values(cars).sort((a, b) => {
     if (a.finished && !b.finished) return -1;
     if (!a.finished && b.finished) return 1;
     if (a.finished && b.finished) return a.finishTime - b.finishTime;
     if (a.lap !== b.lap) return b.lap - a.lap;
-    const distA = (a.checkpoint + 1) % 4;
-    const distB = (b.checkpoint + 1) % 4;
-    return distB - distA;
+    return b.checkpoint - a.checkpoint;
   });
 
   sorted.forEach((car, i) => car.position = i + 1);
@@ -417,7 +439,7 @@ function updateLeaderboard() {
   lb.innerHTML = sorted.map((car, i) => `
     <div class="leaderboard-row">
       <span class="lb-pos">${i + 1}</span>
-      <span class="lb-color" style="background:${car.color}; color:${car.color}"></span>
+      <span class="lb-color" style="background:${car.color}"></span>
       <span class="lb-name">${car.name}</span>
       <span class="lb-lap">L${Math.min(car.lap, GAME.totalLaps)}</span>
     </div>
@@ -439,15 +461,11 @@ function updateRaceTime() {
     `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
-// ════════ RACE FLOW ════════
 function startCountdown() {
   document.getElementById('waiting-screen').classList.remove('active');
   document.getElementById('race-screen').classList.add('active');
 
-  // CRITICAL: Wait for screen to be visible BEFORE resizing canvas
-  setTimeout(() => {
-    resizeCanvas();
-  }, 100);
+  setTimeout(() => resizeCanvas(), 100);
 
   GAME.state = 'countdown';
 
@@ -466,9 +484,6 @@ function startCountdown() {
     if (count > 0) {
       countdownText.textContent = count;
       if (typeof Sounds !== 'undefined') Sounds.countdown();
-      countdownEl.style.animation = 'none';
-      void countdownEl.offsetWidth;
-      countdownEl.style.animation = '';
       const h1 = countdownEl.querySelector('h1');
       h1.style.animation = 'none';
       void h1.offsetWidth;
@@ -486,17 +501,14 @@ function startCountdown() {
       GAME.state = 'racing';
       GAME.raceStartTime = Date.now();
       Object.values(cars).forEach(c => c.lastLapStart = Date.now());
-      console.log('🏎️ RACE STARTED!');
     }
   }, 1000);
 }
 
 function checkRaceEnd() {
-  const allFinished = Object.values(cars).every(c => c.finished);
   const localFinished = cars[LOCAL_PLAYER_ID] && cars[LOCAL_PLAYER_ID].finished;
-
-  if (allFinished || localFinished) {
-    setTimeout(showFinishScreen, 2000);
+  if (localFinished) {
+    setTimeout(showFinishScreen, 2500);
   }
 }
 
@@ -524,22 +536,10 @@ function showFinishScreen() {
   if (localCar) {
     const bestLap = localCar.lapTimes.length > 0 ? Math.min(...localCar.lapTimes).toFixed(2) : 'N/A';
     stats.innerHTML = `
-      <div class="stat-row">
-        <span class="label">Your Position</span>
-        <span class="value">#${localCar.position}</span>
-      </div>
-      <div class="stat-row">
-        <span class="label">Total Time</span>
-        <span class="value">${localCar.finished ? localCar.finishTime.toFixed(2) + 's' : 'DNF'}</span>
-      </div>
-      <div class="stat-row">
-        <span class="label">Best Lap</span>
-        <span class="value">${bestLap}${bestLap !== 'N/A' ? 's' : ''}</span>
-      </div>
-      <div class="stat-row">
-        <span class="label">Laps Completed</span>
-        <span class="value">${Math.min(localCar.lap, GAME.totalLaps)}/${GAME.totalLaps}</span>
-      </div>
+      <div class="stat-row"><span class="label">Your Position</span><span class="value">#${localCar.position}</span></div>
+      <div class="stat-row"><span class="label">Total Time</span><span class="value">${localCar.finished ? localCar.finishTime.toFixed(2) + 's' : 'DNF'}</span></div>
+      <div class="stat-row"><span class="label">Best Lap</span><span class="value">${bestLap}${bestLap !== 'N/A' ? 's' : ''}</span></div>
+      <div class="stat-row"><span class="label">Laps Completed</span><span class="value">${Math.min(localCar.lap, GAME.totalLaps)}/${GAME.totalLaps}</span></div>
     `;
   }
 }
@@ -551,13 +551,11 @@ socket.on("connect", () => {
 });
 
 socket.on("room-created", (data) => {
-  console.log("🏠 Room:", data.roomCode);
   document.getElementById("room-code").textContent = data.roomCode;
 });
 
 socket.on("player-joined", (player) => {
   if (GAME.isBotMode) return;
-
   const colorIndex = Object.keys(cars).length;
   if (colorIndex >= 4) return;
 
@@ -578,21 +576,42 @@ socket.on("player-joined", (player) => {
   }
 });
 
+// ════════ PHONE CONTROLS - FIXED ════════
+// Phone sends signal once per tap, we hold input for short time
 socket.on("player-moved", (data) => {
   const car = cars[data.playerId];
-  if (!car || GAME.state !== 'racing') return;
+  if (!car) return;
+
+  // Hold input for 15 frames (~250ms) after each signal
+  const HOLD_FRAMES = 15;
 
   switch (data.direction) {
-    case "up":     car.input.accel = true; setTimeout(() => car.input.accel = false, 200); break;
-    case "down":   car.input.brake = true; setTimeout(() => car.input.brake = false, 200); break;
-    case "left":   car.input.left = true; setTimeout(() => car.input.left = false, 100); break;
-    case "right":  car.input.right = true; setTimeout(() => car.input.right = false, 100); break;
-    case "punch":  car.input.accel = true; setTimeout(() => car.input.accel = false, 300); break;
-    case "kick":   car.input.brake = true; setTimeout(() => car.input.brake = false, 300); break;
-    case "special":
-      if (car.boostFuel >= 30) {
+    case "up":
+    case "punch":  // Phone GAS button
+      car.input.accel = true;
+      car.inputTimers.accel = HOLD_FRAMES;
+      break;
+
+    case "down":
+    case "kick":  // Phone BRAKE button
+      car.input.brake = true;
+      car.inputTimers.brake = HOLD_FRAMES;
+      break;
+
+    case "left":
+      car.input.left = true;
+      car.inputTimers.left = HOLD_FRAMES;
+      break;
+
+    case "right":
+      car.input.right = true;
+      car.inputTimers.right = HOLD_FRAMES;
+      break;
+
+    case "special":  // Phone BOOST button
+      if (car.boostFuel >= 30 && !car.boosting) {
         car.boosting = true;
-        if (typeof Sounds !== 'undefined') Sounds.boost();
+        if (car.id === LOCAL_PLAYER_ID && typeof Sounds !== 'undefined') Sounds.boost();
         setTimeout(() => car.boosting = false, 1500);
       }
       break;
@@ -603,13 +622,9 @@ socket.on("player-left", (data) => {
   if (cars[data.playerId]) delete cars[data.playerId];
 });
 
-// ════════ START BUTTONS ════════
+// ════════ BUTTONS ════════
 document.getElementById('bot-race-btn').addEventListener('click', () => {
-  console.log('🤖 BOT RACE clicked');
-
-  // Clear existing cars
   Object.keys(cars).forEach(id => delete cars[id]);
-
   GAME.isBotMode = true;
 
   const localCar = new Car('local-player', 'YOU', 0, false);
@@ -617,8 +632,7 @@ document.getElementById('bot-race-btn').addEventListener('click', () => {
   LOCAL_PLAYER_ID = 'local-player';
 
   for (let i = 1; i <= 3; i++) {
-    const bot = new Car(`bot-${i}`, `BOT ${i}`, i, true);
-    cars[`bot-${i}`] = bot;
+    cars[`bot-${i}`] = new Car(`bot-${i}`, `BOT ${i}`, i, true);
   }
 
   document.querySelectorAll('.racer-slot').forEach((slot, i) => {
@@ -631,12 +645,10 @@ document.getElementById('bot-race-btn').addEventListener('click', () => {
 });
 
 document.getElementById('start-race-btn').addEventListener('click', () => {
-  if (Object.keys(cars).length >= 2) {
-    startCountdown();
-  }
+  if (Object.keys(cars).length >= 2) startCountdown();
 });
 
-// ════════ KEYBOARD CONTROLS ════════
+// ════════ KEYBOARD ════════
 const keys = {};
 document.addEventListener('keydown', (e) => {
   keys[e.key.toLowerCase()] = true;
@@ -659,10 +671,11 @@ function applyKeyboardInput() {
   const car = cars[LOCAL_PLAYER_ID];
   if (!car || car.isBot) return;
 
-  car.input.accel = keys['w'] || keys['arrowup'];
-  car.input.brake = keys['s'] || keys['arrowdown'];
-  car.input.left = keys['a'] || keys['arrowleft'];
-  car.input.right = keys['d'] || keys['arrowright'];
+  // Keyboard overrides phone input for local player
+  if (keys['w'] || keys['arrowup']) { car.input.accel = true; car.inputTimers.accel = 2; }
+  if (keys['s'] || keys['arrowdown']) { car.input.brake = true; car.inputTimers.brake = 2; }
+  if (keys['a'] || keys['arrowleft']) { car.input.left = true; car.inputTimers.left = 2; }
+  if (keys['d'] || keys['arrowright']) { car.input.right = true; car.inputTimers.right = 2; }
 }
 
 // ════════ GAME LOOP ════════
@@ -699,7 +712,6 @@ function gameLoop() {
 
   updateCamera();
 
-  // Render with camera offset
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.save();
   ctx.translate(-camera.x, -camera.y);
@@ -712,13 +724,9 @@ function gameLoop() {
   requestAnimationFrame(gameLoop);
 }
 
-// ════════ INIT ════════
 resizeCanvas();
-
 window.addEventListener('resize', () => {
-  if (GAME.state === 'racing' || GAME.state === 'countdown') {
-    resizeCanvas();
-  }
+  if (GAME.state === 'racing' || GAME.state === 'countdown') resizeCanvas();
 });
 
 requestAnimationFrame(gameLoop);
