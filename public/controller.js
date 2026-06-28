@@ -1,4 +1,4 @@
-const socket = io("https://fun-match.onrender.com");
+const socket = io("https://fun-match-production.up.railway.app");
 
 const joinScreen = document.getElementById("join-screen");
 const gameSelect = document.getElementById("game-select");

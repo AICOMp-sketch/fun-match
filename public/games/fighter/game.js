@@ -1,4 +1,4 @@
-const socket = io("https://fun-match.onrender.com");
+const socket = io("https://fun-match-production.up.railway.app");
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 

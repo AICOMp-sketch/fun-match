@@ -82,7 +82,7 @@ const Sounds = {
   },
 
   win: () => {
-    [523, 659, 784, 1047].forEach((freq, i) => {
+    [523, 659, 784, 1047].forEach((freq, i) => {  
       setTimeout(() => playTone(freq, 0.2, 'square', 0.25), i * 100);
     });
   }
