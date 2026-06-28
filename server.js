@@ -5,31 +5,110 @@ const { Server } = require("socket.io");
 const app = express();
 const server = http.createServer(app);
 
-// Allow Cloudflare Pages to connect
 const io = new Server(server, {
   cors: {
-    origin: "https://fun-match.pages.dev",
+    origin: [
+      "https://fun-match.pages.dev",
+      "http://localhost:3000"
+    ],
     methods: ["GET", "POST"]
   }
 });
 
 app.use(express.static("public"));
 
-// Test route to check if server is running
 app.get("/health", (req, res) => {
   res.send("✅ Server is running!");
 });
 
+const rooms = {};
+
+function generateRoomCode() {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  let code = "";
+  for (let i = 0; i < 4; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return code;
+}
+
 io.on("connection", (socket) => {
   console.log("✅ User connected:", socket.id);
 
+  socket.on("create-room", () => {
+    let roomCode = generateRoomCode();
+    while (rooms[roomCode]) {
+      roomCode = generateRoomCode();
+    }
+
+    rooms[roomCode] = {
+      hostId: socket.id,
+      players: {}
+    };
+
+    socket.join(roomCode);
+    socket.emit("room-created", { roomCode });
+    console.log(`🏠 Room created: ${roomCode}`);
+  });
+
+  socket.on("join-room", (data) => {
+    const { roomCode, playerName } = data;
+    const room = rooms[roomCode];
+
+    if (!room) {
+      socket.emit("join-error", { message: "Room not found!" });
+      return;
+    }
+
+    room.players[socket.id] = {
+      id: socket.id,
+      name: playerName,
+      x: 400,
+      y: 250,
+      color: `hsl(${Math.random() * 360}, 70%, 60%)`
+    };
+
+    socket.join(roomCode);
+    socket.data.roomCode = roomCode;
+
+    socket.emit("join-success", { playerName });
+    io.to(room.hostId).emit("player-joined", room.players[socket.id]);
+
+    console.log(`👤 ${playerName} joined room ${roomCode}`);
+  });
+
+  socket.on("move", (data) => {
+    const roomCode = socket.data.roomCode;
+    const room = rooms[roomCode];
+    if (!room || !room.players[socket.id]) return;
+
+    io.to(room.hostId).emit("player-moved", {
+      playerId: socket.id,
+      direction: data.direction
+    });
+  });
+
   socket.on("disconnect", () => {
     console.log("❌ User disconnected:", socket.id);
+
+    const roomCode = socket.data.roomCode;
+    if (roomCode && rooms[roomCode]) {
+      const room = rooms[roomCode];
+
+      if (room.players[socket.id]) {
+        delete room.players[socket.id];
+        io.to(room.hostId).emit("player-left", { playerId: socket.id });
+      }
+
+      if (room.hostId === socket.id) {
+        delete rooms[roomCode];
+        console.log(`🏠 Room deleted: ${roomCode}`);
+      }
+    }
   });
 });
 
 const PORT = process.env.PORT || 3000;
-
 server.listen(PORT, () => {
   console.log("🚀 Server running on port " + PORT);
 });

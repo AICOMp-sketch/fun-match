@@ -1,22 +1,58 @@
-    <!DOCTYPE html>
-    <html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Fun Match</title>
-        <link rel="stylesheet" href="style.css">
-    </head>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fun Match - Game Screen</title>
+    <link rel="stylesheet" href="game.css">
+</head>
 
-    <body>
+<body>
 
-        <h1>🎮 Fun Match</h1>
-        <p id="status">Connecting to server...</p>
+    <div id="game-container">
 
-        <!-- Load Socket.io from Railway server -->
-        <script src="https://fun-match-production.up.railway.app/socket.io/socket.io.js"></script>
-        <script src="script.js"></script>
+        <div id="header">
+            <h1>🎮 Fun Match</h1>
+            <div id="room-info">
+                <p>ROOM CODE</p>
+                <h2 id="room-code">----</h2>
+                <p class="small">Join at: <strong>fun-match.pages.dev/controller.html</strong></p>
+            </div>
+        </div>
 
-    </body>
+        <div id="game-area">
+            <canvas id="gameCanvas" width="800" height="500"></canvas>
 
-    </html>
+            <div id="sidebar">
+                <div class="info-box">
+                    <h3>⏱️ TIME</h3>
+                    <p id="timer">0</p>
+                </div>
+
+                <div class="info-box">
+                    <h3>🤖 BOTS</h3>
+                    <p id="bot-count">0</p>
+                </div>
+
+                <div class="info-box">
+                    <h3>👤 PLAYERS</h3>
+                    <ul id="players-list"></ul>
+                </div>
+            </div>
+        </div>
+
+        <div id="game-over" class="hidden">
+            <h2>💀 GAME OVER</h2>
+            <p id="final-score">You survived for 0 seconds</p>
+            <button id="restart-btn">PLAY AGAIN</button>
+        </div>
+
+    </div>
+
+    <script src="https://fun-match-production.up.railway.app/socket.io/socket.io.js"></script>
+    <script src="game.js"></script>
+
+</body>
+
+</html>

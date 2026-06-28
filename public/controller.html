@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Fun Match - Controller</title>
+  <link rel="stylesheet" href="controller.css">
+</head>
+<body>
+
+  <div id="join-screen">
+    <h1>🎮 Fun Match</h1>
+    <p>Join the game</p>
+
+    <input type="text" id="name-input" placeholder="Your Name" maxlength="10">
+    <input type="text" id="code-input" placeholder="ROOM CODE" maxlength="4">
+
+    <button id="join-btn">JOIN GAME</button>
+
+    <p id="error-msg"></p>
+  </div>
+
+  <div id="controller-screen" class="hidden">
+    <h2 id="welcome">Welcome!</h2>
+
+    <div class="dpad">
+      <button class="btn up" data-dir="up">▲</button>
+      <button class="btn left" data-dir="left">◄</button>
+      <button class="btn right" data-dir="right">►</button>
+      <button class="btn down" data-dir="down">▼</button>
+    </div>
+  </div>
+
+  <script src="https://fun-match-production.up.railway.app/socket.io/socket.io.js"></script>
+  <script src="controller.js"></script>
+
+</body>
+</html>
