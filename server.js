@@ -8,7 +8,7 @@ const server = http.createServer(app);
 // Allow Cloudflare Pages to connect
 const io = new Server(server, {
   cors: {
-    origin: "https://fun-match.ac1423004.workers.dev/",
+    origin: "https://fun-match.pages.dev/",
     methods: ["GET", "POST"]
   }
 });
