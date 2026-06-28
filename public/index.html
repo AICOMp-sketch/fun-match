@@ -1,14 +1,22 @@
 <!DOCTYPE html>
-<html>
-<head>
-  <title>Fun Match</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <h1>🎮 Fun Match</h1>
-  <p>Game coming soon...</p>
+<html lang="en">
 
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="script.js"></script>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fun Match</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <h1>🎮 Fun Match</h1>
+    <p id="status">Connecting to server...</p>
+
+    <!-- Load Socket.io from Railway server -->
+    <script src="https://fun-match-production.up.railway.app/socket.io/socket.io.js"></script>
+    <script src="script.js"></script>
+
 </body>
+
 </html>
