@@ -5,6 +5,7 @@ const ctx = canvas.getContext("2d");
 function resizeCanvas() {
   canvas.width = canvas.clientWidth;
   canvas.height = canvas.clientHeight;
+  console.log('📐 Canvas resized:', canvas.width, 'x', canvas.height);
 }
 window.addEventListener('resize', resizeCanvas);
 
@@ -21,7 +22,7 @@ const GAME = {
 
 const camera = { x: 0, y: 0 };
 
-// ════════ TRACK (smaller, better proportioned) ════════
+// ════════ TRACK ════════
 const TRACK = {
   cx: 900,
   cy: 600,
@@ -44,12 +45,10 @@ class Car {
     this.colorIndex = colorIndex;
     this.isBot = isBot;
 
-    // Starting position on start line (top of track)
-    // Stagger cars side by side on the track
     const startSpacing = 50;
     this.x = TRACK.cx - 75 + (colorIndex * startSpacing);
     this.y = TRACK.cy - (TRACK.outerRY + TRACK.innerRY) / 2;
-    this.angle = 0; // facing right (counter-clockwise rotation)
+    this.angle = 0;
 
     this.speed = 0;
     this.maxSpeed = 4.5;
@@ -60,7 +59,7 @@ class Car {
     this.input = { accel: false, brake: false, left: false, right: false };
 
     this.lap = 0;
-    this.checkpoint = 0;
+    this.checkpoint = 3;
     this.lapTimes = [];
     this.lastLapStart = 0;
     this.finished = false;
@@ -71,6 +70,8 @@ class Car {
     this.boosting = false;
     this.crashed = false;
     this.crashTimer = 0;
+
+    console.log(`🚗 Car created: ${name} (${isBot ? 'BOT' : 'PLAYER'}) at (${this.x.toFixed(0)}, ${this.y.toFixed(0)})`);
   }
 
   update() {
@@ -90,12 +91,10 @@ class Car {
       return;
     }
 
-    // Bot AI
     if (this.isBot && GAME.state === 'racing') {
       this.botThink();
     }
 
-    // Apply input
     let currentMaxSpeed = this.maxSpeed;
     if (this.boosting && this.boostFuel > 0) {
       currentMaxSpeed = this.maxSpeed * 1.6;
@@ -127,24 +126,18 @@ class Car {
     this.speed = Math.max(-1.5, Math.min(currentMaxSpeed, this.speed));
     this.speed *= this.friction;
 
-    // Steering (only when moving)
     if (Math.abs(this.speed) > 0.3) {
       const turnAmount = this.turnSpeed * (this.speed / this.maxSpeed);
       if (this.input.left) this.angle -= turnAmount;
       if (this.input.right) this.angle += turnAmount;
     }
 
-    // Move
     this.x += Math.cos(this.angle) * this.speed;
     this.y += Math.sin(this.angle) * this.speed;
 
-    // Track collision
     this.checkTrackCollision();
-
-    // Checkpoint detection
     this.checkCheckpoints();
 
-    // Skid marks when turning hard
     if (Math.abs(this.speed) > 2 && (this.input.left || this.input.right)) {
       if (Math.random() < 0.4) {
         GAME.skidMarks.push({
@@ -157,12 +150,9 @@ class Car {
   }
 
   botThink() {
-    // Follow oval track - target angle perpendicular to center
     const dx = this.x - TRACK.cx;
     const dy = this.y - TRACK.cy;
     const angleToCenter = Math.atan2(dy, dx);
-
-    // Counter-clockwise direction
     const targetAngle = angleToCenter + Math.PI / 2;
 
     let angleDiff = targetAngle - this.angle;
@@ -183,13 +173,11 @@ class Car {
   checkTrackCollision() {
     const dx = this.x - TRACK.cx;
     const dy = this.y - TRACK.cy;
-
     const outerDist = (dx * dx) / (TRACK.outerRX * TRACK.outerRX) + (dy * dy) / (TRACK.outerRY * TRACK.outerRY);
     const innerDist = (dx * dx) / (TRACK.innerRX * TRACK.innerRX) + (dy * dy) / (TRACK.innerRY * TRACK.innerRY);
 
     let hitWall = false;
 
-    // Outer wall
     if (outerDist > 0.98) {
       const factor = Math.sqrt(0.98 / outerDist);
       this.x = TRACK.cx + dx * factor;
@@ -197,7 +185,6 @@ class Car {
       hitWall = true;
     }
 
-    // Inner wall (grass)
     if (innerDist < 1.05 && innerDist > 0) {
       const factor = Math.sqrt(1.05 / innerDist);
       this.x = TRACK.cx + dx * factor;
@@ -208,7 +195,7 @@ class Car {
     if (hitWall) {
       this.speed *= 0.5;
       if (Math.abs(this.speed) > 1.8 && !this.crashed) {
-        if (this.id === LOCAL_PLAYER_ID) Sounds.crash();
+        if (this.id === LOCAL_PLAYER_ID && typeof Sounds !== 'undefined') Sounds.crash();
         this.crashed = true;
         this.crashTimer = 15;
         for (let i = 0; i < 8; i++) {
@@ -230,12 +217,6 @@ class Car {
     const dy = this.y - TRACK.cy;
     const angle = Math.atan2(dy, dx);
 
-    // 4 zones around track
-    // Zone 0: top (-3π/4 to -π/4)
-    // Zone 1: right (-π/4 to π/4)
-    // Zone 2: bottom (π/4 to 3π/4)
-    // Zone 3: left (3π/4 to -3π/4)
-
     let currentZone;
     if (angle >= -3 * Math.PI / 4 && angle < -Math.PI / 4) currentZone = 0;
     else if (angle >= -Math.PI / 4 && angle < Math.PI / 4) currentZone = 1;
@@ -247,16 +228,14 @@ class Car {
     if (currentZone === expectedNext) {
       this.checkpoint = currentZone;
 
-      // Completed lap when returning to zone 0 from zone 3
       if (currentZone === 0) {
         this.lap++;
+        console.log(`🏁 ${this.name} lap ${this.lap}`);
 
         if (this.lap > 1) {
-          // Lap completed
           const lapTime = (Date.now() - this.lastLapStart) / 1000;
           this.lapTimes.push(lapTime);
-
-          if (this.id === LOCAL_PLAYER_ID) Sounds.lap();
+          if (this.id === LOCAL_PLAYER_ID && typeof Sounds !== 'undefined') Sounds.lap();
         }
 
         this.lastLapStart = Date.now();
@@ -272,7 +251,8 @@ class Car {
     if (this.finished) return;
     this.finished = true;
     this.finishTime = (Date.now() - GAME.raceStartTime) / 1000;
-    if (this.id === LOCAL_PLAYER_ID) Sounds.finish();
+    console.log(`🏆 ${this.name} finished in ${this.finishTime.toFixed(2)}s`);
+    if (this.id === LOCAL_PLAYER_ID && typeof Sounds !== 'undefined') Sounds.finish();
     checkRaceEnd();
   }
 
@@ -281,11 +261,9 @@ class Car {
     ctx.translate(this.x, this.y);
     ctx.rotate(this.angle);
 
-    // Shadow
     ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
     ctx.fillRect(-18, -10, 36, 24);
 
-    // Boost flames
     if (this.boosting) {
       ctx.fillStyle = '#ffaa00';
       ctx.beginPath();
@@ -302,29 +280,24 @@ class Car {
       ctx.fill();
     }
 
-    // Car body with glow
     ctx.shadowColor = this.color;
     ctx.shadowBlur = 15;
     ctx.fillStyle = this.color;
     ctx.fillRect(-20, -12, 40, 24);
 
-    // Body details (cockpit)
     ctx.shadowBlur = 0;
     ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
     ctx.fillRect(-12, -10, 18, 20);
 
-    // Headlights (front)
     ctx.fillStyle = '#ffffaa';
     ctx.fillRect(16, -10, 4, 4);
     ctx.fillRect(16, 6, 4, 4);
 
-    // Spoiler (back)
     ctx.fillStyle = this.color;
     ctx.fillRect(-22, -14, 4, 28);
 
     ctx.restore();
 
-    // Player name (only for non-bot or local)
     ctx.fillStyle = 'white';
     ctx.font = 'bold 12px Inter';
     ctx.textAlign = 'center';
@@ -332,25 +305,20 @@ class Car {
   }
 }
 
-// ════════ TRACK DRAWING ════════
 function drawTrack() {
-  // Grass background (visible area)
   ctx.fillStyle = '#0a1a0a';
   ctx.fillRect(camera.x - 200, camera.y - 200, canvas.width + 400, canvas.height + 400);
 
-  // Outer track boundary (asphalt)
   ctx.fillStyle = '#1f2937';
   ctx.beginPath();
   ctx.ellipse(TRACK.cx, TRACK.cy, TRACK.outerRX, TRACK.outerRY, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Inner grass area
   ctx.fillStyle = '#0d4a1a';
   ctx.beginPath();
   ctx.ellipse(TRACK.cx, TRACK.cy, TRACK.innerRX, TRACK.innerRY, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Skid marks (drawn on track)
   ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
   GAME.skidMarks.forEach(s => {
     ctx.globalAlpha = (s.life / 300) * 0.6;
@@ -358,7 +326,6 @@ function drawTrack() {
   });
   ctx.globalAlpha = 1;
 
-  // White boundary lines
   ctx.strokeStyle = '#ffffff';
   ctx.lineWidth = 3;
   ctx.beginPath();
@@ -369,7 +336,6 @@ function drawTrack() {
   ctx.ellipse(TRACK.cx, TRACK.cy, TRACK.innerRX, TRACK.innerRY, 0, 0, Math.PI * 2);
   ctx.stroke();
 
-  // Red/white kerbs on inner edge
   ctx.lineWidth = 6;
   const segments = 50;
   for (let i = 0; i < segments; i++) {
@@ -381,7 +347,6 @@ function drawTrack() {
     ctx.stroke();
   }
 
-  // Start/Finish line at TOP of track (checkered)
   const lineY = TRACK.cy - (TRACK.outerRY + TRACK.innerRY) / 2;
   const lineX1 = TRACK.cx - 150;
   const lineLen = 300;
@@ -394,7 +359,6 @@ function drawTrack() {
     }
   }
 
-  // Particles
   GAME.particles.forEach(p => {
     ctx.globalAlpha = Math.min(1, p.life / 25);
     ctx.fillStyle = p.color;
@@ -403,23 +367,19 @@ function drawTrack() {
   ctx.globalAlpha = 1;
 }
 
-// ════════ CAMERA ════════
 function updateCamera() {
   const localCar = cars[LOCAL_PLAYER_ID];
   if (localCar) {
-    // Camera centers on player car
     const targetX = localCar.x - canvas.width / 2;
     const targetY = localCar.y - canvas.height / 2;
     camera.x += (targetX - camera.x) * 0.15;
     camera.y += (targetY - camera.y) * 0.15;
   } else {
-    // Center on track
     camera.x = TRACK.cx - canvas.width / 2;
     camera.y = TRACK.cy - canvas.height / 2;
   }
 }
 
-// ════════ UI UPDATES ════════
 function updateLeaderboard() {
   const sorted = Object.values(cars).sort((a, b) => {
     if (a.finished && !b.finished) return -1;
@@ -437,7 +397,7 @@ function updateLeaderboard() {
       <span class="lb-pos">${i + 1}</span>
       <span class="lb-color" style="background:${car.color}"></span>
       <span class="lb-name">${car.name}</span>
-      <span class="lb-lap">L${Math.min(car.lap, GAME.totalLaps)}</span>
+      <span class="lb-lap">L${Math.min(Math.max(car.lap, 0), GAME.totalLaps)}</span>
     </div>
   `).join('');
 
@@ -457,11 +417,16 @@ function updateRaceTime() {
     `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
-// ════════ RACE FLOW ════════
 function startCountdown() {
+  console.log('🏁 Starting countdown...');
   document.getElementById('waiting-screen').classList.remove('active');
   document.getElementById('race-screen').classList.add('active');
-  resizeCanvas();
+
+  // Resize canvas AFTER race screen is visible
+  setTimeout(() => {
+    resizeCanvas();
+  }, 50);
+
   GAME.state = 'countdown';
 
   // Reset all cars to starting positions
@@ -472,7 +437,7 @@ function startCountdown() {
     car.angle = 0;
     car.speed = 0;
     car.lap = 0;
-    car.checkpoint = 3; // start at last checkpoint so they need to cross start
+    car.checkpoint = 3;
     car.lapTimes = [];
     car.finished = false;
     car.crashed = false;
@@ -480,7 +445,7 @@ function startCountdown() {
     idx++;
   });
 
-  startEngine();
+  if (typeof startEngine === 'function') startEngine();
 
   const countdownEl = document.getElementById('countdown');
   const countdownText = document.getElementById('countdown-text');
@@ -488,20 +453,21 @@ function startCountdown() {
   let count = 3;
   countdownEl.classList.remove('hidden');
   countdownText.textContent = count;
-  Sounds.countdown();
+  if (typeof Sounds !== 'undefined') Sounds.countdown();
 
   const interval = setInterval(() => {
     count--;
+    console.log('Countdown:', count);
     if (count > 0) {
       countdownText.textContent = count;
-      Sounds.countdown();
+      if (typeof Sounds !== 'undefined') Sounds.countdown();
       const h1 = countdownEl.querySelector('h1');
       h1.style.animation = 'none';
       void h1.offsetWidth;
       h1.style.animation = 'countdownPop 1s ease-out';
     } else if (count === 0) {
       countdownText.textContent = 'GO!';
-      Sounds.go();
+      if (typeof Sounds !== 'undefined') Sounds.go();
       const h1 = countdownEl.querySelector('h1');
       h1.style.animation = 'none';
       void h1.offsetWidth;
@@ -512,6 +478,9 @@ function startCountdown() {
       GAME.state = 'racing';
       GAME.raceStartTime = Date.now();
       Object.values(cars).forEach(c => c.lastLapStart = Date.now());
+      console.log('🏎️ RACE STARTED! State:', GAME.state);
+      console.log('Local Player ID:', LOCAL_PLAYER_ID);
+      console.log('Cars:', Object.keys(cars));
     }
   }, 1000);
 }
@@ -526,7 +495,7 @@ function checkRaceEnd() {
 function showFinishScreen() {
   if (GAME.state === 'finished') return;
   GAME.state = 'finished';
-  stopEngine();
+  if (typeof stopEngine === 'function') stopEngine();
 
   const sorted = Object.values(cars).sort((a, b) => {
     if (a.finished && !b.finished) return -1;
@@ -569,29 +538,34 @@ function showFinishScreen() {
 
 // ════════ SOCKET EVENTS ════════
 socket.on("connect", () => {
-  console.log("✅ Connected!");
-  socket.emit("create-room");
+  console.log("✅ Connected to server!");
+  // Only create room if not already in bot mode
+  if (!GAME.isBotMode) {
+    socket.emit("create-room");
+  }
 });
 
 socket.on("room-created", (data) => {
-  document.getElementById("room-code").textContent = data.roomCode;
+  console.log("🏠 Room created:", data.roomCode);
+  const roomEl = document.getElementById("room-code");
+  if (roomEl) roomEl.textContent = data.roomCode;
 });
 
 socket.on("player-joined", (player) => {
   // Don't accept players if in bot mode
-  if (GAME.isBotMode) return;
+  if (GAME.isBotMode) {
+    console.log("Bot mode active, ignoring player");
+    return;
+  }
 
-  // Don't add if already 4 cars
   if (Object.keys(cars).length >= 4) return;
 
   const colorIndex = Object.keys(cars).length;
   const car = new Car(player.id, player.name.toUpperCase(), colorIndex, false);
   cars[player.id] = car;
 
-  // First real player becomes local
   if (!LOCAL_PLAYER_ID) LOCAL_PLAYER_ID = player.id;
 
-  // Update slot UI
   const slot = document.getElementById(`slot-${colorIndex + 1}`);
   if (slot) {
     slot.classList.add('filled');
@@ -617,18 +591,18 @@ socket.on("player-moved", (data) => {
       car.input.right = true;
       setTimeout(() => car.input.right = false, 120);
       break;
-    case "punch": // GAS
+    case "punch":
       car.input.accel = true;
       setTimeout(() => car.input.accel = false, 250);
       break;
-    case "kick": // BRAKE
+    case "kick":
       car.input.brake = true;
       setTimeout(() => car.input.brake = false, 250);
       break;
-    case "special": // BOOST
+    case "special":
       if (car.boostFuel >= 30 && !car.boosting) {
         car.boosting = true;
-        if (car.id === LOCAL_PLAYER_ID) Sounds.boost();
+        if (car.id === LOCAL_PLAYER_ID && typeof Sounds !== 'undefined') Sounds.boost();
         setTimeout(() => car.boosting = false, 1500);
       }
       break;
@@ -636,22 +610,23 @@ socket.on("player-moved", (data) => {
 });
 
 socket.on("player-left", (data) => {
-  if (cars[data.playerId]) {
-    delete cars[data.playerId];
-  }
+  if (cars[data.playerId]) delete cars[data.playerId];
 });
 
 // ════════ START BUTTONS ════════
 document.getElementById('bot-race-btn').addEventListener('click', () => {
-  // Clear any existing cars first
+  console.log('🤖 Starting BOT RACE');
+
+  // Clear cars
   Object.keys(cars).forEach(id => delete cars[id]);
 
   GAME.isBotMode = true;
 
-  // Create local player
+  // Create local player FIRST
   const localCar = new Car('local-player', 'YOU', 0, false);
   cars['local-player'] = localCar;
   LOCAL_PLAYER_ID = 'local-player';
+  console.log('👤 Local player ID set to:', LOCAL_PLAYER_ID);
 
   // Create 3 bots
   for (let i = 1; i <= 3; i++) {
@@ -659,7 +634,8 @@ document.getElementById('bot-race-btn').addEventListener('click', () => {
     cars[`bot-${i}`] = bot;
   }
 
-  // Fill slots UI
+  console.log('✅ All cars created:', Object.keys(cars));
+
   document.querySelectorAll('.racer-slot').forEach((slot, i) => {
     slot.classList.add('filled');
     slot.querySelector('p').textContent = i === 0 ? 'YOU' : `Bot ${i}`;
@@ -670,6 +646,7 @@ document.getElementById('bot-race-btn').addEventListener('click', () => {
 });
 
 document.getElementById('start-race-btn').addEventListener('click', () => {
+  console.log('▶️ Starting multiplayer race');
   if (Object.keys(cars).length >= 2) {
     startCountdown();
   }
@@ -677,18 +654,21 @@ document.getElementById('start-race-btn').addEventListener('click', () => {
 
 // ════════ KEYBOARD CONTROLS ════════
 const keys = {};
+
 document.addEventListener('keydown', (e) => {
   keys[e.key.toLowerCase()] = true;
+
   if (e.key === ' ') {
     e.preventDefault();
     const car = cars[LOCAL_PLAYER_ID];
     if (car && car.boostFuel >= 30 && !car.boosting) {
       car.boosting = true;
-      Sounds.boost();
+      if (typeof Sounds !== 'undefined') Sounds.boost();
       setTimeout(() => car.boosting = false, 1500);
     }
   }
 });
+
 document.addEventListener('keyup', (e) => {
   keys[e.key.toLowerCase()] = false;
 });
@@ -705,7 +685,6 @@ function applyKeyboardInput() {
 
 // ════════ GAME LOOP ════════
 function gameLoop() {
-  // Regenerate boost slowly
   Object.values(cars).forEach(c => {
     if (c.boostFuel < 100 && !c.boosting) c.boostFuel += 0.2;
   });
@@ -717,12 +696,11 @@ function gameLoop() {
     updateRaceTime();
 
     const local = cars[LOCAL_PLAYER_ID];
-    if (local) {
+    if (local && typeof updateEngine === 'function') {
       updateEngine(Math.abs(local.speed) / local.maxSpeed);
     }
   }
 
-  // Update particles
   GAME.particles = GAME.particles.filter(p => {
     p.x += p.vx;
     p.y += p.vy;
@@ -732,7 +710,6 @@ function gameLoop() {
     return p.life > 0;
   });
 
-  // Update skid marks
   GAME.skidMarks = GAME.skidMarks.filter(s => {
     s.life--;
     return s.life > 0;
@@ -740,7 +717,6 @@ function gameLoop() {
 
   updateCamera();
 
-  // Render with camera offset
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.save();
   ctx.translate(-camera.x, -camera.y);
@@ -752,6 +728,3 @@ function gameLoop() {
 
   requestAnimationFrame(gameLoop);
 }
-
-resizeCanvas();
-requestAnimationFrame(gameLoop);
