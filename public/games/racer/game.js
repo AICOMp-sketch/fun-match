@@ -19,57 +19,55 @@ const GAME = {
   skidMarks: []
 };
 
-// Camera follows the local player
-const camera = { x: 0, y: 0, scale: 1 };
+const camera = { x: 0, y: 0 };
 
-// ════════ TRACK ════════
+// ════════ TRACK (smaller, better proportioned) ════════
 const TRACK = {
-  cx: 1000,
-  cy: 700,
-  outerRX: 800,
-  outerRY: 550,
-  innerRX: 450,
-  innerRY: 300,
-  startLine: { x1: 1000, y1: 150, x2: 1000, y2: 400 }
+  cx: 900,
+  cy: 600,
+  outerRX: 700,
+  outerRY: 480,
+  innerRX: 380,
+  innerRY: 250
 };
 
 // ════════ CARS ════════
 const COLORS = ['#00e0ff', '#ff7b00', '#aaff00', '#ff3860'];
 const cars = {};
+let LOCAL_PLAYER_ID = null;
 
 class Car {
   constructor(id, name, colorIndex, isBot = false) {
     this.id = id;
     this.name = name;
-    this.color = COLORS[colorIndex];
+    this.color = COLORS[colorIndex % COLORS.length];
     this.colorIndex = colorIndex;
     this.isBot = isBot;
 
-    // Starting position on start line
-    const startX = TRACK.cx + (colorIndex - 1.5) * 60;
-    this.x = startX;
-    this.y = TRACK.cy - TRACK.outerRY + 100;
-    this.angle = 0; // facing right initially
+    // Starting position on start line (top of track)
+    // Stagger cars side by side on the track
+    const startSpacing = 50;
+    this.x = TRACK.cx - 75 + (colorIndex * startSpacing);
+    this.y = TRACK.cy - (TRACK.outerRY + TRACK.innerRY) / 2;
+    this.angle = 0; // facing right (counter-clockwise rotation)
 
-    this.vx = 0;
-    this.vy = 0;
     this.speed = 0;
-    this.maxSpeed = 4;
-    this.acceleration = 0.12;
-    this.friction = 0.96;
-    this.turnSpeed = 0.06;
+    this.maxSpeed = 4.5;
+    this.acceleration = 0.15;
+    this.friction = 0.97;
+    this.turnSpeed = 0.05;
 
-    this.input = { accel: false, brake: false, left: false, right: false, boost: false };
+    this.input = { accel: false, brake: false, left: false, right: false };
 
     this.lap = 0;
-    this.checkpoint = 0; // 0 = top, 1 = right, 2 = bottom, 3 = left
+    this.checkpoint = 0;
     this.lapTimes = [];
     this.lastLapStart = 0;
     this.finished = false;
     this.finishTime = 0;
     this.position = 1;
 
-    this.boostFuel = 0; // 0-100
+    this.boostFuel = 100;
     this.boosting = false;
     this.crashed = false;
     this.crashTimer = 0;
@@ -77,7 +75,7 @@ class Car {
 
   update() {
     if (this.finished) {
-      this.speed *= 0.9;
+      this.speed *= 0.92;
       this.x += Math.cos(this.angle) * this.speed;
       this.y += Math.sin(this.angle) * this.speed;
       return;
@@ -106,7 +104,6 @@ class Car {
         this.boostFuel = 0;
         this.boosting = false;
       }
-      // Boost particles
       if (Math.random() < 0.5) {
         GAME.particles.push({
           x: this.x - Math.cos(this.angle) * 20,
@@ -127,7 +124,7 @@ class Car {
       this.speed -= this.acceleration * 1.5;
     }
 
-    this.speed = Math.max(-1, Math.min(currentMaxSpeed, this.speed));
+    this.speed = Math.max(-1.5, Math.min(currentMaxSpeed, this.speed));
     this.speed *= this.friction;
 
     // Steering (only when moving)
@@ -149,36 +146,37 @@ class Car {
 
     // Skid marks when turning hard
     if (Math.abs(this.speed) > 2 && (this.input.left || this.input.right)) {
-      if (Math.random() < 0.5) {
+      if (Math.random() < 0.4) {
         GAME.skidMarks.push({
           x: this.x - Math.cos(this.angle) * 12,
           y: this.y - Math.sin(this.angle) * 12,
-          life: 200
+          life: 300
         });
       }
     }
   }
 
   botThink() {
-    // Simple AI: follow track in oval pattern
+    // Follow oval track - target angle perpendicular to center
     const dx = this.x - TRACK.cx;
     const dy = this.y - TRACK.cy;
     const angleToCenter = Math.atan2(dy, dx);
 
-    // Target angle is perpendicular to center direction (counter-clockwise)
+    // Counter-clockwise direction
     const targetAngle = angleToCenter + Math.PI / 2;
 
     let angleDiff = targetAngle - this.angle;
     while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
     while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
 
-    this.input.left = angleDiff < -0.1;
-    this.input.right = angleDiff > 0.1;
+    this.input.left = angleDiff < -0.05;
+    this.input.right = angleDiff > 0.05;
     this.input.accel = true;
+    this.input.brake = false;
 
-    // Use boost randomly when available
-    if (this.boostFuel > 50 && Math.random() < 0.01) {
+    if (this.boostFuel > 60 && Math.random() < 0.005) {
       this.boosting = true;
+      setTimeout(() => this.boosting = false, 1200);
     }
   }
 
@@ -186,47 +184,41 @@ class Car {
     const dx = this.x - TRACK.cx;
     const dy = this.y - TRACK.cy;
 
-    // Check outer boundary
     const outerDist = (dx * dx) / (TRACK.outerRX * TRACK.outerRX) + (dy * dy) / (TRACK.outerRY * TRACK.outerRY);
-    // Check inner boundary
     const innerDist = (dx * dx) / (TRACK.innerRX * TRACK.innerRX) + (dy * dy) / (TRACK.innerRY * TRACK.innerRY);
 
     let hitWall = false;
 
+    // Outer wall
     if (outerDist > 0.98) {
-      // Push back from outer wall
-      const factor = 0.98 / outerDist;
-      const newX = TRACK.cx + dx * Math.sqrt(factor);
-      const newY = TRACK.cy + dy * Math.sqrt(factor);
-      this.x = newX;
-      this.y = newY;
+      const factor = Math.sqrt(0.98 / outerDist);
+      this.x = TRACK.cx + dx * factor;
+      this.y = TRACK.cy + dy * factor;
       hitWall = true;
     }
 
-    if (innerDist < 1.02 && innerDist > 0) {
-      const factor = 1.02 / innerDist;
-      const newX = TRACK.cx + dx * Math.sqrt(factor);
-      const newY = TRACK.cy + dy * Math.sqrt(factor);
-      this.x = newX;
-      this.y = newY;
+    // Inner wall (grass)
+    if (innerDist < 1.05 && innerDist > 0) {
+      const factor = Math.sqrt(1.05 / innerDist);
+      this.x = TRACK.cx + dx * factor;
+      this.y = TRACK.cy + dy * factor;
       hitWall = true;
     }
 
     if (hitWall) {
       this.speed *= 0.5;
-      if (Math.abs(this.speed) > 1.5 && !this.crashed) {
-        Sounds.crash();
+      if (Math.abs(this.speed) > 1.8 && !this.crashed) {
+        if (this.id === LOCAL_PLAYER_ID) Sounds.crash();
         this.crashed = true;
-        this.crashTimer = 20;
-        // Crash particles
-        for (let i = 0; i < 10; i++) {
+        this.crashTimer = 15;
+        for (let i = 0; i < 8; i++) {
           GAME.particles.push({
             x: this.x, y: this.y,
-            vx: (Math.random() - 0.5) * 8,
-            vy: (Math.random() - 0.5) * 8,
-            life: 30,
+            vx: (Math.random() - 0.5) * 6,
+            vy: (Math.random() - 0.5) * 6,
+            life: 25,
             color: '#ffaa00',
-            size: Math.random() * 5 + 2
+            size: Math.random() * 4 + 2
           });
         }
       }
@@ -236,42 +228,48 @@ class Car {
   checkCheckpoints() {
     const dx = this.x - TRACK.cx;
     const dy = this.y - TRACK.cy;
-    const angle = Math.atan2(dy, dx); // -PI to PI
+    const angle = Math.atan2(dy, dx);
 
-    // 4 checkpoints around the track
+    // 4 zones around track
+    // Zone 0: top (-3π/4 to -π/4)
+    // Zone 1: right (-π/4 to π/4)
+    // Zone 2: bottom (π/4 to 3π/4)
+    // Zone 3: left (3π/4 to -3π/4)
+
     let currentZone;
-    if (angle >= -Math.PI / 4 && angle < Math.PI / 4) currentZone = 1; // right
-    else if (angle >= Math.PI / 4 && angle < 3 * Math.PI / 4) currentZone = 2; // bottom
-    else if (angle >= -3 * Math.PI / 4 && angle < -Math.PI / 4) currentZone = 0; // top
-    else currentZone = 3; // left
+    if (angle >= -3 * Math.PI / 4 && angle < -Math.PI / 4) currentZone = 0;
+    else if (angle >= -Math.PI / 4 && angle < Math.PI / 4) currentZone = 1;
+    else if (angle >= Math.PI / 4 && angle < 3 * Math.PI / 4) currentZone = 2;
+    else currentZone = 3;
 
-    // Must hit checkpoints in order: 0 -> 1 -> 2 -> 3 -> 0 (= lap complete)
     const expectedNext = (this.checkpoint + 1) % 4;
+
     if (currentZone === expectedNext) {
       this.checkpoint = currentZone;
 
-      // Completed full lap (went 0 -> 1 -> 2 -> 3 -> 0)
-      if (currentZone === 0 && this.lap > 0) {
-        // Lap complete
-        const lapTime = (Date.now() - this.lastLapStart) / 1000;
-        this.lapTimes.push(lapTime);
-        this.lastLapStart = Date.now();
-
-        if (this.id === LOCAL_PLAYER_ID) Sounds.lap();
-
-        if (this.lap >= GAME.totalLaps) {
-          this.finishRace();
-        }
-      }
-
+      // Completed lap when returning to zone 0 from zone 3
       if (currentZone === 0) {
         this.lap++;
-        if (this.lap === 1) this.lastLapStart = Date.now();
+
+        if (this.lap > 1) {
+          // Lap completed
+          const lapTime = (Date.now() - this.lastLapStart) / 1000;
+          this.lapTimes.push(lapTime);
+
+          if (this.id === LOCAL_PLAYER_ID) Sounds.lap();
+        }
+
+        this.lastLapStart = Date.now();
+
+        if (this.lap > GAME.totalLaps) {
+          this.finishRace();
+        }
       }
     }
   }
 
   finishRace() {
+    if (this.finished) return;
     this.finished = true;
     this.finishTime = (Date.now() - GAME.raceStartTime) / 1000;
     if (this.id === LOCAL_PLAYER_ID) Sounds.finish();
@@ -304,45 +302,41 @@ class Car {
       ctx.fill();
     }
 
-    // Car body
+    // Car body with glow
     ctx.shadowColor = this.color;
-    ctx.shadowBlur = 12;
+    ctx.shadowBlur = 15;
     ctx.fillStyle = this.color;
     ctx.fillRect(-20, -12, 40, 24);
 
-    // Body details
+    // Body details (cockpit)
     ctx.shadowBlur = 0;
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
-    ctx.fillRect(-12, -10, 18, 20); // windshield area
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+    ctx.fillRect(-12, -10, 18, 20);
 
-    // Headlights
+    // Headlights (front)
     ctx.fillStyle = '#ffffaa';
     ctx.fillRect(16, -10, 4, 4);
     ctx.fillRect(16, 6, 4, 4);
 
-    // Spoiler
+    // Spoiler (back)
     ctx.fillStyle = this.color;
     ctx.fillRect(-22, -14, 4, 28);
 
     ctx.restore();
 
-    // Player name
-    if (!this.isBot || this.id === LOCAL_PLAYER_ID) {
-      ctx.fillStyle = 'white';
-      ctx.font = 'bold 12px Inter';
-      ctx.textAlign = 'center';
-      ctx.fillText(this.name, this.x, this.y - 30);
-    }
+    // Player name (only for non-bot or local)
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 12px Inter';
+    ctx.textAlign = 'center';
+    ctx.fillText(this.name, this.x, this.y - 25);
   }
 }
 
-let LOCAL_PLAYER_ID = null;
-
 // ════════ TRACK DRAWING ════════
 function drawTrack() {
-  // Grass background
+  // Grass background (visible area)
   ctx.fillStyle = '#0a1a0a';
-  ctx.fillRect(camera.x - 100, camera.y - 100, canvas.width + 200, canvas.height + 200);
+  ctx.fillRect(camera.x - 200, camera.y - 200, canvas.width + 400, canvas.height + 400);
 
   // Outer track boundary (asphalt)
   ctx.fillStyle = '#1f2937';
@@ -356,9 +350,17 @@ function drawTrack() {
   ctx.ellipse(TRACK.cx, TRACK.cy, TRACK.innerRX, TRACK.innerRY, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Track edges (white lines)
+  // Skid marks (drawn on track)
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+  GAME.skidMarks.forEach(s => {
+    ctx.globalAlpha = (s.life / 300) * 0.6;
+    ctx.fillRect(s.x - 2, s.y - 2, 4, 4);
+  });
+  ctx.globalAlpha = 1;
+
+  // White boundary lines
   ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth = 4;
+  ctx.lineWidth = 3;
   ctx.beginPath();
   ctx.ellipse(TRACK.cx, TRACK.cy, TRACK.outerRX, TRACK.outerRY, 0, 0, Math.PI * 2);
   ctx.stroke();
@@ -368,44 +370,35 @@ function drawTrack() {
   ctx.stroke();
 
   // Red/white kerbs on inner edge
-  ctx.lineWidth = 8;
-  const segments = 60;
+  ctx.lineWidth = 6;
+  const segments = 50;
   for (let i = 0; i < segments; i++) {
     const a1 = (i / segments) * Math.PI * 2;
     const a2 = ((i + 1) / segments) * Math.PI * 2;
     ctx.strokeStyle = i % 2 === 0 ? '#ff3860' : '#ffffff';
     ctx.beginPath();
-    ctx.ellipse(TRACK.cx, TRACK.cy, TRACK.innerRX + 6, TRACK.innerRY + 6, 0, a1, a2);
+    ctx.ellipse(TRACK.cx, TRACK.cy, TRACK.innerRX + 4, TRACK.innerRY + 4, 0, a1, a2);
     ctx.stroke();
   }
 
-  // Start/Finish line (checkered)
-  const lineY = TRACK.cy - TRACK.outerRY + 50;
-  ctx.fillStyle = 'white';
-  for (let i = 0; i < 12; i++) {
+  // Start/Finish line at TOP of track (checkered)
+  const lineY = TRACK.cy - (TRACK.outerRY + TRACK.innerRY) / 2;
+  const lineX1 = TRACK.cx - 150;
+  const lineLen = 300;
+  const checkerSize = 12;
+
+  for (let i = 0; i < lineLen / checkerSize; i++) {
     for (let j = 0; j < 2; j++) {
-      if ((i + j) % 2 === 0) {
-        ctx.fillStyle = 'white';
-      } else {
-        ctx.fillStyle = '#1f2937';
-      }
-      ctx.fillRect(TRACK.cx - 175 + (i * 30), lineY + (j * 15), 30, 15);
+      ctx.fillStyle = (i + j) % 2 === 0 ? '#ffffff' : '#000000';
+      ctx.fillRect(lineX1 + (i * checkerSize), lineY - checkerSize + (j * checkerSize), checkerSize, checkerSize);
     }
   }
 
-  // Skid marks
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
-  GAME.skidMarks.forEach(s => {
-    ctx.globalAlpha = (s.life / 200) * 0.6;
-    ctx.fillRect(s.x - 2, s.y - 2, 4, 4);
-  });
-  ctx.globalAlpha = 1;
-
   // Particles
   GAME.particles.forEach(p => {
-    ctx.globalAlpha = p.life / 30;
+    ctx.globalAlpha = Math.min(1, p.life / 25);
     ctx.fillStyle = p.color;
-    ctx.fillRect(p.x - p.size/2, p.y - p.size/2, p.size, p.size);
+    ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
   });
   ctx.globalAlpha = 1;
 }
@@ -414,11 +407,11 @@ function drawTrack() {
 function updateCamera() {
   const localCar = cars[LOCAL_PLAYER_ID];
   if (localCar) {
-    // Smooth camera follow
+    // Camera centers on player car
     const targetX = localCar.x - canvas.width / 2;
     const targetY = localCar.y - canvas.height / 2;
-    camera.x += (targetX - camera.x) * 0.1;
-    camera.y += (targetY - camera.y) * 0.1;
+    camera.x += (targetX - camera.x) * 0.15;
+    camera.y += (targetY - camera.y) * 0.15;
   } else {
     // Center on track
     camera.x = TRACK.cx - canvas.width / 2;
@@ -433,10 +426,7 @@ function updateLeaderboard() {
     if (!a.finished && b.finished) return 1;
     if (a.finished && b.finished) return a.finishTime - b.finishTime;
     if (a.lap !== b.lap) return b.lap - a.lap;
-    // Same lap - check progress around track
-    const distA = (a.checkpoint + 1) % 4;
-    const distB = (b.checkpoint + 1) % 4;
-    return distB - distA;
+    return b.checkpoint - a.checkpoint;
   });
 
   sorted.forEach((car, i) => car.position = i + 1);
@@ -445,7 +435,7 @@ function updateLeaderboard() {
   lb.innerHTML = sorted.map((car, i) => `
     <div class="leaderboard-row">
       <span class="lb-pos">${i + 1}</span>
-      <span class="lb-color" style="background:${car.color}; color:${car.color}"></span>
+      <span class="lb-color" style="background:${car.color}"></span>
       <span class="lb-name">${car.name}</span>
       <span class="lb-lap">L${Math.min(car.lap, GAME.totalLaps)}</span>
     </div>
@@ -454,7 +444,7 @@ function updateLeaderboard() {
   const localCar = cars[LOCAL_PLAYER_ID];
   if (localCar) {
     document.getElementById('position').textContent = '#' + localCar.position;
-    document.getElementById('current-lap').textContent = Math.min(localCar.lap + 1, GAME.totalLaps);
+    document.getElementById('current-lap').textContent = Math.min(Math.max(localCar.lap, 1), GAME.totalLaps);
   }
 }
 
@@ -463,7 +453,7 @@ function updateRaceTime() {
   const elapsed = (Date.now() - GAME.raceStartTime) / 1000;
   const mins = Math.floor(elapsed / 60);
   const secs = Math.floor(elapsed % 60);
-  document.getElementById('race-time').textContent = 
+  document.getElementById('race-time').textContent =
     `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 }
 
@@ -473,6 +463,22 @@ function startCountdown() {
   document.getElementById('race-screen').classList.add('active');
   resizeCanvas();
   GAME.state = 'countdown';
+
+  // Reset all cars to starting positions
+  let idx = 0;
+  Object.values(cars).forEach(car => {
+    car.x = TRACK.cx - 75 + (idx * 50);
+    car.y = TRACK.cy - (TRACK.outerRY + TRACK.innerRY) / 2;
+    car.angle = 0;
+    car.speed = 0;
+    car.lap = 0;
+    car.checkpoint = 3; // start at last checkpoint so they need to cross start
+    car.lapTimes = [];
+    car.finished = false;
+    car.crashed = false;
+    car.boostFuel = 100;
+    idx++;
+  });
 
   startEngine();
 
@@ -489,10 +495,6 @@ function startCountdown() {
     if (count > 0) {
       countdownText.textContent = count;
       Sounds.countdown();
-      // Restart animation
-      countdownEl.style.animation = 'none';
-      void countdownEl.offsetWidth;
-      countdownEl.style.animation = '';
       const h1 = countdownEl.querySelector('h1');
       h1.style.animation = 'none';
       void h1.offsetWidth;
@@ -515,11 +517,9 @@ function startCountdown() {
 }
 
 function checkRaceEnd() {
-  const allFinished = Object.values(cars).every(c => c.finished);
-  const localFinished = cars[LOCAL_PLAYER_ID] && cars[LOCAL_PLAYER_ID].finished;
-
-  if (allFinished || localFinished) {
-    setTimeout(showFinishScreen, 2000);
+  const localCar = cars[LOCAL_PLAYER_ID];
+  if (localCar && localCar.finished) {
+    setTimeout(showFinishScreen, 2500);
   }
 }
 
@@ -542,7 +542,6 @@ function showFinishScreen() {
   if (sorted[1]) document.getElementById('place-2').textContent = sorted[1].name;
   if (sorted[2]) document.getElementById('place-3').textContent = sorted[2].name;
 
-  // Stats
   const localCar = cars[LOCAL_PLAYER_ID];
   const stats = document.getElementById('finish-stats');
   if (localCar) {
@@ -579,9 +578,13 @@ socket.on("room-created", (data) => {
 });
 
 socket.on("player-joined", (player) => {
-  const colorIndex = Object.keys(cars).length;
-  if (colorIndex >= 4) return;
+  // Don't accept players if in bot mode
+  if (GAME.isBotMode) return;
 
+  // Don't add if already 4 cars
+  if (Object.keys(cars).length >= 4) return;
+
+  const colorIndex = Object.keys(cars).length;
   const car = new Car(player.id, player.name.toUpperCase(), colorIndex, false);
   cars[player.id] = car;
 
@@ -590,9 +593,11 @@ socket.on("player-joined", (player) => {
 
   // Update slot UI
   const slot = document.getElementById(`slot-${colorIndex + 1}`);
-  slot.classList.add('filled');
-  slot.querySelector('p').textContent = player.name;
-  slot.querySelector('.status').textContent = 'Ready';
+  if (slot) {
+    slot.classList.add('filled');
+    slot.querySelector('p').textContent = player.name;
+    slot.querySelector('.status').textContent = 'Ready';
+  }
 
   if (Object.keys(cars).length >= 2) {
     document.getElementById('start-race-btn').disabled = false;
@@ -601,32 +606,49 @@ socket.on("player-joined", (player) => {
 
 socket.on("player-moved", (data) => {
   const car = cars[data.playerId];
-  if (!car || GAME.state !== 'racing') return;
+  if (!car) return;
 
   switch (data.direction) {
-    case "up":     car.input.accel = true; setTimeout(() => car.input.accel = false, 200); break;
-    case "down":   car.input.brake = true; setTimeout(() => car.input.brake = false, 200); break;
-    case "left":   car.input.left = true; setTimeout(() => car.input.left = false, 100); break;
-    case "right":  car.input.right = true; setTimeout(() => car.input.right = false, 100); break;
-    case "punch":  // GAS (hold)
-      car.input.accel = true; setTimeout(() => car.input.accel = false, 300); break;
-    case "kick":   // BRAKE
-      car.input.brake = true; setTimeout(() => car.input.brake = false, 300); break;
+    case "left":
+      car.input.left = true;
+      setTimeout(() => car.input.left = false, 120);
+      break;
+    case "right":
+      car.input.right = true;
+      setTimeout(() => car.input.right = false, 120);
+      break;
+    case "punch": // GAS
+      car.input.accel = true;
+      setTimeout(() => car.input.accel = false, 250);
+      break;
+    case "kick": // BRAKE
+      car.input.brake = true;
+      setTimeout(() => car.input.brake = false, 250);
+      break;
     case "special": // BOOST
-      if (car.boostFuel >= 30) {
+      if (car.boostFuel >= 30 && !car.boosting) {
         car.boosting = true;
-        Sounds.boost();
+        if (car.id === LOCAL_PLAYER_ID) Sounds.boost();
         setTimeout(() => car.boosting = false, 1500);
       }
       break;
   }
 });
 
+socket.on("player-left", (data) => {
+  if (cars[data.playerId]) {
+    delete cars[data.playerId];
+  }
+});
+
 // ════════ START BUTTONS ════════
 document.getElementById('bot-race-btn').addEventListener('click', () => {
+  // Clear any existing cars first
+  Object.keys(cars).forEach(id => delete cars[id]);
+
   GAME.isBotMode = true;
 
-  // Create local player car
+  // Create local player
   const localCar = new Car('local-player', 'YOU', 0, false);
   cars['local-player'] = localCar;
   LOCAL_PLAYER_ID = 'local-player';
@@ -637,7 +659,7 @@ document.getElementById('bot-race-btn').addEventListener('click', () => {
     cars[`bot-${i}`] = bot;
   }
 
-  // Fill slots
+  // Fill slots UI
   document.querySelectorAll('.racer-slot').forEach((slot, i) => {
     slot.classList.add('filled');
     slot.querySelector('p').textContent = i === 0 ? 'YOU' : `Bot ${i}`;
@@ -660,7 +682,7 @@ document.addEventListener('keydown', (e) => {
   if (e.key === ' ') {
     e.preventDefault();
     const car = cars[LOCAL_PLAYER_ID];
-    if (car && car.boostFuel >= 30) {
+    if (car && car.boostFuel >= 30 && !car.boosting) {
       car.boosting = true;
       Sounds.boost();
       setTimeout(() => car.boosting = false, 1500);
@@ -683,9 +705,9 @@ function applyKeyboardInput() {
 
 // ════════ GAME LOOP ════════
 function gameLoop() {
-  // Always slowly regenerate boost
+  // Regenerate boost slowly
   Object.values(cars).forEach(c => {
-    if (c.boostFuel < 100 && !c.boosting) c.boostFuel += 0.15;
+    if (c.boostFuel < 100 && !c.boosting) c.boostFuel += 0.2;
   });
 
   if (GAME.state === 'racing') {
@@ -694,7 +716,6 @@ function gameLoop() {
     updateLeaderboard();
     updateRaceTime();
 
-    // Update engine sound based on local car
     const local = cars[LOCAL_PLAYER_ID];
     if (local) {
       updateEngine(Math.abs(local.speed) / local.maxSpeed);
@@ -719,7 +740,7 @@ function gameLoop() {
 
   updateCamera();
 
-  // Render
+  // Render with camera offset
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.save();
   ctx.translate(-camera.x, -camera.y);
