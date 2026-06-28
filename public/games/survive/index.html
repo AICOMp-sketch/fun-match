@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Survive The Bots - Fun Match</title>
+  <link rel="stylesheet" href="game.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <div id="game-container">
+
+    <div id="header">
+      <a href="../../" class="back-btn">← Back</a>
+      <h1>🏃 Survive The Bots</h1>
+      <div id="room-info">
+        <p>ROOM CODE</p>
+        <h2 id="room-code">----</h2>
+      </div>
+    </div>
+
+    <div id="game-area">
+      <canvas id="gameCanvas" width="800" height="500"></canvas>
+
+      <div id="sidebar">
+        <div class="info-box">
+          <h3>⏱️ TIME</h3>
+          <p id="timer">0</p>
+        </div>
+
+        <div class="info-box">
+          <h3>🤖 BOTS</h3>
+          <p id="bot-count">0</p>
+        </div>
+
+        <div class="info-box">
+          <h3>👤 PLAYERS</h3>
+          <ul id="players-list"></ul>
+        </div>
+
+        <div class="info-box join-info">
+          <h3>📱 JOIN</h3>
+          <p class="join-link">fun-match.pages.dev/controller.html</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="game-over" class="hidden">
+      <h2>💀 GAME OVER</h2>
+      <p id="final-score">You survived for 0 seconds</p>
+      <button id="restart-btn">PLAY AGAIN</button>
+      <a href="../../" class="home-link">🏠 Back to Dashboard</a>
+    </div>
+
+  </div>
+
+  <script src="https://fun-match-production.up.railway.app/socket.io/socket.io.js"></script>
+  <script src="game.js"></script>
+
+</body>
+</html>

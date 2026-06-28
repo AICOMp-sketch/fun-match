@@ -1,58 +1,241 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fun Match - Game Screen</title>
-    <link rel="stylesheet" href="game.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fun Match - Dashboard</title>
+  <link rel="stylesheet" href="dashboard.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
-
 <body>
 
-    <div id="game-container">
+  <div class="app">
 
-        <div id="header">
-            <h1>🎮 Fun Match</h1>
-            <div id="room-info">
-                <p>ROOM CODE</p>
-                <h2 id="room-code">----</h2>
-                <p class="small">Join at: <strong>fun-match.pages.dev/controller.html</strong></p>
+    <!-- ─── SIDEBAR ─── -->
+    <aside class="sidebar">
+      <div class="logo">
+        <span class="logo-icon">🎮</span>
+      </div>
+
+      <nav class="nav">
+        <button class="nav-btn active" title="Home">
+          <span>🏠</span>
+        </button>
+        <button class="nav-btn" title="Games">
+          <span>🎮</span>
+        </button>
+        <button class="nav-btn" title="Stats">
+          <span>📊</span>
+        </button>
+        <button class="nav-btn" title="Friends">
+          <span>👥</span>
+        </button>
+        <button class="nav-btn" title="Settings">
+          <span>⚙️</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-bottom">
+        <button class="nav-btn" title="Help">
+          <span>❓</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- ─── MAIN CONTENT ─── -->
+    <main class="main">
+
+      <!-- Top Bar -->
+      <header class="topbar">
+        <div class="search-box">
+          <span class="search-icon">🔍</span>
+          <input type="text" placeholder="Search games...">
+        </div>
+
+        <div class="user-area">
+          <button class="icon-btn">🔔</button>
+          <button class="icon-btn">💬</button>
+          <div class="profile">
+            <div class="avatar">P</div>
+            <div class="profile-info">
+              <p class="profile-name">Player</p>
+              <p class="profile-status">● Online</p>
             </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Hero Banner -->
+      <section class="hero">
+        <div class="hero-content">
+          <span class="hero-tag">🔥 Featured Game</span>
+          <h1 class="hero-title">Survive The Bots</h1>
+          <p class="hero-desc">Dodge the relentless AI enemies and see how long you can survive. Use your phone as a controller for ultimate fun!</p>
+          <div class="hero-actions">
+            <a href="games/survive/" class="btn-primary">
+              ▶ PLAY NOW
+            </a>
+            <button class="btn-secondary">
+              ℹ How to Play
+            </button>
+          </div>
         </div>
 
-        <div id="game-area">
-            <canvas id="gameCanvas" width="800" height="500"></canvas>
+        <div class="hero-visual">
+          <div class="floating-card card-1">🎮</div>
+          <div class="floating-card card-2">🤖</div>
+          <div class="floating-card card-3">⚡</div>
+        </div>
+      </section>
 
-            <div id="sidebar">
-                <div class="info-box">
-                    <h3>⏱️ TIME</h3>
-                    <p id="timer">0</p>
-                </div>
+      <!-- Stats Row -->
+      <section class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon">🏆</div>
+          <div class="stat-info">
+            <p class="stat-label">High Score</p>
+            <p class="stat-value" id="high-score">0s</p>
+          </div>
+        </div>
 
-                <div class="info-box">
-                    <h3>🤖 BOTS</h3>
-                    <p id="bot-count">0</p>
-                </div>
+        <div class="stat-card">
+          <div class="stat-icon">🎮</div>
+          <div class="stat-info">
+            <p class="stat-label">Games Played</p>
+            <p class="stat-value" id="games-played">0</p>
+          </div>
+        </div>
 
-                <div class="info-box">
-                    <h3>👤 PLAYERS</h3>
-                    <ul id="players-list"></ul>
-                </div>
+        <div class="stat-card">
+          <div class="stat-icon">⏱️</div>
+          <div class="stat-info">
+            <p class="stat-label">Total Time</p>
+            <p class="stat-value" id="total-time">0m</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon">👥</div>
+          <div class="stat-info">
+            <p class="stat-label">Friends Online</p>
+            <p class="stat-value">0</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Game Library -->
+      <section class="library">
+        <div class="library-header">
+          <h2>🎮 Game Library</h2>
+          <a href="#" class="view-all">View All →</a>
+        </div>
+
+        <div class="game-grid">
+
+          <!-- Survive Game (Active) -->
+          <a href="games/survive/" class="game-card active">
+            <div class="game-image survive-bg">
+              <span class="game-emoji">🏃</span>
+              <span class="game-badge live">● LIVE</span>
             </div>
+            <div class="game-info">
+              <h3>Survive The Bots</h3>
+              <p class="game-meta">
+                <span>👥 1-4 Players</span>
+                <span>⚡ Action</span>
+              </p>
+            </div>
+          </a>
+
+          <!-- Coming Soon Games -->
+          <div class="game-card coming">
+            <div class="game-image quiz-bg">
+              <span class="game-emoji">❓</span>
+              <span class="game-badge soon">SOON</span>
+            </div>
+            <div class="game-info">
+              <h3>Trivia Battle</h3>
+              <p class="game-meta">
+                <span>👥 2-8 Players</span>
+                <span>🧠 Quiz</span>
+              </p>
+            </div>
+          </div>
+
+          <div class="game-card coming">
+            <div class="game-image draw-bg">
+              <span class="game-emoji">🎨</span>
+              <span class="game-badge soon">SOON</span>
+            </div>
+            <div class="game-info">
+              <h3>Draw & Guess</h3>
+              <p class="game-meta">
+                <span>👥 3-8 Players</span>
+                <span>🎨 Creative</span>
+              </p>
+            </div>
+          </div>
+
+          <div class="game-card coming">
+            <div class="game-image race-bg">
+              <span class="game-emoji">🏎️</span>
+              <span class="game-badge soon">SOON</span>
+            </div>
+            <div class="game-info">
+              <h3>Speed Racers</h3>
+              <p class="game-meta">
+                <span>👥 2-4 Players</span>
+                <span>🏁 Racing</span>
+              </p>
+            </div>
+          </div>
+
+          <div class="game-card coming">
+            <div class="game-image bomb-bg">
+              <span class="game-emoji">💣</span>
+              <span class="game-badge soon">SOON</span>
+            </div>
+            <div class="game-info">
+              <h3>Bomb Squad</h3>
+              <p class="game-meta">
+                <span>👥 2-4 Players</span>
+                <span>💥 Strategy</span>
+              </p>
+            </div>
+          </div>
+
+          <div class="game-card coming">
+            <div class="game-image mystery-bg">
+              <span class="game-emoji">🕵️</span>
+              <span class="game-badge soon">SOON</span>
+            </div>
+            <div class="game-info">
+              <h3>Mystery Mansion</h3>
+              <p class="game-meta">
+                <span>👥 4-10 Players</span>
+                <span>🔍 Mystery</span>
+              </p>
+            </div>
+          </div>
+
         </div>
+      </section>
 
-        <div id="game-over" class="hidden">
-            <h2>💀 GAME OVER</h2>
-            <p id="final-score">You survived for 0 seconds</p>
-            <button id="restart-btn">PLAY AGAIN</button>
+      <!-- Controller Info -->
+      <section class="controller-info">
+        <div class="info-content">
+          <h3>📱 Use Your Phone as a Controller</h3>
+          <p>Open this link on your phone to join games:</p>
+          <div class="link-box">
+            <span id="controller-link">fun-match.pages.dev/controller.html</span>
+            <button class="copy-btn" onclick="copyLink()">📋 Copy</button>
+          </div>
         </div>
+      </section>
 
-    </div>
+    </main>
+  </div>
 
-    <script src="https://fun-match-production.up.railway.app/socket.io/socket.io.js"></script>
-    <script src="game.js"></script>
-
+  <script src="dashboard.js"></script>
 </body>
-
 </html>
