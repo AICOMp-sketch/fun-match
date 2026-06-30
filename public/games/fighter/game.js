@@ -62,9 +62,28 @@ class Fighter {
 
     // NEW: backflip angle
     this.flipAngle = 0;
+
+    // NEW: Death animation
+    this.dying = false;
+    this.deathTimer = 0;
+    this.deathRotation = 0;
+    this.deathBounce = 0;
+    this.dead = false;
+
+
   }
 
   update(dt, opponent) {
+    // NEW: Handle death animation
+    if (this.dying) {
+      this.vy += 0.8; // gravity still applies
+      this.x += this.vx;
+      this.y += this.vy;
+      this.vx *= 0.92;
+      this.updateDeathAnimation();
+      return; // Skip normal update
+    }
+
     // Physics
     this.vy += 0.8;
     this.x += this.vx;
@@ -124,8 +143,9 @@ class Fighter {
 
     // Animation
     this.animTimer++;
-    if (this.animTimer > 8) {
-      this.animFrame = (this.animFrame + 1) % 4;
+    const animSpeed = this.state === 'walk' ? 3 : 8;  // Faster when walking
+    if (this.animTimer > animSpeed) {
+      this.animFrame = (this.animFrame + 1) % 8;       // More frames for smoother
       this.animTimer = 0;
     }
   }
@@ -273,10 +293,84 @@ class Fighter {
         opponent.hp = Math.max(0, opponent.hp);
         updateHpBars();
 
-        if (opponent.hp <= 0) {
-          endRound(this);
+        if (opponent.hp <= 0 && !opponent.dying) {
+          opponent.startDying(this);
         }
       }, 100);
+    }
+  }
+
+  startDying(killer) {
+    this.dying = true;
+    this.deathTimer = 90; // 1.5 seconds of death animation
+    this.invulnerable = 200;
+    this.setState('dying', 90);
+
+    // Big knockback from killer
+    const dir = killer.facing;
+    this.vx = dir * 12;
+    this.vy = -8;
+
+    // Death sound
+    Sounds.ko();
+
+    // Explosion of particles
+    for (let i = 0; i < 30; i++) {
+      GAME.particles.push({
+        x: this.x,
+        y: this.y - 50,
+        vx: (Math.random() - 0.5) * 15,
+        vy: (Math.random() - 0.5) * 15 - 5,
+        life: 50,
+        color: '#ff3860',
+        size: Math.random() * 6 + 3
+      });
+    }
+
+    // Screen shake
+    screenShake();
+    setTimeout(() => screenShake(), 200);
+    setTimeout(() => screenShake(), 400);
+  }
+
+  updateDeathAnimation() {
+    if (!this.dying) return;
+
+    this.deathTimer--;
+
+    // Spinning fall
+    this.deathRotation += 0.3 * this.facing;
+
+    // Bouncing on ground
+    if (this.y >= GROUND_Y()) {
+      if (Math.abs(this.vy) > 2) {
+        this.vy = -Math.abs(this.vy) * 0.5; // Bounce
+        this.deathBounce++;
+
+        // Small particles on each bounce
+        for (let i = 0; i < 10; i++) {
+          GAME.particles.push({
+            x: this.x,
+            y: GROUND_Y(),
+            vx: (Math.random() - 0.5) * 6,
+            vy: -Math.random() * 5,
+            life: 30,
+            color: '#ff7b00',
+            size: Math.random() * 4 + 2
+          });
+        }
+
+        screenShake();
+      } else {
+        this.vy = 0;
+        this.y = GROUND_Y();
+      }
+    }
+
+    // Death timer expired - mark as dead
+    if (this.deathTimer <= 0 && !this.dead) {
+      this.dead = true;
+      endRound(this === player1 ? player2 : player1);
     }
   }
 
@@ -314,7 +408,6 @@ class Fighter {
     const py = this.y;
     const f = this.facing;
 
-    // Apply rotation for spin/flip moves
     ctx.save();
     if (this.state === 'roundhouse') {
       ctx.translate(px, py - 50);
@@ -324,13 +417,35 @@ class Fighter {
       ctx.translate(px, py - 50);
       ctx.rotate(-this.flipAngle * this.facing);
       ctx.translate(-px, -(py - 50));
+    } else if (this.dying) {
+      // NEW: Spinning death rotation
+      ctx.translate(px, py - 50);
+      ctx.rotate(this.deathRotation);
+      ctx.translate(-px, -(py - 50));
     }
 
     const pose = this.getStickmanPose();
 
-    ctx.shadowColor = this.glowColor;
+    // Death effect: flash red and dim
+    let drawColor = this.color;
+    let drawGlow = this.glowColor;
+
+    if (this.dying) {
+      // Flash between red and original color
+      if (Math.floor(this.deathTimer / 5) % 2 === 0) {
+        drawColor = '#ff3860';
+        drawGlow = 'rgba(255, 56, 96, 0.8)';
+      }
+
+      // Fade out near end
+      if (this.deathTimer < 30) {
+        ctx.globalAlpha = this.deathTimer / 30;
+      }
+    }
+
+    ctx.shadowColor = drawGlow;
     ctx.shadowBlur = 15;
-    ctx.strokeStyle = this.color;
+    ctx.strokeStyle = drawColor;
     ctx.lineWidth = 6;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
@@ -379,7 +494,7 @@ class Fighter {
 
     ctx.beginPath();
     ctx.arc(headX, headY, 14, 0, Math.PI * 2);
-    ctx.fillStyle = this.color;
+    ctx.fillStyle = drawColor;
     ctx.fill();
     ctx.strokeStyle = this.color;
     ctx.lineWidth = 3;
@@ -389,7 +504,7 @@ class Fighter {
     ctx.shadowBlur = 0;
     ctx.fillStyle = '#050810';
 
-    if (this.state === 'hurt') {
+    if (this.state === 'hurt' || this.dying) {
       ctx.strokeStyle = '#ff3860';
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -539,16 +654,16 @@ class Fighter {
       },
 
       walk: {
-        head: { x: 0, y: -15 },
-        spine: { x: 2, y: 15 },
-        leftKnee: { x: -5, y: 15 + Math.sin(this.animFrame * 0.8) * 5 },
-        leftFoot: { x: -15, y: 45 },
-        rightKnee: { x: 5, y: 15 - Math.sin(this.animFrame * 0.8) * 5 },
-        rightFoot: { x: 15, y: 45 },
-        leftElbow: { x: -15, y: 10 + Math.sin(this.animFrame * 0.8) * 3 },
-        leftHand: { x: -18, y: 25 },
-        rightElbow: { x: 15, y: 10 - Math.sin(this.animFrame * 0.8) * 3 },
-        rightHand: { x: 18, y: 25 }
+        head: { x: 0, y: -15 + Math.sin(this.animFrame * 0.8) * 2 },  // Head bobs
+        spine: { x: Math.sin(this.animFrame * 0.4) * 2, y: 15 },        // Body sways
+        leftKnee: { x: -5 + Math.sin(this.animFrame * 0.8) * 8, y: 18 + Math.abs(Math.sin(this.animFrame * 0.8)) * 4 },
+        leftFoot: { x: -10 + Math.sin(this.animFrame * 0.8) * 15, y: 45 - Math.abs(Math.sin(this.animFrame * 0.8)) * 8 },
+        rightKnee: { x: 5 - Math.sin(this.animFrame * 0.8) * 8, y: 18 + Math.abs(Math.cos(this.animFrame * 0.8)) * 4 },
+        rightFoot: { x: 10 - Math.sin(this.animFrame * 0.8) * 15, y: 45 - Math.abs(Math.cos(this.animFrame * 0.8)) * 8 },
+        leftElbow: { x: -15, y: 10 - Math.sin(this.animFrame * 0.8) * 4 },
+        leftHand: { x: -18 - Math.sin(this.animFrame * 0.8) * 5, y: 25 - Math.sin(this.animFrame * 0.8) * 3 },
+        rightElbow: { x: 15, y: 10 + Math.sin(this.animFrame * 0.8) * 4 },
+        rightHand: { x: 18 + Math.sin(this.animFrame * 0.8) * 5, y: 25 + Math.sin(this.animFrame * 0.8) * 3 }
       },
 
       punch: {
@@ -698,6 +813,19 @@ class Fighter {
         leftHand: { x: -25, y: 20 },
         rightElbow: { x: 10, y: 10 },
         rightHand: { x: 15, y: 20 }
+      },
+
+      dying: {
+        head: { x: 0, y: -15 },
+        spine: { x: 0, y: 15 },
+        leftKnee: { x: -15, y: 20 },
+        leftFoot: { x: -25, y: 45 },
+        rightKnee: { x: 15, y: 20 },
+        rightFoot: { x: 25, y: 45 },
+        leftElbow: { x: -25, y: 0 },
+        leftHand: { x: -35, y: -15 },   // Arms flailing
+        rightElbow: { x: 25, y: 0 },
+        rightHand: { x: 35, y: -15 }
       }
     };
 
