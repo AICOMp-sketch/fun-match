@@ -74,7 +74,7 @@ class Fighter {
     }
 
     // Wall bounds
-    this.x = Math.max(this.width/2, Math.min(canvas.width - this.width/2, this.x));
+    this.x = Math.max(this.width / 2, Math.min(canvas.width - this.width / 2, this.x));
 
     // Face opponent
     if (opponent) {
@@ -225,9 +225,9 @@ class Fighter {
       const barW = 50;
       const barH = 4;
       ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-      ctx.fillRect(this.x - barW/2, this.y - this.height - 15, barW, barH);
+      ctx.fillRect(this.x - barW / 2, this.y - this.height - 15, barW, barH);
       ctx.fillStyle = '#aaff00';
-      ctx.fillRect(this.x - barW/2, this.y - this.height - 15, barW * (1 - this.specialCooldown/180), barH);
+      ctx.fillRect(this.x - barW / 2, this.y - this.height - 15, barW * (1 - this.specialCooldown / 180), barH);
     }
   }
 
@@ -235,125 +235,307 @@ class Fighter {
     const px = this.x;
     const py = this.y;
     const f = this.facing;
-    const s = 6; // pixel size
 
-    // Determine pose based on state
-    let pose = this.getPose();
+    // Get current pose based on state
+    const pose = this.getStickmanPose();
 
-    // Glow effect
+    // Apply glow effect
     ctx.shadowColor = this.glowColor;
-    ctx.shadowBlur = 20;
+    ctx.shadowBlur = 15;
 
-    // Draw pixel art
-    ctx.fillStyle = this.color;
-
-    pose.forEach(([dx, dy, w, h]) => {
-      ctx.fillRect(
-        px + (dx * f * s) - (s/2),
-        py + (dy * s) - 100,
-        w * s,
-        h * s
-      );
-    });
-
-    // Eyes (white)
+    // Draw shadow on ground first
     ctx.shadowBlur = 0;
-    ctx.fillStyle = '#fff';
-    if (this.state !== 'hurt') {
-      ctx.fillRect(px + (-2 * f * s) - 2, py - 80, 4, 4);
-      ctx.fillRect(px + (1 * f * s) - 2, py - 80, 4, 4);
-    } else {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+    ctx.beginPath();
+    ctx.ellipse(px, py + 5, 35, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Re-apply glow for stickman
+    ctx.shadowColor = this.glowColor;
+    ctx.shadowBlur = 15;
+
+    ctx.strokeStyle = this.color;
+    ctx.lineWidth = 6;
+    ctx.lineCap = 'round';
+    ctx.lineJoin = 'round';
+
+    // Calculate body positions (all relative to feet position)
+    const hipY = py - 50;
+    const shoulderY = py - 80;
+    const neckY = py - 95;
+
+    // ═══ LEGS ═══
+    // Left leg
+    ctx.beginPath();
+    ctx.moveTo(px, hipY);
+    ctx.lineTo(px + pose.leftKnee.x * f, hipY + pose.leftKnee.y);
+    ctx.lineTo(px + pose.leftFoot.x * f, hipY + pose.leftFoot.y);
+    ctx.stroke();
+
+    // Right leg
+    ctx.beginPath();
+    ctx.moveTo(px, hipY);
+    ctx.lineTo(px + pose.rightKnee.x * f, hipY + pose.rightKnee.y);
+    ctx.lineTo(px + pose.rightFoot.x * f, hipY + pose.rightFoot.y);
+    ctx.stroke();
+
+    // ═══ BODY/SPINE ═══
+    ctx.beginPath();
+    ctx.moveTo(px, hipY);
+    ctx.lineTo(px + pose.spine.x * f, shoulderY + pose.spine.y);
+    ctx.stroke();
+
+    const shoulderX = px + pose.spine.x * f;
+    const finalShoulderY = shoulderY + pose.spine.y;
+
+    // ═══ ARMS ═══
+    // Left arm
+    ctx.beginPath();
+    ctx.moveTo(shoulderX, finalShoulderY);
+    ctx.lineTo(shoulderX + pose.leftElbow.x * f, finalShoulderY + pose.leftElbow.y);
+    ctx.lineTo(shoulderX + pose.leftHand.x * f, finalShoulderY + pose.leftHand.y);
+    ctx.stroke();
+
+    // Right arm
+    ctx.beginPath();
+    ctx.moveTo(shoulderX, finalShoulderY);
+    ctx.lineTo(shoulderX + pose.rightElbow.x * f, finalShoulderY + pose.rightElbow.y);
+    ctx.lineTo(shoulderX + pose.rightHand.x * f, finalShoulderY + pose.rightHand.y);
+    ctx.stroke();
+
+    // ═══ HEAD ═══
+    const headX = shoulderX + pose.head.x * f;
+    const headY = finalShoulderY + pose.head.y;
+
+    // Head circle
+    ctx.beginPath();
+    ctx.arc(headX, headY, 14, 0, Math.PI * 2);
+    ctx.fillStyle = this.color;
+    ctx.fill();
+    ctx.strokeStyle = this.color;
+    ctx.lineWidth = 3;
+    ctx.stroke();
+
+    // ═══ FACE DETAILS ═══
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#050810';
+
+    if (this.state === 'hurt') {
       // X eyes when hurt
-      ctx.fillStyle = '#ff3860';
-      ctx.fillText('x x', px - 10, py - 75);
+      ctx.strokeStyle = '#ff3860';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(headX - 7 * f, headY - 3);
+      ctx.lineTo(headX - 3 * f, headY + 1);
+      ctx.moveTo(headX - 3 * f, headY - 3);
+      ctx.lineTo(headX - 7 * f, headY + 1);
+      ctx.moveTo(headX + 3 * f, headY - 3);
+      ctx.lineTo(headX + 7 * f, headY + 1);
+      ctx.moveTo(headX + 7 * f, headY - 3);
+      ctx.lineTo(headX + 3 * f, headY + 1);
+      ctx.stroke();
+    } else if (this.state === 'block') {
+      // Closed eyes (focused)
+      ctx.strokeStyle = '#050810';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(headX - 7 * f, headY - 2);
+      ctx.lineTo(headX - 3 * f, headY - 2);
+      ctx.moveTo(headX + 3 * f, headY - 2);
+      ctx.lineTo(headX + 7 * f, headY - 2);
+      ctx.stroke();
+    } else {
+      // Normal eyes
+      ctx.beginPath();
+      ctx.arc(headX - 5 * f, headY - 2, 2, 0, Math.PI * 2);
+      ctx.arc(headX + 5 * f, headY - 2, 2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Angry eyebrows (looking forward / facing opponent)
+      ctx.strokeStyle = '#050810';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(headX - 8 * f, headY - 6);
+      ctx.lineTo(headX - 2 * f, headY - 4);
+      ctx.moveTo(headX + 2 * f, headY - 4);
+      ctx.lineTo(headX + 8 * f, headY - 6);
+      ctx.stroke();
     }
+
+    // ═══ MOTION TRAILS FOR ATTACKS ═══
+    if (this.state === 'punch') {
+      // Punch trail
+      ctx.strokeStyle = this.color;
+      ctx.globalAlpha = 0.4;
+      ctx.lineWidth = 8;
+      ctx.beginPath();
+      ctx.moveTo(shoulderX + 15 * f, finalShoulderY + 5);
+      ctx.lineTo(shoulderX + pose.rightHand.x * f, finalShoulderY + pose.rightHand.y);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+
+      // Impact star at fist
+      const fistX = shoulderX + pose.rightHand.x * f;
+      const fistY = finalShoulderY + pose.rightHand.y;
+      ctx.fillStyle = '#ffffff';
+      ctx.shadowColor = this.color;
+      ctx.shadowBlur = 20;
+      ctx.beginPath();
+      for (let i = 0; i < 6; i++) {
+        const angle = (i / 6) * Math.PI * 2;
+        const r = i % 2 === 0 ? 8 : 4;
+        const x = fistX + Math.cos(angle) * r;
+        const y = fistY + Math.sin(angle) * r;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    if (this.state === 'kick') {
+      // Kick trail
+      ctx.strokeStyle = this.color;
+      ctx.globalAlpha = 0.4;
+      ctx.lineWidth = 8;
+      ctx.beginPath();
+      ctx.moveTo(px + 10 * f, hipY + 20);
+      ctx.lineTo(px + pose.rightFoot.x * f, hipY + pose.rightFoot.y);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
+
+    if (this.state === 'special') {
+      // Special energy aura
+      ctx.shadowColor = this.color;
+      ctx.shadowBlur = 30;
+
+      for (let i = 0; i < 3; i++) {
+        ctx.strokeStyle = this.color;
+        ctx.globalAlpha = 0.3 - (i * 0.1);
+        ctx.lineWidth = 4 + i * 3;
+        ctx.beginPath();
+        ctx.arc(px, py - 50, 40 + i * 10 + Math.random() * 5, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    ctx.shadowBlur = 0;
   }
 
-  getPose() {
-    // Pixel poses [x, y, width, height] relative to center
-    // Default standing pose
-    const standing = [
-      [-2, 0, 4, 3],    // head
-      [-3, 3, 6, 6],    // torso
-      [-3, 9, 2, 5],    // left leg
-      [1, 9, 2, 5],     // right leg
-      [-5, 4, 2, 4],    // left arm
-      [3, 4, 2, 4],     // right arm
-    ];
+  getStickmanPose() {
+    // All positions are relative offsets
+    // x: horizontal offset (will be multiplied by facing)
+    // y: vertical offset
 
-    const punching = [
-      [-2, 0, 4, 3],    // head
-      [-3, 3, 6, 6],    // torso
-      [-3, 9, 2, 5],    // left leg
-      [1, 9, 2, 5],     // right leg
-      [-5, 4, 2, 4],    // left arm
-      [3, 4, 6, 2],     // right arm extended (punch)
-    ];
+    const poses = {
+      idle: {
+        head: { x: 0, y: -15 },
+        spine: { x: 0, y: 15 },
+        leftKnee: { x: -8, y: 20 },
+        leftFoot: { x: -10, y: 45 },
+        rightKnee: { x: 8, y: 20 },
+        rightFoot: { x: 10, y: 45 },
+        leftElbow: { x: -15, y: 10 },
+        leftHand: { x: -18, y: 25 },
+        rightElbow: { x: 15, y: 10 },
+        rightHand: { x: 18, y: 25 }
+      },
 
-    const kicking = [
-      [-2, 0, 4, 3],    // head
-      [-3, 3, 6, 6],    // torso
-      [-3, 9, 2, 5],    // left leg
-      [1, 7, 7, 2],     // right leg extended (kick)
-      [-5, 4, 2, 4],    // left arm
-      [3, 4, 2, 4],     // right arm
-    ];
+      walk: {
+        head: { x: 0, y: -15 },
+        spine: { x: 2, y: 15 },
+        leftKnee: { x: -5, y: 15 + Math.sin(this.animFrame * 0.8) * 5 },
+        leftFoot: { x: -15, y: 45 },
+        rightKnee: { x: 5, y: 15 - Math.sin(this.animFrame * 0.8) * 5 },
+        rightFoot: { x: 15, y: 45 },
+        leftElbow: { x: -15, y: 10 + Math.sin(this.animFrame * 0.8) * 3 },
+        leftHand: { x: -18, y: 25 },
+        rightElbow: { x: 15, y: 10 - Math.sin(this.animFrame * 0.8) * 3 },
+        rightHand: { x: 18, y: 25 }
+      },
 
-    const jumping = [
-      [-2, 0, 4, 3],    // head
-      [-3, 3, 6, 6],    // torso
-      [-3, 9, 2, 3],    // left leg tucked
-      [1, 9, 2, 3],     // right leg tucked
-      [-5, 2, 2, 4],    // left arm up
-      [3, 2, 2, 4],     // right arm up
-    ];
+      punch: {
+        head: { x: 5, y: -15 },
+        spine: { x: 3, y: 15 },
+        leftKnee: { x: -10, y: 20 },
+        leftFoot: { x: -15, y: 45 },
+        rightKnee: { x: 5, y: 20 },
+        rightFoot: { x: 12, y: 45 },
+        leftElbow: { x: -10, y: 15 },
+        leftHand: { x: -5, y: 20 },
+        rightElbow: { x: 25, y: 5 },
+        rightHand: { x: 50, y: 0 }  // Extended punch
+      },
 
-    const blocking = [
-      [-2, 0, 4, 3],    // head
-      [-3, 3, 6, 6],    // torso
-      [-3, 9, 2, 5],    // left leg
-      [1, 9, 2, 5],     // right leg
-      [-4, 2, 2, 6],    // left arm guard
-      [2, 2, 2, 6],     // right arm guard
-    ];
+      kick: {
+        head: { x: -5, y: -10 },
+        spine: { x: -8, y: 15 },
+        leftKnee: { x: -15, y: 25 },
+        leftFoot: { x: -20, y: 50 },
+        rightKnee: { x: 20, y: 0 },
+        rightFoot: { x: 55, y: 5 },  // Extended kick
+        leftElbow: { x: -20, y: 0 },
+        leftHand: { x: -25, y: 10 },
+        rightElbow: { x: 5, y: 5 },
+        rightHand: { x: 10, y: 20 }
+      },
 
-    const special = [
-      [-2, 0, 4, 3],    // head
-      [-4, 3, 8, 6],    // bigger torso
-      [-3, 9, 2, 5],    // left leg
-      [1, 9, 2, 5],     // right leg
-      [-6, 4, 8, 3],    // both arms forward
-      [-2, 6, 6, 2],
-    ];
+      jump: {
+        head: { x: 0, y: -15 },
+        spine: { x: 0, y: 15 },
+        leftKnee: { x: -10, y: 5 },   // Knees up
+        leftFoot: { x: -15, y: 20 },
+        rightKnee: { x: 10, y: 5 },
+        rightFoot: { x: 15, y: 20 },
+        leftElbow: { x: -20, y: -5 },  // Arms up
+        leftHand: { x: -25, y: -20 },
+        rightElbow: { x: 20, y: -5 },
+        rightHand: { x: 25, y: -20 }
+      },
 
-    const hurt = [
-      [-2, 1, 4, 3],    // head tilted
-      [-3, 4, 6, 6],    // torso
-      [-3, 10, 2, 4],   // left leg
-      [1, 10, 2, 4],    // right leg
-      [-5, 5, 2, 4],    // left arm
-      [3, 5, 2, 4],     // right arm
-    ];
+      block: {
+        head: { x: 0, y: -15 },
+        spine: { x: 0, y: 15 },
+        leftKnee: { x: -8, y: 20 },
+        leftFoot: { x: -15, y: 45 },
+        rightKnee: { x: 8, y: 20 },
+        rightFoot: { x: 15, y: 45 },
+        leftElbow: { x: -5, y: -5 },   // Arms crossed in front
+        leftHand: { x: 10, y: -10 },
+        rightElbow: { x: 5, y: -5 },
+        rightHand: { x: -10, y: -10 }
+      },
 
-    const walking = [
-      [-2, 0, 4, 3],
-      [-3, 3, 6, 6],
-      [-3, 9, 2, 5 + Math.sin(this.animFrame) * 0.5],
-      [1, 9, 2, 5 + Math.cos(this.animFrame) * 0.5],
-      [-5, 4, 2, 4],
-      [3, 4, 2, 4],
-    ];
+      special: {
+        head: { x: 0, y: -20 },   // Head back
+        spine: { x: 0, y: 10 },
+        leftKnee: { x: -15, y: 20 },
+        leftFoot: { x: -25, y: 45 },
+        rightKnee: { x: 15, y: 20 },
+        rightFoot: { x: 25, y: 45 },
+        leftElbow: { x: -25, y: -5 },  // Power pose - arms out
+        leftHand: { x: -35, y: 5 },
+        rightElbow: { x: 25, y: -5 },
+        rightHand: { x: 35, y: 5 }
+      },
 
-    switch (this.state) {
-      case 'punch': return punching;
-      case 'kick': return kicking;
-      case 'jump': return jumping;
-      case 'block': return blocking;
-      case 'special': return special;
-      case 'hurt': return hurt;
-      case 'walk': return walking;
-      default: return standing;
-    }
+      hurt: {
+        head: { x: -5, y: -10 },  // Head back from impact
+        spine: { x: -5, y: 15 },
+        leftKnee: { x: -12, y: 22 },
+        leftFoot: { x: -18, y: 45 },
+        rightKnee: { x: 8, y: 22 },
+        rightFoot: { x: 12, y: 45 },
+        leftElbow: { x: -20, y: 10 },
+        leftHand: { x: -25, y: 20 },
+        rightElbow: { x: 10, y: 10 },
+        rightHand: { x: 15, y: 20 }
+      }
+    };
+
+    return poses[this.state] || poses.idle;
   }
 }
 
@@ -385,7 +567,7 @@ function drawParticles() {
   GAME.particles.forEach(p => {
     ctx.globalAlpha = p.life / 40;
     ctx.fillStyle = p.color;
-    ctx.fillRect(p.x - p.size/2, p.y - p.size/2, p.size, p.size);
+    ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
   });
   ctx.globalAlpha = 1;
 }
@@ -611,12 +793,12 @@ socket.on("player-moved", (data) => {
   const opponent = p === player1 ? player2 : player1;
 
   switch (data.direction) {
-    case "left":  p.move(-1); break;
+    case "left": p.move(-1); break;
     case "right": p.move(1); break;
-    case "up":    p.jump(); break;
-    case "down":  p.block(); break;
+    case "up": p.jump(); break;
+    case "down": p.block(); break;
     case "punch": p.punch(opponent); break;
-    case "kick":  p.kick(opponent); break;
+    case "kick": p.kick(opponent); break;
     case "special": p.special(opponent); break;
     case "block": p.block(); break;
   }
@@ -675,7 +857,7 @@ document.addEventListener('keydown', (e) => {
   if (GAME.state !== 'fighting' || !player1) return;
   const opp = player2;
 
-  switch(e.key.toLowerCase()) {
+  switch (e.key.toLowerCase()) {
     case 'a': player1.move(-1); break;
     case 'd': player1.move(1); break;
     case 'w': player1.jump(); break;
