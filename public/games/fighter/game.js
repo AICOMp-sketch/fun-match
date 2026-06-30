@@ -23,12 +23,11 @@ const GAME = {
 
 const GROUND_Y = () => canvas.height - 100;
 
-// ════════ FIGHTER CLASS ════════
 class Fighter {
   constructor(id, name, side) {
     this.id = id;
     this.name = name;
-    this.side = side; // 'left' or 'right'
+    this.side = side;
     this.x = side === 'left' ? 200 : canvas.width - 200;
     this.y = GROUND_Y();
     this.vx = 0;
@@ -40,8 +39,8 @@ class Fighter {
     this.maxHp = 100;
     this.roundsWon = 0;
 
-    this.facing = side === 'left' ? 1 : -1; // 1 = right, -1 = left
-    this.state = 'idle'; // idle, walk, jump, punch, kick, special, block, hurt
+    this.facing = side === 'left' ? 1 : -1;
+    this.state = 'idle';
     this.stateTimer = 0;
 
     this.onGround = true;
@@ -52,14 +51,22 @@ class Fighter {
     this.color = side === 'left' ? '#00e0ff' : '#ff7b00';
     this.glowColor = side === 'left' ? 'rgba(0, 224, 255, 0.6)' : 'rgba(255, 123, 0, 0.6)';
 
-    // Animation
     this.animFrame = 0;
     this.animTimer = 0;
+
+    // NEW: track if down is held
+    this.crouching = false;
+
+    // NEW: spin angle for roundhouse
+    this.spinAngle = 0;
+
+    // NEW: backflip angle
+    this.flipAngle = 0;
   }
 
   update(dt, opponent) {
     // Physics
-    this.vy += 0.8; // gravity
+    this.vy += 0.8;
     this.x += this.vx;
     this.y += this.vy;
 
@@ -68,7 +75,11 @@ class Fighter {
       this.y = GROUND_Y();
       this.vy = 0;
       this.onGround = true;
-      if (this.state === 'jump') this.setState('idle');
+      if (this.state === 'jump' || this.state === 'jumpPunch' || this.state === 'jumpKick' || this.state === 'backflip') {
+        this.setState('idle');
+        this.spinAngle = 0;
+        this.flipAngle = 0;
+      }
     } else {
       this.onGround = false;
     }
@@ -76,8 +87,8 @@ class Fighter {
     // Wall bounds
     this.x = Math.max(this.width / 2, Math.min(canvas.width - this.width / 2, this.x));
 
-    // Face opponent
-    if (opponent) {
+    // Face opponent (only if on ground and not spinning)
+    if (opponent && this.onGround && this.state !== 'roundhouse' && this.state !== 'backflip') {
       this.facing = opponent.x > this.x ? 1 : -1;
     }
 
@@ -88,11 +99,26 @@ class Fighter {
     if (this.specialCooldown > 0) this.specialCooldown--;
     if (this.invulnerable > 0) this.invulnerable--;
 
+    // Spin animation for roundhouse
+    if (this.state === 'roundhouse') {
+      this.spinAngle += 0.3;
+    }
+
+    // Flip animation for backflip
+    if (this.state === 'backflip') {
+      this.flipAngle += 0.25;
+    }
+
     // State timer
     if (this.stateTimer > 0) {
       this.stateTimer--;
       if (this.stateTimer === 0) {
-        this.setState('idle');
+        // Don't reset air moves until landing
+        if (this.onGround) {
+          this.setState('idle');
+          this.spinAngle = 0;
+          this.flipAngle = 0;
+        }
       }
     }
 
@@ -117,14 +143,30 @@ class Fighter {
   }
 
   jump() {
-    if (this.onGround && this.state !== 'punch' && this.state !== 'kick') {
+    if (this.onGround && this.state !== 'punch' && this.state !== 'kick' && this.state !== 'crouch' && this.state !== 'roundhouse') {
       this.vy = -16;
       this.setState('jump');
       Sounds.jump();
     }
   }
 
+  // NEW: Crouch
+  crouch() {
+    if (this.onGround && (this.state === 'idle' || this.state === 'walk')) {
+      this.crouching = true;
+      this.setState('crouch', 8);
+    }
+  }
+
   punch(opponent) {
+    // AIR PUNCH if in air
+    if (!this.onGround && this.state !== 'jumpPunch') {
+      this.setState('jumpPunch', 25);
+      Sounds.punch();
+      this.checkHit(opponent, 10, 90);
+      return;
+    }
+
     if (this.state === 'idle' || this.state === 'walk') {
       this.setState('punch', 15);
       Sounds.punch();
@@ -133,6 +175,28 @@ class Fighter {
   }
 
   kick(opponent) {
+    // ROUNDHOUSE if crouching
+    if (this.crouching || this.state === 'crouch') {
+      this.setState('roundhouse', 30);
+      this.spinAngle = 0;
+      Sounds.kick();
+      // Hit twice during spin
+      this.checkHit(opponent, 15, 110);
+      setTimeout(() => {
+        if (this.state === 'roundhouse') this.checkHit(opponent, 15, 110);
+      }, 200);
+      this.crouching = false;
+      return;
+    }
+
+    // AIR KICK if in air
+    if (!this.onGround && this.state !== 'jumpKick') {
+      this.setState('jumpKick', 25);
+      Sounds.kick();
+      this.checkHit(opponent, 14, 110);
+      return;
+    }
+
     if (this.state === 'idle' || this.state === 'walk') {
       this.setState('kick', 20);
       Sounds.kick();
@@ -142,12 +206,26 @@ class Fighter {
 
   special(opponent) {
     if (this.specialCooldown > 0) return;
+
+    // BACKFLIP DODGE if crouching
+    if (this.crouching || this.state === 'crouch') {
+      this.setState('backflip', 40);
+      this.flipAngle = 0;
+      this.vx = -this.facing * 8;
+      this.vy = -14;
+      this.invulnerable = 40; // Immune during backflip!
+      this.specialCooldown = 120;
+      this.crouching = false;
+      Sounds.jump();
+      return;
+    }
+
+    // Normal special
     if (this.state === 'idle' || this.state === 'walk') {
       this.setState('special', 30);
-      this.specialCooldown = 180; // 3 seconds
+      this.specialCooldown = 180;
       Sounds.special();
 
-      // Create special effect particles
       for (let i = 0; i < 20; i++) {
         GAME.particles.push({
           x: this.x + (this.facing * 50),
@@ -216,7 +294,7 @@ class Fighter {
       ctx.globalAlpha = 0.5;
     }
 
-    this.drawPixelFighter();
+    this.drawStickman();
 
     ctx.restore();
 
@@ -231,55 +309,49 @@ class Fighter {
     }
   }
 
-  drawPixelFighter() {
+  drawStickman() {
     const px = this.x;
     const py = this.y;
     const f = this.facing;
 
-    // Get current pose based on state
+    // Apply rotation for spin/flip moves
+    ctx.save();
+    if (this.state === 'roundhouse') {
+      ctx.translate(px, py - 50);
+      ctx.rotate(this.spinAngle);
+      ctx.translate(-px, -(py - 50));
+    } else if (this.state === 'backflip') {
+      ctx.translate(px, py - 50);
+      ctx.rotate(-this.flipAngle * this.facing);
+      ctx.translate(-px, -(py - 50));
+    }
+
     const pose = this.getStickmanPose();
 
-    // Apply glow effect
     ctx.shadowColor = this.glowColor;
     ctx.shadowBlur = 15;
-
-    // Draw shadow on ground first
-    ctx.shadowBlur = 0;
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
-    ctx.beginPath();
-    ctx.ellipse(px, py + 5, 35, 8, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Re-apply glow for stickman
-    ctx.shadowColor = this.glowColor;
-    ctx.shadowBlur = 15;
-
     ctx.strokeStyle = this.color;
     ctx.lineWidth = 6;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
-    // Calculate body positions (all relative to feet position)
-    const hipY = py - 50;
-    const shoulderY = py - 80;
-    const neckY = py - 95;
+    const hipY = py - 50 + (pose.crouchOffset || 0);
+    const shoulderY = py - 80 + (pose.crouchOffset || 0);
 
-    // ═══ LEGS ═══
-    // Left leg
+    // Legs
     ctx.beginPath();
     ctx.moveTo(px, hipY);
     ctx.lineTo(px + pose.leftKnee.x * f, hipY + pose.leftKnee.y);
     ctx.lineTo(px + pose.leftFoot.x * f, hipY + pose.leftFoot.y);
     ctx.stroke();
 
-    // Right leg
     ctx.beginPath();
     ctx.moveTo(px, hipY);
     ctx.lineTo(px + pose.rightKnee.x * f, hipY + pose.rightKnee.y);
     ctx.lineTo(px + pose.rightFoot.x * f, hipY + pose.rightFoot.y);
     ctx.stroke();
 
-    // ═══ BODY/SPINE ═══
+    // Spine
     ctx.beginPath();
     ctx.moveTo(px, hipY);
     ctx.lineTo(px + pose.spine.x * f, shoulderY + pose.spine.y);
@@ -288,26 +360,23 @@ class Fighter {
     const shoulderX = px + pose.spine.x * f;
     const finalShoulderY = shoulderY + pose.spine.y;
 
-    // ═══ ARMS ═══
-    // Left arm
+    // Arms
     ctx.beginPath();
     ctx.moveTo(shoulderX, finalShoulderY);
     ctx.lineTo(shoulderX + pose.leftElbow.x * f, finalShoulderY + pose.leftElbow.y);
     ctx.lineTo(shoulderX + pose.leftHand.x * f, finalShoulderY + pose.leftHand.y);
     ctx.stroke();
 
-    // Right arm
     ctx.beginPath();
     ctx.moveTo(shoulderX, finalShoulderY);
     ctx.lineTo(shoulderX + pose.rightElbow.x * f, finalShoulderY + pose.rightElbow.y);
     ctx.lineTo(shoulderX + pose.rightHand.x * f, finalShoulderY + pose.rightHand.y);
     ctx.stroke();
 
-    // ═══ HEAD ═══
+    // Head
     const headX = shoulderX + pose.head.x * f;
     const headY = finalShoulderY + pose.head.y;
 
-    // Head circle
     ctx.beginPath();
     ctx.arc(headX, headY, 14, 0, Math.PI * 2);
     ctx.fillStyle = this.color;
@@ -316,12 +385,11 @@ class Fighter {
     ctx.lineWidth = 3;
     ctx.stroke();
 
-    // ═══ FACE DETAILS ═══
+    // Face
     ctx.shadowBlur = 0;
     ctx.fillStyle = '#050810';
 
     if (this.state === 'hurt') {
-      // X eyes when hurt
       ctx.strokeStyle = '#ff3860';
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -335,7 +403,6 @@ class Fighter {
       ctx.lineTo(headX + 3 * f, headY + 1);
       ctx.stroke();
     } else if (this.state === 'block') {
-      // Closed eyes (focused)
       ctx.strokeStyle = '#050810';
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -345,13 +412,11 @@ class Fighter {
       ctx.lineTo(headX + 7 * f, headY - 2);
       ctx.stroke();
     } else {
-      // Normal eyes
       ctx.beginPath();
       ctx.arc(headX - 5 * f, headY - 2, 2, 0, Math.PI * 2);
       ctx.arc(headX + 5 * f, headY - 2, 2, 0, Math.PI * 2);
       ctx.fill();
 
-      // Angry eyebrows (looking forward / facing opponent)
       ctx.strokeStyle = '#050810';
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -362,9 +427,10 @@ class Fighter {
       ctx.stroke();
     }
 
-    // ═══ MOTION TRAILS FOR ATTACKS ═══
-    if (this.state === 'punch') {
-      // Punch trail
+    ctx.restore(); // End rotation
+
+    // Motion trails (drawn after restore so they don't rotate)
+    if (this.state === 'punch' || this.state === 'jumpPunch') {
       ctx.strokeStyle = this.color;
       ctx.globalAlpha = 0.4;
       ctx.lineWidth = 8;
@@ -374,7 +440,6 @@ class Fighter {
       ctx.stroke();
       ctx.globalAlpha = 1;
 
-      // Impact star at fist
       const fistX = shoulderX + pose.rightHand.x * f;
       const fistY = finalShoulderY + pose.rightHand.y;
       ctx.fillStyle = '#ffffff';
@@ -393,8 +458,7 @@ class Fighter {
       ctx.fill();
     }
 
-    if (this.state === 'kick') {
-      // Kick trail
+    if (this.state === 'kick' || this.state === 'jumpKick') {
       ctx.strokeStyle = this.color;
       ctx.globalAlpha = 0.4;
       ctx.lineWidth = 8;
@@ -405,8 +469,43 @@ class Fighter {
       ctx.globalAlpha = 1;
     }
 
+    // Roundhouse spin trail (circular)
+    if (this.state === 'roundhouse') {
+      ctx.strokeStyle = this.color;
+      ctx.globalAlpha = 0.3;
+      ctx.lineWidth = 6;
+      ctx.beginPath();
+      ctx.arc(px, py - 50, 70, this.spinAngle - 0.5, this.spinAngle + 0.5);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+
+      // Speed lines around spin
+      ctx.strokeStyle = '#ffffff';
+      ctx.globalAlpha = 0.5;
+      ctx.lineWidth = 2;
+      for (let i = 0; i < 3; i++) {
+        const a = this.spinAngle - 0.3 - (i * 0.2);
+        ctx.beginPath();
+        ctx.arc(px, py - 50, 60 + i * 5, a, a + 0.1);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    // Backflip trail
+    if (this.state === 'backflip') {
+      ctx.strokeStyle = this.color;
+      ctx.globalAlpha = 0.4;
+      ctx.lineWidth = 4;
+      for (let i = 0; i < 3; i++) {
+        ctx.beginPath();
+        ctx.arc(px + i * 5 * this.facing, py - 50, 50, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+
     if (this.state === 'special') {
-      // Special energy aura
       ctx.shadowColor = this.color;
       ctx.shadowBlur = 30;
 
@@ -425,10 +524,6 @@ class Fighter {
   }
 
   getStickmanPose() {
-    // All positions are relative offsets
-    // x: horizontal offset (will be multiplied by facing)
-    // y: vertical offset
-
     const poses = {
       idle: {
         head: { x: 0, y: -15 },
@@ -466,7 +561,7 @@ class Fighter {
         leftElbow: { x: -10, y: 15 },
         leftHand: { x: -5, y: 20 },
         rightElbow: { x: 25, y: 5 },
-        rightHand: { x: 50, y: 0 }  // Extended punch
+        rightHand: { x: 50, y: 0 }
       },
 
       kick: {
@@ -475,24 +570,95 @@ class Fighter {
         leftKnee: { x: -15, y: 25 },
         leftFoot: { x: -20, y: 50 },
         rightKnee: { x: 20, y: 0 },
-        rightFoot: { x: 55, y: 5 },  // Extended kick
+        rightFoot: { x: 55, y: 5 },
         leftElbow: { x: -20, y: 0 },
         leftHand: { x: -25, y: 10 },
         rightElbow: { x: 5, y: 5 },
         rightHand: { x: 10, y: 20 }
       },
 
+      // NEW: Crouching pose
+      crouch: {
+        crouchOffset: 25,  // Lower the whole body
+        head: { x: 0, y: -10 },
+        spine: { x: 0, y: 10 },
+        leftKnee: { x: -20, y: 5 },   // Knees bent way out
+        leftFoot: { x: -25, y: 20 },
+        rightKnee: { x: 20, y: 5 },
+        rightFoot: { x: 25, y: 20 },
+        leftElbow: { x: -15, y: 5 },
+        leftHand: { x: -10, y: 15 },
+        rightElbow: { x: 15, y: 5 },
+        rightHand: { x: 10, y: 15 }
+      },
+
+      // NEW: Roundhouse - extended kick that spins
+      roundhouse: {
+        head: { x: 0, y: -15 },
+        spine: { x: 0, y: 15 },
+        leftKnee: { x: 0, y: 25 },
+        leftFoot: { x: 0, y: 50 },
+        rightKnee: { x: 30, y: 0 },   // Extended out
+        rightFoot: { x: 60, y: 0 },   // Way out for kick
+        leftElbow: { x: -25, y: 5 },
+        leftHand: { x: -35, y: 15 },
+        rightElbow: { x: 20, y: 10 },
+        rightHand: { x: 30, y: 20 }
+      },
+
+      // NEW: Backflip pose
+      backflip: {
+        head: { x: 0, y: -10 },
+        spine: { x: 0, y: 15 },
+        leftKnee: { x: -8, y: 10 },   // Tucked
+        leftFoot: { x: -12, y: 20 },
+        rightKnee: { x: 8, y: 10 },
+        rightFoot: { x: 12, y: 20 },
+        leftElbow: { x: -18, y: -5 },
+        leftHand: { x: -22, y: -15 },
+        rightElbow: { x: 18, y: -5 },
+        rightHand: { x: 22, y: -15 }
+      },
+
       jump: {
         head: { x: 0, y: -15 },
         spine: { x: 0, y: 15 },
-        leftKnee: { x: -10, y: 5 },   // Knees up
+        leftKnee: { x: -10, y: 5 },
         leftFoot: { x: -15, y: 20 },
         rightKnee: { x: 10, y: 5 },
         rightFoot: { x: 15, y: 20 },
-        leftElbow: { x: -20, y: -5 },  // Arms up
+        leftElbow: { x: -20, y: -5 },
         leftHand: { x: -25, y: -20 },
         rightElbow: { x: 20, y: -5 },
         rightHand: { x: 25, y: -20 }
+      },
+
+      // NEW: Jump Punch - in air with punch extended
+      jumpPunch: {
+        head: { x: 5, y: -10 },
+        spine: { x: 3, y: 12 },
+        leftKnee: { x: -8, y: 8 },
+        leftFoot: { x: -12, y: 25 },
+        rightKnee: { x: 5, y: 8 },
+        rightFoot: { x: 10, y: 22 },
+        leftElbow: { x: -10, y: 0 },
+        leftHand: { x: -5, y: -10 },
+        rightElbow: { x: 25, y: 0 },
+        rightHand: { x: 50, y: -5 }    // Punching down-forward
+      },
+
+      // NEW: Jump Kick - in air with kick extended
+      jumpKick: {
+        head: { x: -5, y: -10 },
+        spine: { x: -5, y: 12 },
+        leftKnee: { x: -10, y: 15 },
+        leftFoot: { x: -15, y: 30 },
+        rightKnee: { x: 20, y: 5 },
+        rightFoot: { x: 55, y: 0 },    // Flying kick
+        leftElbow: { x: -20, y: -5 },
+        leftHand: { x: -25, y: -15 },
+        rightElbow: { x: 10, y: 0 },
+        rightHand: { x: 15, y: 10 }
       },
 
       block: {
@@ -502,27 +668,27 @@ class Fighter {
         leftFoot: { x: -15, y: 45 },
         rightKnee: { x: 8, y: 20 },
         rightFoot: { x: 15, y: 45 },
-        leftElbow: { x: -5, y: -5 },   // Arms crossed in front
+        leftElbow: { x: -5, y: -5 },
         leftHand: { x: 10, y: -10 },
         rightElbow: { x: 5, y: -5 },
         rightHand: { x: -10, y: -10 }
       },
 
       special: {
-        head: { x: 0, y: -20 },   // Head back
+        head: { x: 0, y: -20 },
         spine: { x: 0, y: 10 },
         leftKnee: { x: -15, y: 20 },
         leftFoot: { x: -25, y: 45 },
         rightKnee: { x: 15, y: 20 },
         rightFoot: { x: 25, y: 45 },
-        leftElbow: { x: -25, y: -5 },  // Power pose - arms out
+        leftElbow: { x: -25, y: -5 },
         leftHand: { x: -35, y: 5 },
         rightElbow: { x: 25, y: -5 },
         rightHand: { x: 35, y: 5 }
       },
 
       hurt: {
-        head: { x: -5, y: -10 },  // Head back from impact
+        head: { x: -5, y: -10 },
         spine: { x: -5, y: 15 },
         leftKnee: { x: -12, y: 22 },
         leftFoot: { x: -18, y: 45 },
@@ -796,7 +962,7 @@ socket.on("player-moved", (data) => {
     case "left": p.move(-1); break;
     case "right": p.move(1); break;
     case "up": p.jump(); break;
-    case "down": p.block(); break;
+    case "down": p.crouch(); break;  // NEW: crouch on down
     case "punch": p.punch(opponent); break;
     case "kick": p.kick(opponent); break;
     case "special": p.special(opponent); break;
@@ -861,9 +1027,10 @@ document.addEventListener('keydown', (e) => {
     case 'a': player1.move(-1); break;
     case 'd': player1.move(1); break;
     case 'w': player1.jump(); break;
-    case 's': player1.block(); break;
+    case 's': player1.crouch(); break;  // NEW
     case 'j': player1.punch(opp); break;
     case 'k': player1.kick(opp); break;
     case 'l': player1.special(opp); break;
+    case 'i': player1.block(); break;
   }
 });
