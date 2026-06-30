@@ -8,7 +8,6 @@ function resizeCanvas() {
   canvas.height = rect.height || window.innerHeight - 100;
 }
 
-// ════════ GAME STATE ════════
 const GAME = {
   state: 'waiting',
   totalLaps: 3,
@@ -20,7 +19,6 @@ const GAME = {
 
 const camera = { x: 0, y: 0 };
 
-// ════════ TRACK ════════
 const TRACK = {
   cx: 1000,
   cy: 700,
@@ -34,7 +32,6 @@ const COLORS = ['#00e0ff', '#ff7b00', '#aaff00', '#ff3860'];
 const cars = {};
 let LOCAL_PLAYER_ID = null;
 
-// ════════ CAR CLASS ════════
 class Car {
   constructor(id, name, colorIndex, isBot = false) {
     this.id = id;
@@ -43,7 +40,6 @@ class Car {
     this.colorIndex = colorIndex;
     this.isBot = isBot;
 
-    // Starting position
     const startX = TRACK.cx + (colorIndex - 1.5) * 60;
     this.x = startX;
     this.y = TRACK.cy - TRACK.outerRY + 100;
@@ -55,8 +51,8 @@ class Car {
     this.friction = 0.96;
     this.turnSpeed = 0.06;
 
-    // Input - now uses HELD state (no auto-release)
     this.input = { accel: false, brake: false, left: false, right: false };
+    this.inputTimers = { accel: 0, brake: 0, left: 0, right: 0 };
 
     this.lap = 0;
     this.checkpoint = 0;
@@ -70,13 +66,31 @@ class Car {
     this.boosting = false;
     this.crashed = false;
     this.crashTimer = 0;
+    this.stuckTimer = 0;
 
-    // For phone controls - timer-based release
+    console.log(`🚗 Created car: ${name} (id: ${id}, bot: ${isBot}, color: ${this.color})`);
+  }
+
+  resetForRace() {
+    const startX = TRACK.cx + (this.colorIndex - 1.5) * 60;
+    this.x = startX;
+    this.y = TRACK.cy - TRACK.outerRY + 100;
+    this.angle = 0;
+    this.speed = 0;
+    this.lap = 0;
+    this.checkpoint = 0;
+    this.lapTimes = [];
+    this.finished = false;
+    this.crashed = false;
+    this.boostFuel = 100;
+    this.boosting = false;
+    this.stuckTimer = 0;
+    this.input = { accel: false, brake: false, left: false, right: false };
     this.inputTimers = { accel: 0, brake: 0, left: 0, right: 0 };
   }
 
   update() {
-    // Decrement input timers (for phone)
+    // Decrement input timers
     Object.keys(this.inputTimers).forEach(k => {
       if (this.inputTimers[k] > 0) {
         this.inputTimers[k]--;
@@ -154,38 +168,26 @@ class Car {
     }
   }
 
-  // ════════ IMPROVED BOT AI ════════
   botThink() {
-    // Calculate ideal racing line position
-    // Look ahead 0.3 radians on the track for smoother turning
     const dx = this.x - TRACK.cx;
     const dy = this.y - TRACK.cy;
     const angleFromCenter = Math.atan2(dy, dx);
-
-    // Look ahead position on the track
     const lookAhead = angleFromCenter + 0.3;
 
-    // Ideal radius (middle of track)
     const idealRX = (TRACK.outerRX + TRACK.innerRX) / 2;
     const idealRY = (TRACK.outerRY + TRACK.innerRY) / 2;
 
-    // Target point on racing line ahead
     const targetX = TRACK.cx + Math.cos(lookAhead) * idealRX;
     const targetY = TRACK.cy + Math.sin(lookAhead) * idealRY;
 
-    // Calculate angle to target
     const angleToTarget = Math.atan2(targetY - this.y, targetX - this.x);
-
-    // Normalize angle difference
     let angleDiff = angleToTarget - this.angle;
     while (angleDiff > Math.PI) angleDiff -= Math.PI * 2;
     while (angleDiff < -Math.PI) angleDiff += Math.PI * 2;
 
-    // Steer towards target
     this.input.left = angleDiff < -0.05;
     this.input.right = angleDiff > 0.05;
 
-    // Always accelerate (slow down only on very sharp turns)
     if (Math.abs(angleDiff) > 1.2) {
       this.input.accel = false;
       this.input.brake = true;
@@ -194,12 +196,9 @@ class Car {
       this.input.brake = false;
     }
 
-    // Anti-stuck: if too slow for too long, force boost or random turn
     if (Math.abs(this.speed) < 0.5) {
-      if (!this.stuckTimer) this.stuckTimer = 0;
       this.stuckTimer++;
       if (this.stuckTimer > 60) {
-        // Force a hard turn and boost to get unstuck
         this.input.left = Math.random() > 0.5;
         this.input.right = !this.input.left;
         this.input.accel = true;
@@ -214,7 +213,6 @@ class Car {
       this.stuckTimer = 0;
     }
 
-    // Use boost randomly when on straight sections
     if (Math.abs(angleDiff) < 0.2 && this.boostFuel > 70 && Math.random() < 0.01 && !this.boosting) {
       this.boosting = true;
       setTimeout(() => this.boosting = false, 1500);
@@ -353,7 +351,6 @@ class Car {
   }
 }
 
-// ════════ TRACK DRAWING ════════
 function drawTrack() {
   ctx.fillStyle = '#0a1a0a';
   ctx.fillRect(camera.x - 500, camera.y - 500, canvas.width + 1000, canvas.height + 1000);
@@ -436,14 +433,16 @@ function updateLeaderboard() {
   sorted.forEach((car, i) => car.position = i + 1);
 
   const lb = document.getElementById('leaderboard');
-  lb.innerHTML = sorted.map((car, i) => `
-    <div class="leaderboard-row">
-      <span class="lb-pos">${i + 1}</span>
-      <span class="lb-color" style="background:${car.color}"></span>
-      <span class="lb-name">${car.name}</span>
-      <span class="lb-lap">L${Math.min(car.lap, GAME.totalLaps)}</span>
-    </div>
-  `).join('');
+  if (lb) {
+    lb.innerHTML = sorted.map((car, i) => `
+      <div class="leaderboard-row">
+        <span class="lb-pos">${i + 1}</span>
+        <span class="lb-color" style="background:${car.color}"></span>
+        <span class="lb-name">${car.name}</span>
+        <span class="lb-lap">L${Math.min(car.lap, GAME.totalLaps)}</span>
+      </div>
+    `).join('');
+  }
 
   const localCar = cars[LOCAL_PLAYER_ID];
   if (localCar) {
@@ -462,12 +461,17 @@ function updateRaceTime() {
 }
 
 function startCountdown() {
+  console.log('🏁 Starting countdown. Cars:', Object.keys(cars), 'Local:', LOCAL_PLAYER_ID);
+
   document.getElementById('waiting-screen').classList.remove('active');
   document.getElementById('race-screen').classList.add('active');
 
   setTimeout(() => resizeCanvas(), 100);
 
   GAME.state = 'countdown';
+
+  // IMPORTANT: Reset ALL cars to start positions
+  Object.values(cars).forEach(car => car.resetForRace());
 
   if (typeof startEngine === 'function') startEngine();
 
@@ -501,6 +505,7 @@ function startCountdown() {
       GAME.state = 'racing';
       GAME.raceStartTime = Date.now();
       Object.values(cars).forEach(c => c.lastLapStart = Date.now());
+      console.log('🏎️ RACE STARTED! Cars:', Object.keys(cars).map(id => `${cars[id].name}(${id})`));
     }
   }, 1000);
 }
@@ -546,23 +551,34 @@ function showFinishScreen() {
 
 // ════════ SOCKET EVENTS ════════
 socket.on("connect", () => {
-  console.log("✅ Connected!");
+  console.log("✅ Connected to server!");
   socket.emit("create-room");
 });
 
 socket.on("room-created", (data) => {
+  console.log("🏠 Room:", data.roomCode);
   document.getElementById("room-code").textContent = data.roomCode;
 });
 
 socket.on("player-joined", (player) => {
-  if (GAME.isBotMode) return;
+  console.log("👤 Player joined:", player.name, player.id);
+
+  if (GAME.isBotMode) {
+    console.log("⚠️ Bot mode active - ignoring");
+    return;
+  }
+
   const colorIndex = Object.keys(cars).length;
   if (colorIndex >= 4) return;
 
   const car = new Car(player.id, player.name.toUpperCase(), colorIndex, false);
   cars[player.id] = car;
 
-  if (!LOCAL_PLAYER_ID) LOCAL_PLAYER_ID = player.id;
+  // First player joining IS the player (sets local player)
+  if (!LOCAL_PLAYER_ID) {
+    LOCAL_PLAYER_ID = player.id;
+    console.log("🎯 Set LOCAL_PLAYER_ID =", LOCAL_PLAYER_ID);
+  }
 
   const slot = document.getElementById(`slot-${colorIndex + 1}`);
   if (slot) {
@@ -571,29 +587,31 @@ socket.on("player-joined", (player) => {
     slot.querySelector('.status').textContent = 'Ready';
   }
 
-  if (Object.keys(cars).length >= 2) {
-    document.getElementById('start-race-btn').disabled = false;
-  }
+  // Enable start button when at least 1 player joined
+  document.getElementById('start-race-btn').disabled = false;
 });
 
-// ════════ PHONE CONTROLS - FIXED ════════
-// Phone sends signal once per tap, we hold input for short time
+// ════════ PHONE/PLAYER CONTROLS ════════
 socket.on("player-moved", (data) => {
   const car = cars[data.playerId];
-  if (!car) return;
+  if (!car) {
+    console.log("⚠️ No car for player:", data.playerId);
+    return;
+  }
 
-  // Hold input for 15 frames (~250ms) after each signal
   const HOLD_FRAMES = 15;
+
+  console.log(`🎮 ${car.name} input: ${data.direction}`);
 
   switch (data.direction) {
     case "up":
-    case "punch":  // Phone GAS button
+    case "punch":
       car.input.accel = true;
       car.inputTimers.accel = HOLD_FRAMES;
       break;
 
     case "down":
-    case "kick":  // Phone BRAKE button
+    case "kick":
       car.input.brake = true;
       car.inputTimers.brake = HOLD_FRAMES;
       break;
@@ -608,7 +626,7 @@ socket.on("player-moved", (data) => {
       car.inputTimers.right = HOLD_FRAMES;
       break;
 
-    case "special":  // Phone BOOST button
+    case "special":
       if (car.boostFuel >= 30 && !car.boosting) {
         car.boosting = true;
         if (car.id === LOCAL_PLAYER_ID && typeof Sounds !== 'undefined') Sounds.boost();
@@ -622,15 +640,21 @@ socket.on("player-left", (data) => {
   if (cars[data.playerId]) delete cars[data.playerId];
 });
 
-// ════════ BUTTONS ════════
+// ════════ BOT RACE BUTTON ════════
 document.getElementById('bot-race-btn').addEventListener('click', () => {
+  console.log('🤖 BOT RACE clicked');
+
+  // Clear all cars
   Object.keys(cars).forEach(id => delete cars[id]);
+
   GAME.isBotMode = true;
 
+  // Create local player car
   const localCar = new Car('local-player', 'YOU', 0, false);
   cars['local-player'] = localCar;
   LOCAL_PLAYER_ID = 'local-player';
 
+  // Create 3 bots
   for (let i = 1; i <= 3; i++) {
     cars[`bot-${i}`] = new Car(`bot-${i}`, `BOT ${i}`, i, true);
   }
@@ -644,8 +668,27 @@ document.getElementById('bot-race-btn').addEventListener('click', () => {
   setTimeout(startCountdown, 800);
 });
 
+// ════════ START MULTIPLAYER RACE ════════
 document.getElementById('start-race-btn').addEventListener('click', () => {
-  if (Object.keys(cars).length >= 2) startCountdown();
+  console.log('▶️ START RACE clicked. Cars:', Object.keys(cars).length);
+
+  if (Object.keys(cars).length === 0) {
+    alert('Need at least 1 player to start!');
+    return;
+  }
+
+  // If only 1 player, fill remaining slots with bots
+  const playerCount = Object.keys(cars).length;
+  if (playerCount < 4) {
+    const startIdx = playerCount;
+    for (let i = startIdx; i < 4; i++) {
+      const botId = `bot-fill-${i}`;
+      cars[botId] = new Car(botId, `BOT ${i}`, i, true);
+    }
+    console.log('🤖 Added bots to fill slots');
+  }
+
+  startCountdown();
 });
 
 // ════════ KEYBOARD ════════
@@ -671,7 +714,6 @@ function applyKeyboardInput() {
   const car = cars[LOCAL_PLAYER_ID];
   if (!car || car.isBot) return;
 
-  // Keyboard overrides phone input for local player
   if (keys['w'] || keys['arrowup']) { car.input.accel = true; car.inputTimers.accel = 2; }
   if (keys['s'] || keys['arrowdown']) { car.input.brake = true; car.inputTimers.brake = 2; }
   if (keys['a'] || keys['arrowleft']) { car.input.left = true; car.inputTimers.left = 2; }
