@@ -2,6 +2,9 @@ const socket = io("https://fun-match-production.up.railway.app");
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
+// ════════ SIZE CONFIG ════════
+const SCALE = 1.4;  // Change this to resize fighters: 1.0=small, 1.4=medium, 1.8=huge
+
 // Set canvas to actual display size
 function resizeCanvas() {
   const rect = canvas.getBoundingClientRect();
@@ -12,7 +15,7 @@ window.addEventListener('resize', resizeCanvas);
 
 // ════════ GAME STATE ════════
 const GAME = {
-  state: 'waiting', // waiting, countdown, fighting, roundEnd, gameOver
+  state: 'waiting',
   round: 1,
   maxRounds: 3,
   timer: 99,
@@ -32,8 +35,8 @@ class Fighter {
     this.y = GROUND_Y();
     this.vx = 0;
     this.vy = 0;
-    this.width = 60;
-    this.height = 100;
+    this.width = 60 * SCALE;
+    this.height = 100 * SCALE;
 
     this.hp = 100;
     this.maxHp = 100;
@@ -54,34 +57,27 @@ class Fighter {
     this.animFrame = 0;
     this.animTimer = 0;
 
-    // NEW: track if down is held
     this.crouching = false;
-
-    // NEW: spin angle for roundhouse
     this.spinAngle = 0;
-
-    // NEW: backflip angle
     this.flipAngle = 0;
 
-    // NEW: Death animation
+    // Death animation
     this.dying = false;
     this.deathTimer = 0;
     this.deathRotation = 0;
     this.deathBounce = 0;
     this.dead = false;
-
-
   }
 
   update(dt, opponent) {
-    // NEW: Handle death animation
+    // Handle death animation
     if (this.dying) {
-      this.vy += 0.8; // gravity still applies
+      this.vy += 0.8;
       this.x += this.vx;
       this.y += this.vy;
       this.vx *= 0.92;
       this.updateDeathAnimation();
-      return; // Skip normal update
+      return;
     }
 
     // Physics
@@ -106,7 +102,7 @@ class Fighter {
     // Wall bounds
     this.x = Math.max(this.width / 2, Math.min(canvas.width - this.width / 2, this.x));
 
-    // Face opponent (only if on ground and not spinning)
+    // Face opponent
     if (opponent && this.onGround && this.state !== 'roundhouse' && this.state !== 'backflip') {
       this.facing = opponent.x > this.x ? 1 : -1;
     }
@@ -118,12 +114,12 @@ class Fighter {
     if (this.specialCooldown > 0) this.specialCooldown--;
     if (this.invulnerable > 0) this.invulnerable--;
 
-    // Spin animation for roundhouse
+    // Spin animation
     if (this.state === 'roundhouse') {
       this.spinAngle += 0.3;
     }
 
-    // Flip animation for backflip
+    // Flip animation
     if (this.state === 'backflip') {
       this.flipAngle += 0.25;
     }
@@ -132,7 +128,6 @@ class Fighter {
     if (this.stateTimer > 0) {
       this.stateTimer--;
       if (this.stateTimer === 0) {
-        // Don't reset air moves until landing
         if (this.onGround) {
           this.setState('idle');
           this.spinAngle = 0;
@@ -143,9 +138,9 @@ class Fighter {
 
     // Animation
     this.animTimer++;
-    const animSpeed = this.state === 'walk' ? 3 : 8;  // Faster when walking
+    const animSpeed = this.state === 'walk' ? 3 : 8;
     if (this.animTimer > animSpeed) {
-      this.animFrame = (this.animFrame + 1) % 8;       // More frames for smoother
+      this.animFrame = (this.animFrame + 1) % 8;
       this.animTimer = 0;
     }
   }
@@ -170,7 +165,6 @@ class Fighter {
     }
   }
 
-  // NEW: Crouch
   crouch() {
     if (this.onGround && (this.state === 'idle' || this.state === 'walk')) {
       this.crouching = true;
@@ -179,68 +173,62 @@ class Fighter {
   }
 
   punch(opponent) {
-    // AIR PUNCH if in air
     if (!this.onGround && this.state !== 'jumpPunch') {
       this.setState('jumpPunch', 25);
       Sounds.punch();
-      this.checkHit(opponent, 10, 90);
+      this.checkHit(opponent, 10, 90 * SCALE);
       return;
     }
 
     if (this.state === 'idle' || this.state === 'walk') {
       this.setState('punch', 15);
       Sounds.punch();
-      this.checkHit(opponent, 8, 80);
+      this.checkHit(opponent, 8, 80 * SCALE);
     }
   }
 
   kick(opponent) {
-    // ROUNDHOUSE if crouching
     if (this.crouching || this.state === 'crouch') {
       this.setState('roundhouse', 30);
       this.spinAngle = 0;
       Sounds.kick();
-      // Hit twice during spin
-      this.checkHit(opponent, 15, 110);
+      this.checkHit(opponent, 15, 110 * SCALE);
       setTimeout(() => {
-        if (this.state === 'roundhouse') this.checkHit(opponent, 15, 110);
+        if (this.state === 'roundhouse') this.checkHit(opponent, 15, 110 * SCALE);
       }, 200);
       this.crouching = false;
       return;
     }
 
-    // AIR KICK if in air
     if (!this.onGround && this.state !== 'jumpKick') {
       this.setState('jumpKick', 25);
       Sounds.kick();
-      this.checkHit(opponent, 14, 110);
+      this.checkHit(opponent, 14, 110 * SCALE);
       return;
     }
 
     if (this.state === 'idle' || this.state === 'walk') {
       this.setState('kick', 20);
       Sounds.kick();
-      this.checkHit(opponent, 12, 100);
+      this.checkHit(opponent, 12, 100 * SCALE);
     }
   }
 
   special(opponent) {
     if (this.specialCooldown > 0) return;
 
-    // BACKFLIP DODGE if crouching
     if (this.crouching || this.state === 'crouch') {
       this.setState('backflip', 40);
       this.flipAngle = 0;
       this.vx = -this.facing * 8;
       this.vy = -14;
-      this.invulnerable = 40; // Immune during backflip!
+      this.invulnerable = 40;
       this.specialCooldown = 120;
       this.crouching = false;
       Sounds.jump();
       return;
     }
 
-    // Normal special
     if (this.state === 'idle' || this.state === 'walk') {
       this.setState('special', 30);
       this.specialCooldown = 180;
@@ -249,7 +237,7 @@ class Fighter {
       for (let i = 0; i < 20; i++) {
         GAME.particles.push({
           x: this.x + (this.facing * 50),
-          y: this.y - 50,
+          y: this.y - 50 * SCALE,
           vx: (Math.random() - 0.5) * 8 + (this.facing * 4),
           vy: (Math.random() - 0.5) * 8,
           life: 30,
@@ -258,7 +246,7 @@ class Fighter {
         });
       }
 
-      this.checkHit(opponent, 20, 150);
+      this.checkHit(opponent, 20, 150 * SCALE);
     }
   }
 
@@ -279,13 +267,13 @@ class Fighter {
       setTimeout(() => {
         if (opponent.isBlocking) {
           opponent.hp -= damage * 0.2;
-          createHitParticles(opponent.x, opponent.y - 50, '#94a3b8', 5);
+          createHitParticles(opponent.x, opponent.y - 50 * SCALE, '#94a3b8', 5);
         } else {
           opponent.hp -= damage;
           opponent.vx = this.facing * 8;
           opponent.setState('hurt', 15);
           opponent.invulnerable = 20;
-          createHitParticles(opponent.x, opponent.y - 50, '#ff3860', 15);
+          createHitParticles(opponent.x, opponent.y - 50 * SCALE, '#ff3860', 15);
           screenShake();
           Sounds.hit();
         }
@@ -302,23 +290,20 @@ class Fighter {
 
   startDying(killer) {
     this.dying = true;
-    this.deathTimer = 90; // 1.5 seconds of death animation
+    this.deathTimer = 90;
     this.invulnerable = 200;
     this.setState('dying', 90);
 
-    // Big knockback from killer
     const dir = killer.facing;
     this.vx = dir * 12;
     this.vy = -8;
 
-    // Death sound
     Sounds.ko();
 
-    // Explosion of particles
     for (let i = 0; i < 30; i++) {
       GAME.particles.push({
         x: this.x,
-        y: this.y - 50,
+        y: this.y - 50 * SCALE,
         vx: (Math.random() - 0.5) * 15,
         vy: (Math.random() - 0.5) * 15 - 5,
         life: 50,
@@ -327,7 +312,6 @@ class Fighter {
       });
     }
 
-    // Screen shake
     screenShake();
     setTimeout(() => screenShake(), 200);
     setTimeout(() => screenShake(), 400);
@@ -337,17 +321,13 @@ class Fighter {
     if (!this.dying) return;
 
     this.deathTimer--;
-
-    // Spinning fall
     this.deathRotation += 0.3 * this.facing;
 
-    // Bouncing on ground
     if (this.y >= GROUND_Y()) {
       if (Math.abs(this.vy) > 2) {
-        this.vy = -Math.abs(this.vy) * 0.5; // Bounce
+        this.vy = -Math.abs(this.vy) * 0.5;
         this.deathBounce++;
 
-        // Small particles on each bounce
         for (let i = 0; i < 10; i++) {
           GAME.particles.push({
             x: this.x,
@@ -367,7 +347,6 @@ class Fighter {
       }
     }
 
-    // Death timer expired - mark as dead
     if (this.deathTimer <= 0 && !this.dead) {
       this.dead = true;
       endRound(this === player1 ? player2 : player1);
@@ -377,13 +356,12 @@ class Fighter {
   draw() {
     ctx.save();
 
-    // Shadow
+    // Bigger shadow for bigger character
     ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
     ctx.beginPath();
-    ctx.ellipse(this.x, GROUND_Y() + 5, 40, 8, 0, 0, Math.PI * 2);
+    ctx.ellipse(this.x, GROUND_Y() + 5, 50 * SCALE, 10 * SCALE, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Invulnerability flash
     if (this.invulnerable > 0 && Math.floor(this.invulnerable / 3) % 2 === 0) {
       ctx.globalAlpha = 0.5;
     }
@@ -394,12 +372,12 @@ class Fighter {
 
     // Special cooldown bar
     if (this.specialCooldown > 0) {
-      const barW = 50;
-      const barH = 4;
+      const barW = 60 * SCALE;
+      const barH = 5;
       ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-      ctx.fillRect(this.x - barW / 2, this.y - this.height - 15, barW, barH);
+      ctx.fillRect(this.x - barW / 2, this.y - this.height - 20, barW, barH);
       ctx.fillStyle = '#aaff00';
-      ctx.fillRect(this.x - barW / 2, this.y - this.height - 15, barW * (1 - this.specialCooldown / 180), barH);
+      ctx.fillRect(this.x - barW / 2, this.y - this.height - 20, barW * (1 - this.specialCooldown / 180), barH);
     }
   }
 
@@ -410,18 +388,17 @@ class Fighter {
 
     ctx.save();
     if (this.state === 'roundhouse') {
-      ctx.translate(px, py - 50);
+      ctx.translate(px, py - 50 * SCALE);
       ctx.rotate(this.spinAngle);
-      ctx.translate(-px, -(py - 50));
+      ctx.translate(-px, -(py - 50 * SCALE));
     } else if (this.state === 'backflip') {
-      ctx.translate(px, py - 50);
+      ctx.translate(px, py - 50 * SCALE);
       ctx.rotate(-this.flipAngle * this.facing);
-      ctx.translate(-px, -(py - 50));
+      ctx.translate(-px, -(py - 50 * SCALE));
     } else if (this.dying) {
-      // NEW: Spinning death rotation
-      ctx.translate(px, py - 50);
+      ctx.translate(px, py - 50 * SCALE);
       ctx.rotate(this.deathRotation);
-      ctx.translate(-px, -(py - 50));
+      ctx.translate(-px, -(py - 50 * SCALE));
     }
 
     const pose = this.getStickmanPose();
@@ -431,73 +408,72 @@ class Fighter {
     let drawGlow = this.glowColor;
 
     if (this.dying) {
-      // Flash between red and original color
       if (Math.floor(this.deathTimer / 5) % 2 === 0) {
         drawColor = '#ff3860';
         drawGlow = 'rgba(255, 56, 96, 0.8)';
       }
 
-      // Fade out near end
       if (this.deathTimer < 30) {
         ctx.globalAlpha = this.deathTimer / 30;
       }
     }
 
     ctx.shadowColor = drawGlow;
-    ctx.shadowBlur = 15;
+    ctx.shadowBlur = 18;
     ctx.strokeStyle = drawColor;
-    ctx.lineWidth = 6;
+    ctx.lineWidth = 6 * SCALE;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
-    const hipY = py - 50 + (pose.crouchOffset || 0);
-    const shoulderY = py - 80 + (pose.crouchOffset || 0);
+    const hipY = py - (50 * SCALE) + ((pose.crouchOffset || 0) * SCALE);
+    const shoulderY = py - (80 * SCALE) + ((pose.crouchOffset || 0) * SCALE);
 
     // Legs
     ctx.beginPath();
     ctx.moveTo(px, hipY);
-    ctx.lineTo(px + pose.leftKnee.x * f, hipY + pose.leftKnee.y);
-    ctx.lineTo(px + pose.leftFoot.x * f, hipY + pose.leftFoot.y);
+    ctx.lineTo(px + pose.leftKnee.x * f * SCALE, hipY + pose.leftKnee.y * SCALE);
+    ctx.lineTo(px + pose.leftFoot.x * f * SCALE, hipY + pose.leftFoot.y * SCALE);
     ctx.stroke();
 
     ctx.beginPath();
     ctx.moveTo(px, hipY);
-    ctx.lineTo(px + pose.rightKnee.x * f, hipY + pose.rightKnee.y);
-    ctx.lineTo(px + pose.rightFoot.x * f, hipY + pose.rightFoot.y);
+    ctx.lineTo(px + pose.rightKnee.x * f * SCALE, hipY + pose.rightKnee.y * SCALE);
+    ctx.lineTo(px + pose.rightFoot.x * f * SCALE, hipY + pose.rightFoot.y * SCALE);
     ctx.stroke();
 
     // Spine
     ctx.beginPath();
     ctx.moveTo(px, hipY);
-    ctx.lineTo(px + pose.spine.x * f, shoulderY + pose.spine.y);
+    ctx.lineTo(px + pose.spine.x * f * SCALE, shoulderY + pose.spine.y * SCALE);
     ctx.stroke();
 
-    const shoulderX = px + pose.spine.x * f;
-    const finalShoulderY = shoulderY + pose.spine.y;
+    const shoulderX = px + pose.spine.x * f * SCALE;
+    const finalShoulderY = shoulderY + pose.spine.y * SCALE;
 
     // Arms
     ctx.beginPath();
     ctx.moveTo(shoulderX, finalShoulderY);
-    ctx.lineTo(shoulderX + pose.leftElbow.x * f, finalShoulderY + pose.leftElbow.y);
-    ctx.lineTo(shoulderX + pose.leftHand.x * f, finalShoulderY + pose.leftHand.y);
+    ctx.lineTo(shoulderX + pose.leftElbow.x * f * SCALE, finalShoulderY + pose.leftElbow.y * SCALE);
+    ctx.lineTo(shoulderX + pose.leftHand.x * f * SCALE, finalShoulderY + pose.leftHand.y * SCALE);
     ctx.stroke();
 
     ctx.beginPath();
     ctx.moveTo(shoulderX, finalShoulderY);
-    ctx.lineTo(shoulderX + pose.rightElbow.x * f, finalShoulderY + pose.rightElbow.y);
-    ctx.lineTo(shoulderX + pose.rightHand.x * f, finalShoulderY + pose.rightHand.y);
+    ctx.lineTo(shoulderX + pose.rightElbow.x * f * SCALE, finalShoulderY + pose.rightElbow.y * SCALE);
+    ctx.lineTo(shoulderX + pose.rightHand.x * f * SCALE, finalShoulderY + pose.rightHand.y * SCALE);
     ctx.stroke();
 
-    // Head
-    const headX = shoulderX + pose.head.x * f;
-    const headY = finalShoulderY + pose.head.y;
+    // Head (bigger)
+    const headX = shoulderX + pose.head.x * f * SCALE;
+    const headY = finalShoulderY + pose.head.y * SCALE;
+    const headRadius = 14 * SCALE;
 
     ctx.beginPath();
-    ctx.arc(headX, headY, 14, 0, Math.PI * 2);
+    ctx.arc(headX, headY, headRadius, 0, Math.PI * 2);
     ctx.fillStyle = drawColor;
     ctx.fill();
-    ctx.strokeStyle = this.color;
-    ctx.lineWidth = 3;
+    ctx.strokeStyle = drawColor;
+    ctx.lineWidth = 3 * SCALE;
     ctx.stroke();
 
     // Face
@@ -506,64 +482,66 @@ class Fighter {
 
     if (this.state === 'hurt' || this.dying) {
       ctx.strokeStyle = '#ff3860';
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 2.5 * SCALE;
       ctx.beginPath();
-      ctx.moveTo(headX - 7 * f, headY - 3);
-      ctx.lineTo(headX - 3 * f, headY + 1);
-      ctx.moveTo(headX - 3 * f, headY - 3);
-      ctx.lineTo(headX - 7 * f, headY + 1);
-      ctx.moveTo(headX + 3 * f, headY - 3);
-      ctx.lineTo(headX + 7 * f, headY + 1);
-      ctx.moveTo(headX + 7 * f, headY - 3);
-      ctx.lineTo(headX + 3 * f, headY + 1);
+      ctx.moveTo(headX - 7 * f * SCALE, headY - 3 * SCALE);
+      ctx.lineTo(headX - 3 * f * SCALE, headY + 1 * SCALE);
+      ctx.moveTo(headX - 3 * f * SCALE, headY - 3 * SCALE);
+      ctx.lineTo(headX - 7 * f * SCALE, headY + 1 * SCALE);
+      ctx.moveTo(headX + 3 * f * SCALE, headY - 3 * SCALE);
+      ctx.lineTo(headX + 7 * f * SCALE, headY + 1 * SCALE);
+      ctx.moveTo(headX + 7 * f * SCALE, headY - 3 * SCALE);
+      ctx.lineTo(headX + 3 * f * SCALE, headY + 1 * SCALE);
       ctx.stroke();
     } else if (this.state === 'block') {
       ctx.strokeStyle = '#050810';
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 2.5 * SCALE;
       ctx.beginPath();
-      ctx.moveTo(headX - 7 * f, headY - 2);
-      ctx.lineTo(headX - 3 * f, headY - 2);
-      ctx.moveTo(headX + 3 * f, headY - 2);
-      ctx.lineTo(headX + 7 * f, headY - 2);
+      ctx.moveTo(headX - 7 * f * SCALE, headY - 2 * SCALE);
+      ctx.lineTo(headX - 3 * f * SCALE, headY - 2 * SCALE);
+      ctx.moveTo(headX + 3 * f * SCALE, headY - 2 * SCALE);
+      ctx.lineTo(headX + 7 * f * SCALE, headY - 2 * SCALE);
       ctx.stroke();
     } else {
+      // Eyes
       ctx.beginPath();
-      ctx.arc(headX - 5 * f, headY - 2, 2, 0, Math.PI * 2);
-      ctx.arc(headX + 5 * f, headY - 2, 2, 0, Math.PI * 2);
+      ctx.arc(headX - 5 * f * SCALE, headY - 2 * SCALE, 2.5 * SCALE, 0, Math.PI * 2);
+      ctx.arc(headX + 5 * f * SCALE, headY - 2 * SCALE, 2.5 * SCALE, 0, Math.PI * 2);
       ctx.fill();
 
+      // Angry eyebrows
       ctx.strokeStyle = '#050810';
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 2.5 * SCALE;
       ctx.beginPath();
-      ctx.moveTo(headX - 8 * f, headY - 6);
-      ctx.lineTo(headX - 2 * f, headY - 4);
-      ctx.moveTo(headX + 2 * f, headY - 4);
-      ctx.lineTo(headX + 8 * f, headY - 6);
+      ctx.moveTo(headX - 8 * f * SCALE, headY - 6 * SCALE);
+      ctx.lineTo(headX - 2 * f * SCALE, headY - 4 * SCALE);
+      ctx.moveTo(headX + 2 * f * SCALE, headY - 4 * SCALE);
+      ctx.lineTo(headX + 8 * f * SCALE, headY - 6 * SCALE);
       ctx.stroke();
     }
 
-    ctx.restore(); // End rotation
+    ctx.restore();
 
-    // Motion trails (drawn after restore so they don't rotate)
+    // Motion trails
     if (this.state === 'punch' || this.state === 'jumpPunch') {
       ctx.strokeStyle = this.color;
       ctx.globalAlpha = 0.4;
-      ctx.lineWidth = 8;
+      ctx.lineWidth = 10 * SCALE;
       ctx.beginPath();
-      ctx.moveTo(shoulderX + 15 * f, finalShoulderY + 5);
-      ctx.lineTo(shoulderX + pose.rightHand.x * f, finalShoulderY + pose.rightHand.y);
+      ctx.moveTo(shoulderX + 15 * f * SCALE, finalShoulderY + 5 * SCALE);
+      ctx.lineTo(shoulderX + pose.rightHand.x * f * SCALE, finalShoulderY + pose.rightHand.y * SCALE);
       ctx.stroke();
       ctx.globalAlpha = 1;
 
-      const fistX = shoulderX + pose.rightHand.x * f;
-      const fistY = finalShoulderY + pose.rightHand.y;
+      const fistX = shoulderX + pose.rightHand.x * f * SCALE;
+      const fistY = finalShoulderY + pose.rightHand.y * SCALE;
       ctx.fillStyle = '#ffffff';
       ctx.shadowColor = this.color;
-      ctx.shadowBlur = 20;
+      ctx.shadowBlur = 25;
       ctx.beginPath();
       for (let i = 0; i < 6; i++) {
         const angle = (i / 6) * Math.PI * 2;
-        const r = i % 2 === 0 ? 8 : 4;
+        const r = (i % 2 === 0 ? 10 : 5) * SCALE;
         const x = fistX + Math.cos(angle) * r;
         const y = fistY + Math.sin(angle) * r;
         if (i === 0) ctx.moveTo(x, y);
@@ -576,32 +554,31 @@ class Fighter {
     if (this.state === 'kick' || this.state === 'jumpKick') {
       ctx.strokeStyle = this.color;
       ctx.globalAlpha = 0.4;
-      ctx.lineWidth = 8;
+      ctx.lineWidth = 10 * SCALE;
       ctx.beginPath();
-      ctx.moveTo(px + 10 * f, hipY + 20);
-      ctx.lineTo(px + pose.rightFoot.x * f, hipY + pose.rightFoot.y);
+      ctx.moveTo(px + 10 * f * SCALE, hipY + 20 * SCALE);
+      ctx.lineTo(px + pose.rightFoot.x * f * SCALE, hipY + pose.rightFoot.y * SCALE);
       ctx.stroke();
       ctx.globalAlpha = 1;
     }
 
-    // Roundhouse spin trail (circular)
+    // Roundhouse trail
     if (this.state === 'roundhouse') {
       ctx.strokeStyle = this.color;
       ctx.globalAlpha = 0.3;
-      ctx.lineWidth = 6;
+      ctx.lineWidth = 8 * SCALE;
       ctx.beginPath();
-      ctx.arc(px, py - 50, 70, this.spinAngle - 0.5, this.spinAngle + 0.5);
+      ctx.arc(px, py - 50 * SCALE, 80 * SCALE, this.spinAngle - 0.5, this.spinAngle + 0.5);
       ctx.stroke();
       ctx.globalAlpha = 1;
 
-      // Speed lines around spin
       ctx.strokeStyle = '#ffffff';
       ctx.globalAlpha = 0.5;
-      ctx.lineWidth = 2;
+      ctx.lineWidth = 2 * SCALE;
       for (let i = 0; i < 3; i++) {
         const a = this.spinAngle - 0.3 - (i * 0.2);
         ctx.beginPath();
-        ctx.arc(px, py - 50, 60 + i * 5, a, a + 0.1);
+        ctx.arc(px, py - 50 * SCALE, (70 + i * 5) * SCALE, a, a + 0.1);
         ctx.stroke();
       }
       ctx.globalAlpha = 1;
@@ -611,10 +588,10 @@ class Fighter {
     if (this.state === 'backflip') {
       ctx.strokeStyle = this.color;
       ctx.globalAlpha = 0.4;
-      ctx.lineWidth = 4;
+      ctx.lineWidth = 5 * SCALE;
       for (let i = 0; i < 3; i++) {
         ctx.beginPath();
-        ctx.arc(px + i * 5 * this.facing, py - 50, 50, 0, Math.PI * 2);
+        ctx.arc(px + i * 5 * this.facing, py - 50 * SCALE, 60 * SCALE, 0, Math.PI * 2);
         ctx.stroke();
       }
       ctx.globalAlpha = 1;
@@ -622,14 +599,14 @@ class Fighter {
 
     if (this.state === 'special') {
       ctx.shadowColor = this.color;
-      ctx.shadowBlur = 30;
+      ctx.shadowBlur = 35;
 
       for (let i = 0; i < 3; i++) {
         ctx.strokeStyle = this.color;
         ctx.globalAlpha = 0.3 - (i * 0.1);
-        ctx.lineWidth = 4 + i * 3;
+        ctx.lineWidth = (4 + i * 3) * SCALE;
         ctx.beginPath();
-        ctx.arc(px, py - 50, 40 + i * 10 + Math.random() * 5, 0, Math.PI * 2);
+        ctx.arc(px, py - 50 * SCALE, (50 + i * 12 + Math.random() * 5) * SCALE, 0, Math.PI * 2);
         ctx.stroke();
       }
       ctx.globalAlpha = 1;
@@ -654,8 +631,8 @@ class Fighter {
       },
 
       walk: {
-        head: { x: 0, y: -15 + Math.sin(this.animFrame * 0.8) * 2 },  // Head bobs
-        spine: { x: Math.sin(this.animFrame * 0.4) * 2, y: 15 },        // Body sways
+        head: { x: 0, y: -15 + Math.sin(this.animFrame * 0.8) * 2 },
+        spine: { x: Math.sin(this.animFrame * 0.4) * 2, y: 15 },
         leftKnee: { x: -5 + Math.sin(this.animFrame * 0.8) * 8, y: 18 + Math.abs(Math.sin(this.animFrame * 0.8)) * 4 },
         leftFoot: { x: -10 + Math.sin(this.animFrame * 0.8) * 15, y: 45 - Math.abs(Math.sin(this.animFrame * 0.8)) * 8 },
         rightKnee: { x: 5 - Math.sin(this.animFrame * 0.8) * 8, y: 18 + Math.abs(Math.cos(this.animFrame * 0.8)) * 4 },
@@ -692,12 +669,11 @@ class Fighter {
         rightHand: { x: 10, y: 20 }
       },
 
-      // NEW: Crouching pose
       crouch: {
-        crouchOffset: 25,  // Lower the whole body
+        crouchOffset: 25,
         head: { x: 0, y: -10 },
         spine: { x: 0, y: 10 },
-        leftKnee: { x: -20, y: 5 },   // Knees bent way out
+        leftKnee: { x: -20, y: 5 },
         leftFoot: { x: -25, y: 20 },
         rightKnee: { x: 20, y: 5 },
         rightFoot: { x: 25, y: 20 },
@@ -707,25 +683,23 @@ class Fighter {
         rightHand: { x: 10, y: 15 }
       },
 
-      // NEW: Roundhouse - extended kick that spins
       roundhouse: {
         head: { x: 0, y: -15 },
         spine: { x: 0, y: 15 },
         leftKnee: { x: 0, y: 25 },
         leftFoot: { x: 0, y: 50 },
-        rightKnee: { x: 30, y: 0 },   // Extended out
-        rightFoot: { x: 60, y: 0 },   // Way out for kick
+        rightKnee: { x: 30, y: 0 },
+        rightFoot: { x: 60, y: 0 },
         leftElbow: { x: -25, y: 5 },
         leftHand: { x: -35, y: 15 },
         rightElbow: { x: 20, y: 10 },
         rightHand: { x: 30, y: 20 }
       },
 
-      // NEW: Backflip pose
       backflip: {
         head: { x: 0, y: -10 },
         spine: { x: 0, y: 15 },
-        leftKnee: { x: -8, y: 10 },   // Tucked
+        leftKnee: { x: -8, y: 10 },
         leftFoot: { x: -12, y: 20 },
         rightKnee: { x: 8, y: 10 },
         rightFoot: { x: 12, y: 20 },
@@ -748,7 +722,6 @@ class Fighter {
         rightHand: { x: 25, y: -20 }
       },
 
-      // NEW: Jump Punch - in air with punch extended
       jumpPunch: {
         head: { x: 5, y: -10 },
         spine: { x: 3, y: 12 },
@@ -759,17 +732,16 @@ class Fighter {
         leftElbow: { x: -10, y: 0 },
         leftHand: { x: -5, y: -10 },
         rightElbow: { x: 25, y: 0 },
-        rightHand: { x: 50, y: -5 }    // Punching down-forward
+        rightHand: { x: 50, y: -5 }
       },
 
-      // NEW: Jump Kick - in air with kick extended
       jumpKick: {
         head: { x: -5, y: -10 },
         spine: { x: -5, y: 12 },
         leftKnee: { x: -10, y: 15 },
         leftFoot: { x: -15, y: 30 },
         rightKnee: { x: 20, y: 5 },
-        rightFoot: { x: 55, y: 0 },    // Flying kick
+        rightFoot: { x: 55, y: 0 },
         leftElbow: { x: -20, y: -5 },
         leftHand: { x: -25, y: -15 },
         rightElbow: { x: 10, y: 0 },
@@ -823,7 +795,7 @@ class Fighter {
         rightKnee: { x: 15, y: 20 },
         rightFoot: { x: 25, y: 45 },
         leftElbow: { x: -25, y: 0 },
-        leftHand: { x: -35, y: -15 },   // Arms flailing
+        leftHand: { x: -35, y: -15 },
         rightElbow: { x: 25, y: 0 },
         rightHand: { x: 35, y: -15 }
       }
@@ -879,7 +851,7 @@ function showAnnouncement(text, duration = 2000) {
   const txt = document.getElementById('announcement-text');
   txt.textContent = text;
   el.classList.remove('show');
-  void el.offsetWidth; // force reflow
+  void el.offsetWidth;
   el.classList.add('show');
 }
 
@@ -935,6 +907,20 @@ function startRound() {
   player2.hp = player2.maxHp;
   player1.x = 200;
   player2.x = canvas.width - 200;
+
+  // Reset death state for new round
+  player1.dying = false;
+  player1.dead = false;
+  player1.deathTimer = 0;
+  player1.deathRotation = 0;
+  player1.setState('idle');
+
+  player2.dying = false;
+  player2.dead = false;
+  player2.deathTimer = 0;
+  player2.deathRotation = 0;
+  player2.setState('idle');
+
   updateHpBars();
 
   document.getElementById('round-text').textContent = `ROUND ${GAME.round}`;
@@ -960,23 +946,21 @@ function startTimer() {
 
     if (GAME.timer <= 0) {
       clearInterval(GAME.timerInterval);
-      // Determine winner by HP
       if (player1.hp > player2.hp) endRound(player1);
       else if (player2.hp > player1.hp) endRound(player2);
-      else endRound(null); // draw
+      else endRound(null);
     }
   }, 1000);
 }
 
 function endRound(winner) {
-  if (GAME.state !== 'fighting') return;
+  if (GAME.state !== 'fighting' && GAME.state !== 'roundEnd') return;
   GAME.state = 'roundEnd';
   clearInterval(GAME.timerInterval);
 
   if (winner) {
     winner.roundsWon++;
     updateRoundDots();
-    Sounds.ko();
     showAnnouncement('K.O.!');
   } else {
     showAnnouncement('DRAW!');
@@ -1013,31 +997,33 @@ function endMatch() {
 
 // ════════ BOT AI ════════
 function botThink() {
-  if (GAME.state !== 'fighting' || !player2) return;
+  if (GAME.state !== 'fighting' || !player2 || player2.dying) return;
 
   const dx = player1.x - player2.x;
   const distance = Math.abs(dx);
-
-  // Random actions with simple AI
   const action = Math.random();
 
   if (distance > 200) {
-    // Move toward player
     player2.move(dx > 0 ? 1 : -1);
   } else if (distance < 120) {
-    // Attack
-    if (action < 0.3) player2.punch(player1);
-    else if (action < 0.5) player2.kick(player1);
-    else if (action < 0.6 && player2.specialCooldown === 0) player2.special(player1);
-    else if (action < 0.75) player2.block();
-    else if (action < 0.85) player2.jump();
-    else player2.move(dx > 0 ? -1 : 1); // back off
+    if (action < 0.25) player2.punch(player1);
+    else if (action < 0.45) player2.kick(player1);
+    else if (action < 0.55 && player2.specialCooldown === 0) player2.special(player1);
+    else if (action < 0.7) player2.block();
+    else if (action < 0.8) player2.jump();
+    else if (action < 0.9) {
+      // Try roundhouse
+      player2.crouch();
+      setTimeout(() => player2.kick(player1), 100);
+    } else player2.move(dx > 0 ? -1 : 1);
   } else {
-    // Mid range - mix it up
-    if (action < 0.4) player2.move(dx > 0 ? 1 : -1);
-    else if (action < 0.6) player2.kick(player1);
-    else if (action < 0.7 && player2.specialCooldown === 0) player2.special(player1);
-    else player2.jump();
+    if (action < 0.35) player2.move(dx > 0 ? 1 : -1);
+    else if (action < 0.55) player2.kick(player1);
+    else if (action < 0.65 && player2.specialCooldown === 0) player2.special(player1);
+    else if (action < 0.8) {
+      player2.jump();
+      setTimeout(() => player2.kick(player1), 200);
+    } else player2.jump();
   }
 }
 
@@ -1082,7 +1068,7 @@ socket.on("player-joined", (player) => {
 
 socket.on("player-moved", (data) => {
   const p = player1 && player1.id === data.playerId ? player1 : (player2 && player2.id === data.playerId ? player2 : null);
-  if (!p || GAME.state !== 'fighting') return;
+  if (!p || GAME.state !== 'fighting' || p.dying) return;
 
   const opponent = p === player1 ? player2 : player1;
 
@@ -1090,7 +1076,7 @@ socket.on("player-moved", (data) => {
     case "left": p.move(-1); break;
     case "right": p.move(1); break;
     case "up": p.jump(); break;
-    case "down": p.crouch(); break;  // NEW: crouch on down
+    case "down": p.crouch(); break;
     case "punch": p.punch(opponent); break;
     case "kick": p.kick(opponent); break;
     case "special": p.special(opponent); break;
@@ -1102,7 +1088,6 @@ socket.on("player-moved", (data) => {
 document.getElementById('bot-mode-btn').addEventListener('click', () => {
   GAME.isBotMode = true;
   if (!player1) {
-    // Create dummy player 1 for testing
     player1 = new Fighter('dummy1', 'YOU', 'left');
     document.getElementById('p1-name').textContent = 'YOU';
   }
@@ -1148,14 +1133,14 @@ requestAnimationFrame(gameLoop);
 
 // Keyboard fallback for testing
 document.addEventListener('keydown', (e) => {
-  if (GAME.state !== 'fighting' || !player1) return;
+  if (GAME.state !== 'fighting' || !player1 || player1.dying) return;
   const opp = player2;
 
   switch (e.key.toLowerCase()) {
     case 'a': player1.move(-1); break;
     case 'd': player1.move(1); break;
     case 'w': player1.jump(); break;
-    case 's': player1.crouch(); break;  // NEW
+    case 's': player1.crouch(); break;
     case 'j': player1.punch(opp); break;
     case 'k': player1.kick(opp); break;
     case 'l': player1.special(opp); break;
