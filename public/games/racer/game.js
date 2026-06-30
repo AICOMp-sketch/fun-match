@@ -408,17 +408,59 @@ function drawTrack() {
   ctx.globalAlpha = 1;
 }
 
+// Add zoom to camera object
+if (!camera.zoom) camera.zoom = 1;
+
 function updateCamera() {
-  const localCar = cars[LOCAL_PLAYER_ID];
-  if (localCar) {
-    const targetX = localCar.x - canvas.width / 2;
-    const targetY = localCar.y - canvas.height / 2;
-    camera.x += (targetX - camera.x) * 0.15;
-    camera.y += (targetY - camera.y) * 0.15;
-  } else {
-    camera.x = TRACK.cx - canvas.width / 2;
-    camera.y = TRACK.cy - canvas.height / 2;
+  const allCars = Object.values(cars).filter(c => !c.finished);
+
+  // If no cars or not racing, center on track
+  if (allCars.length === 0 || GAME.state !== 'racing') {
+    const targetZoom = 1;
+    camera.zoom += (targetZoom - camera.zoom) * 0.1;
+    camera.x = TRACK.cx - (canvas.width / 2) / camera.zoom;
+    camera.y = TRACK.cy - (canvas.height / 2) / camera.zoom;
+    return;
   }
+
+  // Find bounding box of all active cars
+  let minX = Infinity, maxX = -Infinity;
+  let minY = Infinity, maxY = -Infinity;
+
+  allCars.forEach(car => {
+    if (car.x < minX) minX = car.x;
+    if (car.x > maxX) maxX = car.x;
+    if (car.y < minY) minY = car.y;
+    if (car.y > maxY) maxY = car.y;
+  });
+
+  // Add padding around cars so they're not at the edge
+  const padding = 200;
+  const boxWidth = (maxX - minX) + padding * 2;
+  const boxHeight = (maxY - minY) + padding * 2;
+
+  // Center of the bounding box
+  const centerX = (minX + maxX) / 2;
+  const centerY = (minY + maxY) / 2;
+
+  // Calculate zoom needed to fit all cars
+  const zoomX = canvas.width / boxWidth;
+  const zoomY = canvas.height / boxHeight;
+  let targetZoom = Math.min(zoomX, zoomY);
+
+  // Clamp zoom (don't zoom in too much, don't zoom out too much)
+  targetZoom = Math.max(0.4, Math.min(1.2, targetZoom));
+
+  // Smooth zoom transition
+  camera.zoom += (targetZoom - camera.zoom) * 0.05;
+
+  // Calculate camera position (centered on all cars)
+  const targetX = centerX - (canvas.width / 2) / camera.zoom;
+  const targetY = centerY - (canvas.height / 2) / camera.zoom;
+
+  // Smooth camera movement
+  camera.x += (targetX - camera.x) * 0.1;
+  camera.y += (targetY - camera.y) * 0.1;
 }
 
 function updateLeaderboard() {
@@ -756,6 +798,8 @@ function gameLoop() {
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.save();
+  
+  ctx.scale(camera.zoom, camera.zoom);
   ctx.translate(-camera.x, -camera.y);
 
   drawTrack();
