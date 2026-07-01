@@ -103,7 +103,6 @@ function startGame() {
 }
 
 function sendHandsToPlayers() {
-  // Send each player their hand via socket
   GAME.players.forEach(player => {
     if (!player.isBot) {
       socket.emit('uno-hand', {
@@ -333,7 +332,7 @@ function endGame(winner) {
 
     // Stats
     const stats = document.getElementById('win-stats');
-    const cardsLeft = GAME.players.map(p => 
+    const cardsLeft = GAME.players.map(p =>
       `<div class="stat-row"><span>${p.name}</span><span>${GAME.hands[p.id].length} cards</span></div>`
     ).join('');
     stats.innerHTML = cardsLeft;
@@ -387,8 +386,8 @@ function updateDisplay() {
     document.getElementById('local-name').textContent = localPlayer.name;
     const isYourTurn = current.id === LOCAL_PLAYER_ID;
     document.getElementById('local-player-display').classList.toggle('your-turn', isYourTurn);
-    document.getElementById('local-status').textContent = isYourTurn 
-      ? `Your turn! (${GAME.hands[LOCAL_PLAYER_ID].length} cards)` 
+    document.getElementById('local-status').textContent = isYourTurn
+      ? `Your turn! (${GAME.hands[LOCAL_PLAYER_ID].length} cards)`
       : `Waiting... (${GAME.hands[LOCAL_PLAYER_ID].length} cards)`;
   }
 }
@@ -550,11 +549,11 @@ function showLocalPlayerCards() {
 
   container.innerHTML = hand.map((card, i) => {
     const canPlay = isMyTurn && isValidPlay(card, topCard, GAME.currentColor);
-    const bgColor = card.type === 'wild' ? 'linear-gradient(135deg, #ff3860 0%, #ffaa00 33%, #aaff00 66%, #00e0ff 100%)' : 
+    const bgColor = card.type === 'wild' ? 'linear-gradient(135deg, #ff3860 0%, #ffaa00 33%, #aaff00 66%, #00e0ff 100%)' :
       card.color === 'red' ? '#ff3860' :
-      card.color === 'blue' ? '#00e0ff' :
-      card.color === 'green' ? '#aaff00' :
-      '#ffaa00';
+        card.color === 'blue' ? '#00e0ff' :
+          card.color === 'green' ? '#aaff00' :
+            '#ffaa00';
 
     let displayValue = card.value;
     if (card.value === 'skip') displayValue = '⊘';
@@ -658,7 +657,7 @@ function showColorPicker(callback) {
 
 // Hook into updateDisplay for bot mode
 const originalUpdateDisplay = updateDisplay;
-updateDisplay = function() {
+updateDisplay = function () {
   originalUpdateDisplay();
   if (GAME.isBotMode) showLocalPlayerCards();
 };

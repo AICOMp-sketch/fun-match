@@ -88,6 +88,51 @@ io.on("connection", (socket) => {
     });
   });
 
+  // ═══════ UNO EVENTS ═══════
+
+  // Host sends hand to specific player
+  socket.on("uno-hand", (data) => {
+    // Forward to specific player
+    io.to(data.targetId).emit("uno-your-hand", {
+      hand: data.hand,
+      isMyTurn: data.isMyTurn,
+      currentColor: data.currentColor,
+      topCard: data.topCard
+    });
+  });
+
+  // Player plays a card
+  socket.on("uno-play-card", (data) => {
+    const roomCode = socket.data.roomCode;
+    const room = rooms[roomCode];
+    if (!room) return;
+
+    // Forward to host
+    io.to(room.hostId).emit("uno-play", {
+      playerId: socket.id,
+      cardIndex: data.cardIndex,
+      chosenColor: data.chosenColor
+    });
+  });
+
+  // Player draws a card
+  socket.on("uno-draw-card", () => {
+    const roomCode = socket.data.roomCode;
+    const room = rooms[roomCode];
+    if (!room) return;
+
+    io.to(room.hostId).emit("uno-draw", {
+      playerId: socket.id
+    });
+  });
+
+  // Host sends error back to player
+  socket.on("uno-error", (data) => {
+    io.to(data.targetId).emit("uno-error-msg", {
+      message: data.message
+    });
+  });
+
   socket.on("disconnect", () => {
     console.log("❌ User disconnected:", socket.id);
 

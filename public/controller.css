@@ -430,3 +430,269 @@ input {
 .boost-btn:active .boost-label {
     color: #050810;
 }
+
+/* ══════ UNO Controller ══════ */
+#uno-controller {
+    padding: 15px;
+    gap: 12px;
+    max-width: 100%;
+    width: 100%;
+}
+
+.uno-header {
+    text-align: center;
+}
+
+.uno-header h2 {
+    font-size: 2rem;
+    background: linear-gradient(135deg, #ff3860, #ffaa00);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    font-weight: 900;
+    letter-spacing: 4px;
+}
+
+#uno-status {
+    color: #94a3b8;
+    font-size: 0.85rem;
+    margin-top: 5px;
+}
+
+.uno-top-card-display {
+    background: rgba(0, 0, 0, 0.4);
+    border-radius: 12px;
+    padding: 12px;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.uno-label {
+    font-size: 0.7rem;
+    color: #94a3b8;
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+}
+
+.uno-mini-card {
+    width: 60px;
+    height: 85px;
+    margin: 0 auto;
+    border-radius: 8px;
+    border: 3px solid white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1.5rem;
+    color: white;
+    text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.4);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.uno-mini-card.red {
+    background: #ff3860;
+}
+
+.uno-mini-card.blue {
+    background: #00e0ff;
+}
+
+.uno-mini-card.green {
+    background: #aaff00;
+}
+
+.uno-mini-card.yellow {
+    background: #ffaa00;
+}
+
+.uno-mini-card.wild {
+    background: linear-gradient(135deg, #ff3860 0%, #ffaa00 33%, #aaff00 66%, #00e0ff 100%);
+}
+
+.uno-color-label {
+    margin-top: 8px;
+    font-size: 0.75rem;
+    color: #94a3b8;
+}
+
+.uno-color-label span {
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+.uno-hand {
+    background: rgba(255, 255, 255, 0.03);
+    border: 2px dashed rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 12px;
+    min-height: 130px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    justify-content: center;
+    align-items: center;
+}
+
+.uno-hand .no-cards {
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.uno-card {
+    width: 55px;
+    height: 78px;
+    border-radius: 8px;
+    border: 3px solid white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1.3rem;
+    color: white;
+    text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.4);
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+    user-select: none;
+}
+
+.uno-card.playable {
+    border-color: #aaff00;
+    box-shadow: 0 0 15px rgba(170, 255, 0, 0.6);
+    animation: glowPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0 15px rgba(170, 255, 0, 0.6);
+    }
+
+    50% {
+        box-shadow: 0 0 25px rgba(170, 255, 0, 1);
+    }
+}
+
+.uno-card.playable:active {
+    transform: scale(0.9) translateY(-10px);
+}
+
+.uno-card.not-playable {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.uno-card.red {
+    background: #ff3860;
+}
+
+.uno-card.blue {
+    background: #00e0ff;
+}
+
+.uno-card.green {
+    background: #aaff00;
+}
+
+.uno-card.yellow {
+    background: #ffaa00;
+}
+
+.uno-card.wild {
+    background: linear-gradient(135deg, #ff3860 0%, #ffaa00 33%, #aaff00 66%, #00e0ff 100%);
+}
+
+.uno-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.uno-action-btn {
+    flex: 1;
+    padding: 15px;
+    background: linear-gradient(135deg, #7c3aed, #ff3860);
+    color: white;
+    border: 2px solid white;
+    border-radius: 12px;
+    font-weight: 800;
+    font-size: 1rem;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: 1px;
+}
+
+.uno-action-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.uno-action-btn:not(:disabled):active {
+    transform: scale(0.97);
+}
+
+.uno-color-picker {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.9);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 30px;
+    backdrop-filter: blur(10px);
+}
+
+.uno-color-picker h3 {
+    font-size: 1.5rem;
+    color: white;
+}
+
+.uno-colors {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.uno-color {
+    width: 100px;
+    height: 100px;
+    border: 5px solid white;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.uno-color:active {
+    transform: scale(0.9);
+}
+
+.uno-color.red {
+    background: #ff3860;
+}
+
+.uno-color.blue {
+    background: #00e0ff;
+}
+
+.uno-color.green {
+    background: #aaff00;
+}
+
+.uno-color.yellow {
+    background: #ffaa00;
+}
+
+.uno-error {
+    color: #ff3860;
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    min-height: 22px;
+}

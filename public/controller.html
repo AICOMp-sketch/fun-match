@@ -22,15 +22,40 @@
         <p id="error-msg"></p>
     </div>
 
-    <!-- Survive Controller (D-pad) -->
-    <div id="survive-controller" class="controller hidden">
-        <h2 id="welcome">Welcome!</h2>
-        <div class="dpad">
-            <button class="ctrl-btn dpad-btn up" data-dir="up">▲</button>
-            <button class="ctrl-btn dpad-btn left" data-dir="left">◄</button>
-            <button class="ctrl-btn dpad-btn right" data-dir="right">►</button>
-            <button class="ctrl-btn dpad-btn down" data-dir="down">▼</button>
+    <!-- UNO Controller -->
+    <div id="uno-controller" class="controller hidden">
+        <div class="uno-header">
+            <h2 id="uno-welcome">UNO</h2>
+            <p id="uno-status">Waiting for game to start...</p>
         </div>
+
+        <div class="uno-top-card-display">
+            <p class="uno-label">TOP CARD</p>
+            <div id="uno-top-card" class="uno-mini-card">
+                <span>-</span>
+            </div>
+            <p class="uno-color-label">Color: <span id="uno-current-color">-</span></p>
+        </div>
+
+        <div class="uno-hand" id="uno-hand">
+            <p class="no-cards">Waiting for cards...</p>
+        </div>
+
+        <div class="uno-actions">
+            <button id="uno-draw-btn" class="uno-action-btn" disabled>DRAW CARD</button>
+        </div>
+
+        <div id="uno-color-picker" class="uno-color-picker hidden">
+            <h3>Pick a color</h3>
+            <div class="uno-colors">
+                <button class="uno-color red" data-color="red"></button>
+                <button class="uno-color blue" data-color="blue"></button>
+                <button class="uno-color green" data-color="green"></button>
+                <button class="uno-color yellow" data-color="yellow"></button>
+            </div>
+        </div>
+
+        <p id="uno-error" class="uno-error"></p>
     </div>
 
     <!-- Fighter Controller -->
@@ -97,7 +122,7 @@
     <!-- Game Selection -->
     <div id="game-select" class="hidden">
         <h2>Pick Controller Type</h2>
-        <button class="select-btn" data-game="survive">Survive Mode</button>
+        <button class="select-btn" data-game="survive">UNO Card Game</button>
         <button class="select-btn" data-game="fighter">Fighter Mode</button>
         <button class="select-btn" data-game="racer">Racer Mode</button>
     </div>
