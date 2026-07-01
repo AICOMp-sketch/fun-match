@@ -1,873 +1,302 @@
 const socket = io("https://fun-match-production.up.railway.app");
 const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
+const c = canvas.getContext("2d");
+const CW = canvas.width;
+const CH = canvas.height;
 
-// ════════ SIZE CONFIG ════════
-const SCALE = 1.4;  // Change this to resize fighters: 1.0=small, 1.4=medium, 1.8=huge
-
-// Set canvas to actual display size
-function resizeCanvas() {
-  const rect = canvas.getBoundingClientRect();
-  canvas.width = rect.width;
-  canvas.height = rect.height;
-}
-window.addEventListener('resize', resizeCanvas);
+// ════════ CONSTANTS ════════
+const GRAVITY = 0.7;
+const SPEED = 5;
+const JUMP_V = -18;
+const FLOOR_Y = 330;
+const CDN = "https://cdn.jsdelivr.net/gh/chriscourses/fighting-game@main/img/";
 
 // ════════ GAME STATE ════════
 const GAME = {
-  state: 'waiting',
+  state: 'waiting', // waiting, countdown, fighting, roundEnd, gameOver
   round: 1,
   maxRounds: 3,
-  timer: 99,
+  timer: 60,
   timerInterval: null,
-  particles: [],
-  isBotMode: false
+  isBotMode: false,
+  lastTime: performance.now()
 };
 
-const GROUND_Y = () => canvas.height - 100;
-
-class Fighter {
-  constructor(id, name, side) {
-    this.id = id;
-    this.name = name;
-    this.side = side;
-    this.x = side === 'left' ? 200 : canvas.width - 200;
-    this.y = GROUND_Y();
-    this.vx = 0;
-    this.vy = 0;
-    this.width = 60 * SCALE;
-    this.height = 100 * SCALE;
-
-    this.hp = 100;
-    this.maxHp = 100;
-    this.roundsWon = 0;
-
-    this.facing = side === 'left' ? 1 : -1;
-    this.state = 'idle';
-    this.stateTimer = 0;
-
-    this.onGround = true;
-    this.isBlocking = false;
-    this.specialCooldown = 0;
-    this.invulnerable = 0;
-
-    this.color = side === 'left' ? '#00e0ff' : '#ff7b00';
-    this.glowColor = side === 'left' ? 'rgba(0, 224, 255, 0.6)' : 'rgba(255, 123, 0, 0.6)';
-
-    this.animFrame = 0;
-    this.animTimer = 0;
-
-    this.crouching = false;
-    this.spinAngle = 0;
-    this.flipAngle = 0;
-
-    // Death animation
-    this.dying = false;
-    this.deathTimer = 0;
-    this.deathRotation = 0;
-    this.deathBounce = 0;
-    this.dead = false;
-  }
-
-  update(dt, opponent) {
-    // Handle death animation
-    if (this.dying) {
-      this.vy += 0.8;
-      this.x += this.vx;
-      this.y += this.vy;
-      this.vx *= 0.92;
-      this.updateDeathAnimation();
-      return;
-    }
-
-    // Physics
-    this.vy += 0.8;
-    this.x += this.vx;
-    this.y += this.vy;
-
-    // Ground collision
-    if (this.y >= GROUND_Y()) {
-      this.y = GROUND_Y();
-      this.vy = 0;
-      this.onGround = true;
-      if (this.state === 'jump' || this.state === 'jumpPunch' || this.state === 'jumpKick' || this.state === 'backflip') {
-        this.setState('idle');
-        this.spinAngle = 0;
-        this.flipAngle = 0;
-      }
-    } else {
-      this.onGround = false;
-    }
-
-    // Wall bounds
-    this.x = Math.max(this.width / 2, Math.min(canvas.width - this.width / 2, this.x));
-
-    // Face opponent
-    if (opponent && this.onGround && this.state !== 'roundhouse' && this.state !== 'backflip') {
-      this.facing = opponent.x > this.x ? 1 : -1;
-    }
-
-    // Friction
-    this.vx *= 0.8;
-
-    // Cooldowns
-    if (this.specialCooldown > 0) this.specialCooldown--;
-    if (this.invulnerable > 0) this.invulnerable--;
-
-    // Spin animation
-    if (this.state === 'roundhouse') {
-      this.spinAngle += 0.3;
-    }
-
-    // Flip animation
-    if (this.state === 'backflip') {
-      this.flipAngle += 0.25;
-    }
-
-    // State timer
-    if (this.stateTimer > 0) {
-      this.stateTimer--;
-      if (this.stateTimer === 0) {
-        if (this.onGround) {
-          this.setState('idle');
-          this.spinAngle = 0;
-          this.flipAngle = 0;
-        }
-      }
-    }
-
-    // Animation
-    this.animTimer++;
-    const animSpeed = this.state === 'walk' ? 3 : 8;
-    if (this.animTimer > animSpeed) {
-      this.animFrame = (this.animFrame + 1) % 8;
-      this.animTimer = 0;
-    }
-  }
-
-  setState(state, duration = 0) {
-    this.state = state;
-    this.stateTimer = duration;
-  }
-
-  move(dir) {
-    if (this.state === 'idle' || this.state === 'walk') {
-      this.vx = dir * 5;
-      this.setState('walk');
-    }
-  }
-
-  jump() {
-    if (this.onGround && this.state !== 'punch' && this.state !== 'kick' && this.state !== 'crouch' && this.state !== 'roundhouse') {
-      this.vy = -16;
-      this.setState('jump');
-      Sounds.jump();
-    }
-  }
-
-  crouch() {
-    if (this.onGround && (this.state === 'idle' || this.state === 'walk')) {
-      this.crouching = true;
-      this.setState('crouch', 8);
-    }
-  }
-
-  punch(opponent) {
-    if (!this.onGround && this.state !== 'jumpPunch') {
-      this.setState('jumpPunch', 25);
-      Sounds.punch();
-      this.checkHit(opponent, 10, 90 * SCALE);
-      return;
-    }
-
-    if (this.state === 'idle' || this.state === 'walk') {
-      this.setState('punch', 15);
-      Sounds.punch();
-      this.checkHit(opponent, 8, 80 * SCALE);
-    }
-  }
-
-  kick(opponent) {
-    if (this.crouching || this.state === 'crouch') {
-      this.setState('roundhouse', 30);
-      this.spinAngle = 0;
-      Sounds.kick();
-      this.checkHit(opponent, 15, 110 * SCALE);
-      setTimeout(() => {
-        if (this.state === 'roundhouse') this.checkHit(opponent, 15, 110 * SCALE);
-      }, 200);
-      this.crouching = false;
-      return;
-    }
-
-    if (!this.onGround && this.state !== 'jumpKick') {
-      this.setState('jumpKick', 25);
-      Sounds.kick();
-      this.checkHit(opponent, 14, 110 * SCALE);
-      return;
-    }
-
-    if (this.state === 'idle' || this.state === 'walk') {
-      this.setState('kick', 20);
-      Sounds.kick();
-      this.checkHit(opponent, 12, 100 * SCALE);
-    }
-  }
-
-  special(opponent) {
-    if (this.specialCooldown > 0) return;
-
-    if (this.crouching || this.state === 'crouch') {
-      this.setState('backflip', 40);
-      this.flipAngle = 0;
-      this.vx = -this.facing * 8;
-      this.vy = -14;
-      this.invulnerable = 40;
-      this.specialCooldown = 120;
-      this.crouching = false;
-      Sounds.jump();
-      return;
-    }
-
-    if (this.state === 'idle' || this.state === 'walk') {
-      this.setState('special', 30);
-      this.specialCooldown = 180;
-      Sounds.special();
-
-      for (let i = 0; i < 20; i++) {
-        GAME.particles.push({
-          x: this.x + (this.facing * 50),
-          y: this.y - 50 * SCALE,
-          vx: (Math.random() - 0.5) * 8 + (this.facing * 4),
-          vy: (Math.random() - 0.5) * 8,
-          life: 30,
-          color: this.color,
-          size: Math.random() * 6 + 3
-        });
-      }
-
-      this.checkHit(opponent, 20, 150 * SCALE);
-    }
-  }
-
-  block() {
-    this.isBlocking = true;
-    this.setState('block', 10);
-    Sounds.block();
-  }
-
-  checkHit(opponent, damage, range) {
-    if (!opponent || opponent.invulnerable > 0) return;
-
-    const dx = opponent.x - this.x;
-    const distance = Math.abs(dx);
-    const sameDirection = (dx > 0 && this.facing === 1) || (dx < 0 && this.facing === -1);
-
-    if (distance < range && sameDirection) {
-      setTimeout(() => {
-        if (opponent.isBlocking) {
-          opponent.hp -= damage * 0.2;
-          createHitParticles(opponent.x, opponent.y - 50 * SCALE, '#94a3b8', 5);
-        } else {
-          opponent.hp -= damage;
-          opponent.vx = this.facing * 8;
-          opponent.setState('hurt', 15);
-          opponent.invulnerable = 20;
-          createHitParticles(opponent.x, opponent.y - 50 * SCALE, '#ff3860', 15);
-          screenShake();
-          Sounds.hit();
-        }
-
-        opponent.hp = Math.max(0, opponent.hp);
-        updateHpBars();
-
-        if (opponent.hp <= 0 && !opponent.dying) {
-          opponent.startDying(this);
-        }
-      }, 100);
-    }
-  }
-
-  startDying(killer) {
-    this.dying = true;
-    this.deathTimer = 90;
-    this.invulnerable = 200;
-    this.setState('dying', 90);
-
-    const dir = killer.facing;
-    this.vx = dir * 12;
-    this.vy = -8;
-
-    Sounds.ko();
-
-    for (let i = 0; i < 30; i++) {
-      GAME.particles.push({
-        x: this.x,
-        y: this.y - 50 * SCALE,
-        vx: (Math.random() - 0.5) * 15,
-        vy: (Math.random() - 0.5) * 15 - 5,
-        life: 50,
-        color: '#ff3860',
-        size: Math.random() * 6 + 3
-      });
-    }
-
-    screenShake();
-    setTimeout(() => screenShake(), 200);
-    setTimeout(() => screenShake(), 400);
-  }
-
-  updateDeathAnimation() {
-    if (!this.dying) return;
-
-    this.deathTimer--;
-    this.deathRotation += 0.3 * this.facing;
-
-    if (this.y >= GROUND_Y()) {
-      if (Math.abs(this.vy) > 2) {
-        this.vy = -Math.abs(this.vy) * 0.5;
-        this.deathBounce++;
-
-        for (let i = 0; i < 10; i++) {
-          GAME.particles.push({
-            x: this.x,
-            y: GROUND_Y(),
-            vx: (Math.random() - 0.5) * 6,
-            vy: -Math.random() * 5,
-            life: 30,
-            color: '#ff7b00',
-            size: Math.random() * 4 + 2
-          });
-        }
-
-        screenShake();
-      } else {
-        this.vy = 0;
-        this.y = GROUND_Y();
-      }
-    }
-
-    if (this.deathTimer <= 0 && !this.dead) {
-      this.dead = true;
-      endRound(this === player1 ? player2 : player1);
-    }
+// ════════ SPRITE CLASS (backgrounds) ════════
+class Sprite {
+  constructor({ position, imageSrc, scale = 1, framesMax = 1, offset = {x:0, y:0} }) {
+    this.position = position;
+    this.scale = scale;
+    this.framesMax = framesMax;
+    this.offset = offset;
+    this.image = new Image();
+    this.image.src = encodeURI(imageSrc);
+    this.framesCurrent = 0;
+    this.framesElapsed = 0;
+    this.framesHold = 8;
   }
 
   draw() {
-    ctx.save();
+    if (!this.image.complete || !this.image.naturalWidth) return;
+    const fw = this.image.width / this.framesMax;
+    c.drawImage(
+      this.image,
+      this.framesCurrent * fw, 0, fw, this.image.height,
+      this.position.x - this.offset.x, this.position.y - this.offset.y,
+      fw * this.scale, this.image.height * this.scale
+    );
+  }
 
-    // Bigger shadow for bigger character
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-    ctx.beginPath();
-    ctx.ellipse(this.x, GROUND_Y() + 5, 50 * SCALE, 10 * SCALE, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    if (this.invulnerable > 0 && Math.floor(this.invulnerable / 3) % 2 === 0) {
-      ctx.globalAlpha = 0.5;
-    }
-
-    this.drawStickman();
-
-    ctx.restore();
-
-    // Special cooldown bar
-    if (this.specialCooldown > 0) {
-      const barW = 60 * SCALE;
-      const barH = 5;
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-      ctx.fillRect(this.x - barW / 2, this.y - this.height - 20, barW, barH);
-      ctx.fillStyle = '#aaff00';
-      ctx.fillRect(this.x - barW / 2, this.y - this.height - 20, barW * (1 - this.specialCooldown / 180), barH);
+  animate() {
+    if (++this.framesElapsed % this.framesHold === 0) {
+      this.framesCurrent = (this.framesCurrent + 1) % this.framesMax;
     }
   }
 
-  drawStickman() {
-    const px = this.x;
-    const py = this.y;
-    const f = this.facing;
+  update() {
+    this.draw();
+    this.animate();
+  }
+}
 
-    ctx.save();
-    if (this.state === 'roundhouse') {
-      ctx.translate(px, py - 50 * SCALE);
-      ctx.rotate(this.spinAngle);
-      ctx.translate(-px, -(py - 50 * SCALE));
-    } else if (this.state === 'backflip') {
-      ctx.translate(px, py - 50 * SCALE);
-      ctx.rotate(-this.flipAngle * this.facing);
-      ctx.translate(-px, -(py - 50 * SCALE));
-    } else if (this.dying) {
-      ctx.translate(px, py - 50 * SCALE);
-      ctx.rotate(this.deathRotation);
-      ctx.translate(-px, -(py - 50 * SCALE));
+// ════════ FIGHTER CLASS ════════
+class Fighter {
+  constructor(config) {
+    this.id = config.id;
+    this.name = config.name;
+    this.startX = config.startX;
+    this.defaultFacing = config.defaultFacing;
+    this.scale = config.scale;
+    this.drawOffset = config.offset;
+    this.hitFrame = config.hitFrame;
+    this.width = 50;
+    this.height = 150;
+    this.attackBox = { x: 0, y: 0, width: 160, height: 50, innerGap: 12, yOff: 50 };
+    this.sprites = config.sprites;
+    this.isCPU = false;
+
+    // Load all sprite images
+    for (const key in this.sprites) {
+      this.sprites[key].image = new Image();
+      this.sprites[key].image.src = encodeURI(this.sprites[key].src);
     }
 
-    const pose = this.getStickmanPose();
+    this.roundsWon = 0;
+    this.reset();
+  }
 
-    // Death effect: flash red and dim
-    let drawColor = this.color;
-    let drawGlow = this.glowColor;
+  reset() {
+    this.position = { x: this.startX, y: 0 };
+    this.velocity = { x: 0, y: 0 };
+    this.health = 100;
+    this.maxHealth = 100;
+    this.dead = false;
+    this.isAttacking = false;
+    this._applied = false;
+    this.onGround = false;
+    this.facing = this.defaultFacing;
+    this.lastKey = null;
+    this.aiTimer = 0;
+    this.aiJump = 0;
+    this.aiAtk = 0;
+    this.image = this.sprites.idle.image;
+    this.framesMax = this.sprites.idle.framesMax;
+    this.framesCurrent = 0;
+    this.framesElapsed = 0;
+    this.framesHold = 6;
+  }
 
-    if (this.dying) {
-      if (Math.floor(this.deathTimer / 5) % 2 === 0) {
-        drawColor = '#ff3860';
-        drawGlow = 'rgba(255, 56, 96, 0.8)';
-      }
+  get cx() { return this.position.x + this.width / 2; }
 
-      if (this.deathTimer < 30) {
-        ctx.globalAlpha = this.deathTimer / 30;
-      }
+  draw() {
+    if (!this.image.complete || !this.image.naturalWidth) return;
+    const fw = this.image.width / this.framesMax;
+    const dx = this.position.x - this.drawOffset.x;
+    const dy = this.position.y - this.drawOffset.y;
+    const dw = fw * this.scale;
+    const dh = this.image.height * this.scale;
+    const flip = this.facing !== this.defaultFacing;
+
+    c.save();
+    if (flip) {
+      c.translate(dx + dw / 2, 0);
+      c.scale(-1, 1);
+      c.translate(-(dx + dw / 2), 0);
     }
+    c.drawImage(this.image, this.framesCurrent * fw, 0, fw, this.image.height, dx, dy, dw, dh);
+    c.restore();
+  }
 
-    ctx.shadowColor = drawGlow;
-    ctx.shadowBlur = 18;
-    ctx.strokeStyle = drawColor;
-    ctx.lineWidth = 6 * SCALE;
-    ctx.lineCap = 'round';
-    ctx.lineJoin = 'round';
+  animate() {
+    if (this.dead && this.image === this.sprites.death.image
+        && this.framesCurrent === this.sprites.death.framesMax - 1) return;
+    if (++this.framesElapsed % this.framesHold === 0) {
+      if (this.framesCurrent < this.framesMax - 1) this.framesCurrent++;
+      else if (!(this.image === this.sprites.death.image)) this.framesCurrent = 0;
+    }
+  }
 
-    const hipY = py - (50 * SCALE) + ((pose.crouchOffset || 0) * SCALE);
-    const shoulderY = py - (80 * SCALE) + ((pose.crouchOffset || 0) * SCALE);
+  updateAttackBox() {
+    const cx = this.cx;
+    const b = this.attackBox;
+    b.x = this.facing === 1 ? cx + b.innerGap : cx - b.innerGap - b.width;
+    b.y = this.position.y + b.yOff;
+  }
 
-    // Legs
-    ctx.beginPath();
-    ctx.moveTo(px, hipY);
-    ctx.lineTo(px + pose.leftKnee.x * f * SCALE, hipY + pose.leftKnee.y * SCALE);
-    ctx.lineTo(px + pose.leftFoot.x * f * SCALE, hipY + pose.leftFoot.y * SCALE);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.moveTo(px, hipY);
-    ctx.lineTo(px + pose.rightKnee.x * f * SCALE, hipY + pose.rightKnee.y * SCALE);
-    ctx.lineTo(px + pose.rightFoot.x * f * SCALE, hipY + pose.rightFoot.y * SCALE);
-    ctx.stroke();
-
-    // Spine
-    ctx.beginPath();
-    ctx.moveTo(px, hipY);
-    ctx.lineTo(px + pose.spine.x * f * SCALE, shoulderY + pose.spine.y * SCALE);
-    ctx.stroke();
-
-    const shoulderX = px + pose.spine.x * f * SCALE;
-    const finalShoulderY = shoulderY + pose.spine.y * SCALE;
-
-    // Arms
-    ctx.beginPath();
-    ctx.moveTo(shoulderX, finalShoulderY);
-    ctx.lineTo(shoulderX + pose.leftElbow.x * f * SCALE, finalShoulderY + pose.leftElbow.y * SCALE);
-    ctx.lineTo(shoulderX + pose.leftHand.x * f * SCALE, finalShoulderY + pose.leftHand.y * SCALE);
-    ctx.stroke();
-
-    ctx.beginPath();
-    ctx.moveTo(shoulderX, finalShoulderY);
-    ctx.lineTo(shoulderX + pose.rightElbow.x * f * SCALE, finalShoulderY + pose.rightElbow.y * SCALE);
-    ctx.lineTo(shoulderX + pose.rightHand.x * f * SCALE, finalShoulderY + pose.rightHand.y * SCALE);
-    ctx.stroke();
-
-    // Head (bigger)
-    const headX = shoulderX + pose.head.x * f * SCALE;
-    const headY = finalShoulderY + pose.head.y * SCALE;
-    const headRadius = 14 * SCALE;
-
-    ctx.beginPath();
-    ctx.arc(headX, headY, headRadius, 0, Math.PI * 2);
-    ctx.fillStyle = drawColor;
-    ctx.fill();
-    ctx.strokeStyle = drawColor;
-    ctx.lineWidth = 3 * SCALE;
-    ctx.stroke();
-
-    // Face
-    ctx.shadowBlur = 0;
-    ctx.fillStyle = '#050810';
-
-    if (this.state === 'hurt' || this.dying) {
-      ctx.strokeStyle = '#ff3860';
-      ctx.lineWidth = 2.5 * SCALE;
-      ctx.beginPath();
-      ctx.moveTo(headX - 7 * f * SCALE, headY - 3 * SCALE);
-      ctx.lineTo(headX - 3 * f * SCALE, headY + 1 * SCALE);
-      ctx.moveTo(headX - 3 * f * SCALE, headY - 3 * SCALE);
-      ctx.lineTo(headX - 7 * f * SCALE, headY + 1 * SCALE);
-      ctx.moveTo(headX + 3 * f * SCALE, headY - 3 * SCALE);
-      ctx.lineTo(headX + 7 * f * SCALE, headY + 1 * SCALE);
-      ctx.moveTo(headX + 7 * f * SCALE, headY - 3 * SCALE);
-      ctx.lineTo(headX + 3 * f * SCALE, headY + 1 * SCALE);
-      ctx.stroke();
-    } else if (this.state === 'block') {
-      ctx.strokeStyle = '#050810';
-      ctx.lineWidth = 2.5 * SCALE;
-      ctx.beginPath();
-      ctx.moveTo(headX - 7 * f * SCALE, headY - 2 * SCALE);
-      ctx.lineTo(headX - 3 * f * SCALE, headY - 2 * SCALE);
-      ctx.moveTo(headX + 3 * f * SCALE, headY - 2 * SCALE);
-      ctx.lineTo(headX + 7 * f * SCALE, headY - 2 * SCALE);
-      ctx.stroke();
+  physics() {
+    this.position.x += this.velocity.x;
+    this.position.y += this.velocity.y;
+    this.position.x = Math.max(-30, Math.min(CW - this.width + 30, this.position.x));
+    if (this.position.y + this.height + this.velocity.y >= CH - 96) {
+      this.velocity.y = 0;
+      this.position.y = FLOOR_Y;
+      this.onGround = true;
     } else {
-      // Eyes
-      ctx.beginPath();
-      ctx.arc(headX - 5 * f * SCALE, headY - 2 * SCALE, 2.5 * SCALE, 0, Math.PI * 2);
-      ctx.arc(headX + 5 * f * SCALE, headY - 2 * SCALE, 2.5 * SCALE, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Angry eyebrows
-      ctx.strokeStyle = '#050810';
-      ctx.lineWidth = 2.5 * SCALE;
-      ctx.beginPath();
-      ctx.moveTo(headX - 8 * f * SCALE, headY - 6 * SCALE);
-      ctx.lineTo(headX - 2 * f * SCALE, headY - 4 * SCALE);
-      ctx.moveTo(headX + 2 * f * SCALE, headY - 4 * SCALE);
-      ctx.lineTo(headX + 8 * f * SCALE, headY - 6 * SCALE);
-      ctx.stroke();
+      this.velocity.y += GRAVITY;
+      this.onGround = false;
     }
-
-    ctx.restore();
-
-    // Motion trails
-    if (this.state === 'punch' || this.state === 'jumpPunch') {
-      ctx.strokeStyle = this.color;
-      ctx.globalAlpha = 0.4;
-      ctx.lineWidth = 10 * SCALE;
-      ctx.beginPath();
-      ctx.moveTo(shoulderX + 15 * f * SCALE, finalShoulderY + 5 * SCALE);
-      ctx.lineTo(shoulderX + pose.rightHand.x * f * SCALE, finalShoulderY + pose.rightHand.y * SCALE);
-      ctx.stroke();
-      ctx.globalAlpha = 1;
-
-      const fistX = shoulderX + pose.rightHand.x * f * SCALE;
-      const fistY = finalShoulderY + pose.rightHand.y * SCALE;
-      ctx.fillStyle = '#ffffff';
-      ctx.shadowColor = this.color;
-      ctx.shadowBlur = 25;
-      ctx.beginPath();
-      for (let i = 0; i < 6; i++) {
-        const angle = (i / 6) * Math.PI * 2;
-        const r = (i % 2 === 0 ? 10 : 5) * SCALE;
-        const x = fistX + Math.cos(angle) * r;
-        const y = fistY + Math.sin(angle) * r;
-        if (i === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
-      }
-      ctx.closePath();
-      ctx.fill();
-    }
-
-    if (this.state === 'kick' || this.state === 'jumpKick') {
-      ctx.strokeStyle = this.color;
-      ctx.globalAlpha = 0.4;
-      ctx.lineWidth = 10 * SCALE;
-      ctx.beginPath();
-      ctx.moveTo(px + 10 * f * SCALE, hipY + 20 * SCALE);
-      ctx.lineTo(px + pose.rightFoot.x * f * SCALE, hipY + pose.rightFoot.y * SCALE);
-      ctx.stroke();
-      ctx.globalAlpha = 1;
-    }
-
-    // Roundhouse trail
-    if (this.state === 'roundhouse') {
-      ctx.strokeStyle = this.color;
-      ctx.globalAlpha = 0.3;
-      ctx.lineWidth = 8 * SCALE;
-      ctx.beginPath();
-      ctx.arc(px, py - 50 * SCALE, 80 * SCALE, this.spinAngle - 0.5, this.spinAngle + 0.5);
-      ctx.stroke();
-      ctx.globalAlpha = 1;
-
-      ctx.strokeStyle = '#ffffff';
-      ctx.globalAlpha = 0.5;
-      ctx.lineWidth = 2 * SCALE;
-      for (let i = 0; i < 3; i++) {
-        const a = this.spinAngle - 0.3 - (i * 0.2);
-        ctx.beginPath();
-        ctx.arc(px, py - 50 * SCALE, (70 + i * 5) * SCALE, a, a + 0.1);
-        ctx.stroke();
-      }
-      ctx.globalAlpha = 1;
-    }
-
-    // Backflip trail
-    if (this.state === 'backflip') {
-      ctx.strokeStyle = this.color;
-      ctx.globalAlpha = 0.4;
-      ctx.lineWidth = 5 * SCALE;
-      for (let i = 0; i < 3; i++) {
-        ctx.beginPath();
-        ctx.arc(px + i * 5 * this.facing, py - 50 * SCALE, 60 * SCALE, 0, Math.PI * 2);
-        ctx.stroke();
-      }
-      ctx.globalAlpha = 1;
-    }
-
-    if (this.state === 'special') {
-      ctx.shadowColor = this.color;
-      ctx.shadowBlur = 35;
-
-      for (let i = 0; i < 3; i++) {
-        ctx.strokeStyle = this.color;
-        ctx.globalAlpha = 0.3 - (i * 0.1);
-        ctx.lineWidth = (4 + i * 3) * SCALE;
-        ctx.beginPath();
-        ctx.arc(px, py - 50 * SCALE, (50 + i * 12 + Math.random() * 5) * SCALE, 0, Math.PI * 2);
-        ctx.stroke();
-      }
-      ctx.globalAlpha = 1;
-    }
-
-    ctx.shadowBlur = 0;
   }
 
-  getStickmanPose() {
-    const poses = {
-      idle: {
-        head: { x: 0, y: -15 },
-        spine: { x: 0, y: 15 },
-        leftKnee: { x: -8, y: 20 },
-        leftFoot: { x: -10, y: 45 },
-        rightKnee: { x: 8, y: 20 },
-        rightFoot: { x: 10, y: 45 },
-        leftElbow: { x: -15, y: 10 },
-        leftHand: { x: -18, y: 25 },
-        rightElbow: { x: 15, y: 10 },
-        rightHand: { x: 18, y: 25 }
-      },
+  setAnim(name) {
+    const s = this.sprites[name];
+    if (this.image === this.sprites.death.image) return;
+    if (this.image === this.sprites.attack1.image &&
+        this.framesCurrent < this.sprites.attack1.framesMax - 1) return;
+    if (this.image === this.sprites.takeHit.image &&
+        this.framesCurrent < this.sprites.takeHit.framesMax - 1) return;
+    if (this.image !== s.image) {
+      this.image = s.image;
+      this.framesMax = s.framesMax;
+      this.framesCurrent = 0;
+    }
+  }
 
-      walk: {
-        head: { x: 0, y: -15 + Math.sin(this.animFrame * 0.8) * 2 },
-        spine: { x: Math.sin(this.animFrame * 0.4) * 2, y: 15 },
-        leftKnee: { x: -5 + Math.sin(this.animFrame * 0.8) * 8, y: 18 + Math.abs(Math.sin(this.animFrame * 0.8)) * 4 },
-        leftFoot: { x: -10 + Math.sin(this.animFrame * 0.8) * 15, y: 45 - Math.abs(Math.sin(this.animFrame * 0.8)) * 8 },
-        rightKnee: { x: 5 - Math.sin(this.animFrame * 0.8) * 8, y: 18 + Math.abs(Math.cos(this.animFrame * 0.8)) * 4 },
-        rightFoot: { x: 10 - Math.sin(this.animFrame * 0.8) * 15, y: 45 - Math.abs(Math.cos(this.animFrame * 0.8)) * 8 },
-        leftElbow: { x: -15, y: 10 - Math.sin(this.animFrame * 0.8) * 4 },
-        leftHand: { x: -18 - Math.sin(this.animFrame * 0.8) * 5, y: 25 - Math.sin(this.animFrame * 0.8) * 3 },
-        rightElbow: { x: 15, y: 10 + Math.sin(this.animFrame * 0.8) * 4 },
-        rightHand: { x: 18 + Math.sin(this.animFrame * 0.8) * 5, y: 25 + Math.sin(this.animFrame * 0.8) * 3 }
-      },
+  attack() {
+    if (this.dead) return;
+    if (this.image === this.sprites.attack1.image &&
+        this.framesCurrent < this.sprites.attack1.framesMax - 1) return;
+    if (this.image === this.sprites.takeHit.image &&
+        this.framesCurrent < this.sprites.takeHit.framesMax - 1) return;
 
-      punch: {
-        head: { x: 5, y: -15 },
-        spine: { x: 3, y: 15 },
-        leftKnee: { x: -10, y: 20 },
-        leftFoot: { x: -15, y: 45 },
-        rightKnee: { x: 5, y: 20 },
-        rightFoot: { x: 12, y: 45 },
-        leftElbow: { x: -10, y: 15 },
-        leftHand: { x: -5, y: 20 },
-        rightElbow: { x: 25, y: 5 },
-        rightHand: { x: 50, y: 0 }
-      },
+    this.image = this.sprites.attack1.image;
+    this.framesMax = this.sprites.attack1.framesMax;
+    this.framesCurrent = 0;
+    this.isAttacking = true;
+    this._applied = false;
 
-      kick: {
-        head: { x: -5, y: -10 },
-        spine: { x: -8, y: 15 },
-        leftKnee: { x: -15, y: 25 },
-        leftFoot: { x: -20, y: 50 },
-        rightKnee: { x: 20, y: 0 },
-        rightFoot: { x: 55, y: 5 },
-        leftElbow: { x: -20, y: 0 },
-        leftHand: { x: -25, y: 10 },
-        rightElbow: { x: 5, y: 5 },
-        rightHand: { x: 10, y: 20 }
-      },
+    if (typeof Sounds !== 'undefined') Sounds.kick();
+  }
 
-      crouch: {
-        crouchOffset: 25,
-        head: { x: 0, y: -10 },
-        spine: { x: 0, y: 10 },
-        leftKnee: { x: -20, y: 5 },
-        leftFoot: { x: -25, y: 20 },
-        rightKnee: { x: 20, y: 5 },
-        rightFoot: { x: 25, y: 20 },
-        leftElbow: { x: -15, y: 5 },
-        leftHand: { x: -10, y: 15 },
-        rightElbow: { x: 15, y: 5 },
-        rightHand: { x: 10, y: 15 }
-      },
+  jump() {
+    if (this.onGround && !this.dead) {
+      this.velocity.y = JUMP_V;
+      if (typeof Sounds !== 'undefined') Sounds.jump();
+    }
+  }
 
-      roundhouse: {
-        head: { x: 0, y: -15 },
-        spine: { x: 0, y: 15 },
-        leftKnee: { x: 0, y: 25 },
-        leftFoot: { x: 0, y: 50 },
-        rightKnee: { x: 30, y: 0 },
-        rightFoot: { x: 60, y: 0 },
-        leftElbow: { x: -25, y: 5 },
-        leftHand: { x: -35, y: 15 },
-        rightElbow: { x: 20, y: 10 },
-        rightHand: { x: 30, y: 20 }
-      },
+  takeHit() {
+    this.health = Math.max(0, this.health - 15);
+    this.isAttacking = false;
+    if (typeof Sounds !== 'undefined') Sounds.hit();
+    screenShake();
 
-      backflip: {
-        head: { x: 0, y: -10 },
-        spine: { x: 0, y: 15 },
-        leftKnee: { x: -8, y: 10 },
-        leftFoot: { x: -12, y: 20 },
-        rightKnee: { x: 8, y: 10 },
-        rightFoot: { x: 12, y: 20 },
-        leftElbow: { x: -18, y: -5 },
-        leftHand: { x: -22, y: -15 },
-        rightElbow: { x: 18, y: -5 },
-        rightHand: { x: 22, y: -15 }
-      },
-
-      jump: {
-        head: { x: 0, y: -15 },
-        spine: { x: 0, y: 15 },
-        leftKnee: { x: -10, y: 5 },
-        leftFoot: { x: -15, y: 20 },
-        rightKnee: { x: 10, y: 5 },
-        rightFoot: { x: 15, y: 20 },
-        leftElbow: { x: -20, y: -5 },
-        leftHand: { x: -25, y: -20 },
-        rightElbow: { x: 20, y: -5 },
-        rightHand: { x: 25, y: -20 }
-      },
-
-      jumpPunch: {
-        head: { x: 5, y: -10 },
-        spine: { x: 3, y: 12 },
-        leftKnee: { x: -8, y: 8 },
-        leftFoot: { x: -12, y: 25 },
-        rightKnee: { x: 5, y: 8 },
-        rightFoot: { x: 10, y: 22 },
-        leftElbow: { x: -10, y: 0 },
-        leftHand: { x: -5, y: -10 },
-        rightElbow: { x: 25, y: 0 },
-        rightHand: { x: 50, y: -5 }
-      },
-
-      jumpKick: {
-        head: { x: -5, y: -10 },
-        spine: { x: -5, y: 12 },
-        leftKnee: { x: -10, y: 15 },
-        leftFoot: { x: -15, y: 30 },
-        rightKnee: { x: 20, y: 5 },
-        rightFoot: { x: 55, y: 0 },
-        leftElbow: { x: -20, y: -5 },
-        leftHand: { x: -25, y: -15 },
-        rightElbow: { x: 10, y: 0 },
-        rightHand: { x: 15, y: 10 }
-      },
-
-      block: {
-        head: { x: 0, y: -15 },
-        spine: { x: 0, y: 15 },
-        leftKnee: { x: -8, y: 20 },
-        leftFoot: { x: -15, y: 45 },
-        rightKnee: { x: 8, y: 20 },
-        rightFoot: { x: 15, y: 45 },
-        leftElbow: { x: -5, y: -5 },
-        leftHand: { x: 10, y: -10 },
-        rightElbow: { x: 5, y: -5 },
-        rightHand: { x: -10, y: -10 }
-      },
-
-      special: {
-        head: { x: 0, y: -20 },
-        spine: { x: 0, y: 10 },
-        leftKnee: { x: -15, y: 20 },
-        leftFoot: { x: -25, y: 45 },
-        rightKnee: { x: 15, y: 20 },
-        rightFoot: { x: 25, y: 45 },
-        leftElbow: { x: -25, y: -5 },
-        leftHand: { x: -35, y: 5 },
-        rightElbow: { x: 25, y: -5 },
-        rightHand: { x: 35, y: 5 }
-      },
-
-      hurt: {
-        head: { x: -5, y: -10 },
-        spine: { x: -5, y: 15 },
-        leftKnee: { x: -12, y: 22 },
-        leftFoot: { x: -18, y: 45 },
-        rightKnee: { x: 8, y: 22 },
-        rightFoot: { x: 12, y: 45 },
-        leftElbow: { x: -20, y: 10 },
-        leftHand: { x: -25, y: 20 },
-        rightElbow: { x: 10, y: 10 },
-        rightHand: { x: 15, y: 20 }
-      },
-
-      dying: {
-        head: { x: 0, y: -15 },
-        spine: { x: 0, y: 15 },
-        leftKnee: { x: -15, y: 20 },
-        leftFoot: { x: -25, y: 45 },
-        rightKnee: { x: 15, y: 20 },
-        rightFoot: { x: 25, y: 45 },
-        leftElbow: { x: -25, y: 0 },
-        leftHand: { x: -35, y: -15 },
-        rightElbow: { x: 25, y: 0 },
-        rightHand: { x: 35, y: -15 }
-      }
-    };
-
-    return poses[this.state] || poses.idle;
+    if (this.health <= 0) {
+      this.dead = true;
+      this.image = this.sprites.death.image;
+      this.framesMax = this.sprites.death.framesMax;
+      this.framesCurrent = 0;
+      if (typeof Sounds !== 'undefined') Sounds.ko();
+    } else {
+      this.image = this.sprites.takeHit.image;
+      this.framesMax = this.sprites.takeHit.framesMax;
+      this.framesCurrent = 0;
+    }
   }
 }
 
-// ════════ PARTICLES ════════
-function createHitParticles(x, y, color, count) {
-  for (let i = 0; i < count; i++) {
-    GAME.particles.push({
-      x, y,
-      vx: (Math.random() - 0.5) * 10,
-      vy: (Math.random() - 0.5) * 10 - 3,
-      life: 20 + Math.random() * 20,
-      color,
-      size: Math.random() * 4 + 2
-    });
-  }
-}
+// ════════ ASSETS ════════
+const background = new Sprite({
+  position: { x: 0, y: 0 },
+  imageSrc: CDN + "background.png"
+});
 
-function updateParticles() {
-  GAME.particles = GAME.particles.filter(p => {
-    p.x += p.vx;
-    p.y += p.vy;
-    p.vy += 0.3;
-    p.life--;
-    return p.life > 0;
+const shop = new Sprite({
+  position: { x: 600, y: 128 },
+  imageSrc: CDN + "shop.png",
+  scale: 2.75,
+  framesMax: 6
+});
+
+// ════════ CREATE FIGHTERS ════════
+let player1 = null;
+let player2 = null;
+
+function createPlayer1(id, name) {
+  return new Fighter({
+    id,
+    name,
+    startX: 200,
+    defaultFacing: 1,
+    scale: 2.5,
+    offset: { x: 215, y: 157 },
+    hitFrame: 4,
+    sprites: {
+      idle:    { src: CDN + "samuraiMack/Idle.png",    framesMax: 8 },
+      run:     { src: CDN + "samuraiMack/Run.png",     framesMax: 8 },
+      jump:    { src: CDN + "samuraiMack/Jump.png",    framesMax: 2 },
+      fall:    { src: CDN + "samuraiMack/Fall.png",    framesMax: 2 },
+      attack1: { src: CDN + "samuraiMack/Attack1.png", framesMax: 6 },
+      takeHit: { src: CDN + "samuraiMack/Take Hit - white silhouette.png", framesMax: 4 },
+      death:   { src: CDN + "samuraiMack/Death.png",   framesMax: 6 }
+    }
   });
 }
 
-function drawParticles() {
-  GAME.particles.forEach(p => {
-    ctx.globalAlpha = p.life / 40;
-    ctx.fillStyle = p.color;
-    ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
+function createPlayer2(id, name) {
+  return new Fighter({
+    id,
+    name,
+    startX: 760,
+    defaultFacing: -1,
+    scale: 2.5,
+    offset: { x: 215, y: 167 },
+    hitFrame: 2,
+    sprites: {
+      idle:    { src: CDN + "kenji/Idle.png",    framesMax: 4 },
+      run:     { src: CDN + "kenji/Run.png",     framesMax: 8 },
+      jump:    { src: CDN + "kenji/Jump.png",    framesMax: 2 },
+      fall:    { src: CDN + "kenji/Fall.png",    framesMax: 2 },
+      attack1: { src: CDN + "kenji/Attack1.png", framesMax: 4 },
+      takeHit: { src: CDN + "kenji/Take hit.png", framesMax: 3 },
+      death:   { src: CDN + "kenji/Death.png",   framesMax: 7 }
+    }
   });
-  ctx.globalAlpha = 1;
 }
 
 // ════════ SCREEN EFFECTS ════════
 function screenShake() {
-  document.getElementById('gameCanvas').classList.add('shake');
-  setTimeout(() => {
-    document.getElementById('gameCanvas').classList.remove('shake');
-  }, 300);
+  canvas.classList.add('shake');
+  setTimeout(() => canvas.classList.remove('shake'), 300);
 }
 
-function showAnnouncement(text, duration = 2000) {
+function showAnnouncement(text) {
   const el = document.getElementById('announcement');
-  const txt = document.getElementById('announcement-text');
-  txt.textContent = text;
+  document.getElementById('announcement-text').textContent = text;
   el.classList.remove('show');
   void el.offsetWidth;
   el.classList.add('show');
 }
 
 // ════════ GAME FLOW ════════
-let player1 = null;
-let player2 = null;
-
 function updateHpBars() {
   if (player1) {
-    const hp1 = (player1.hp / player1.maxHp) * 100;
+    const hp1 = (player1.health / player1.maxHealth) * 100;
     const bar1 = document.getElementById('p1-hp');
     bar1.style.width = hp1 + '%';
     bar1.classList.toggle('low', hp1 < 30);
   }
   if (player2) {
-    const hp2 = (player2.hp / player2.maxHp) * 100;
+    const hp2 = (player2.health / player2.maxHealth) * 100;
     const bar2 = document.getElementById('p2-hp');
     bar2.style.width = hp2 + '%';
     bar2.classList.toggle('low', hp2 < 30);
@@ -890,7 +319,6 @@ function updateRoundDots() {
 function startMatch() {
   document.getElementById('waiting-screen').classList.remove('active');
   document.getElementById('fight-screen').classList.add('active');
-  resizeCanvas();
 
   GAME.round = 1;
   player1.roundsWon = 0;
@@ -902,30 +330,17 @@ function startMatch() {
 
 function startRound() {
   GAME.state = 'countdown';
-  GAME.timer = 99;
-  player1.hp = player1.maxHp;
-  player2.hp = player2.maxHp;
-  player1.x = 200;
-  player2.x = canvas.width - 200;
-
-  // Reset death state for new round
-  player1.dying = false;
-  player1.dead = false;
-  player1.deathTimer = 0;
-  player1.deathRotation = 0;
-  player1.setState('idle');
-
-  player2.dying = false;
-  player2.dead = false;
-  player2.deathTimer = 0;
-  player2.deathRotation = 0;
-  player2.setState('idle');
-
+  GAME.timer = 60;
+  player1.reset();
+  player2.reset();
+  player2.isCPU = GAME.isBotMode;
   updateHpBars();
 
   document.getElementById('round-text').textContent = `ROUND ${GAME.round}`;
+  document.getElementById('p1-name').textContent = player1.name.toUpperCase();
+  document.getElementById('p2-name').textContent = player2.name.toUpperCase();
 
-  Sounds.round();
+  if (typeof Sounds !== 'undefined') Sounds.round();
   showAnnouncement(`ROUND ${GAME.round}`);
 
   setTimeout(() => {
@@ -946,15 +361,15 @@ function startTimer() {
 
     if (GAME.timer <= 0) {
       clearInterval(GAME.timerInterval);
-      if (player1.hp > player2.hp) endRound(player1);
-      else if (player2.hp > player1.hp) endRound(player2);
+      if (player1.health > player2.health) endRound(player1);
+      else if (player2.health > player1.health) endRound(player2);
       else endRound(null);
     }
   }, 1000);
 }
 
 function endRound(winner) {
-  if (GAME.state !== 'fighting' && GAME.state !== 'roundEnd') return;
+  if (GAME.state !== 'fighting') return;
   GAME.state = 'roundEnd';
   clearInterval(GAME.timerInterval);
 
@@ -978,14 +393,14 @@ function endRound(winner) {
 
 function endMatch() {
   GAME.state = 'gameOver';
-  Sounds.win();
+  if (typeof Sounds !== 'undefined') Sounds.win();
 
   const winner = player1.roundsWon > player2.roundsWon ? player1 : player2;
 
   const overlay = document.createElement('div');
   overlay.className = 'game-over-overlay';
   overlay.innerHTML = `
-    <h1>${winner.name} WINS!</h1>
+    <h1>${winner.name.toUpperCase()} WINS!</h1>
     <p>Final Score: ${player1.roundsWon} - ${player2.roundsWon}</p>
     <div class="game-over-buttons">
       <button class="go-btn primary" onclick="location.reload()">REMATCH</button>
@@ -996,38 +411,133 @@ function endMatch() {
 }
 
 // ════════ BOT AI ════════
-function botThink() {
-  if (GAME.state !== 'fighting' || !player2 || player2.dying) return;
+function runAI(dt) {
+  if (!player2 || player2.dead || player1.dead) {
+    if (player2) player2.velocity.x = 0;
+    return;
+  }
 
-  const dx = player1.x - player2.x;
-  const distance = Math.abs(dx);
-  const action = Math.random();
+  const dx = player1.cx - player2.cx;
+  const adist = Math.abs(dx);
+  const dir = dx >= 0 ? 1 : -1;
+  const want = 165;
 
-  if (distance > 200) {
-    player2.move(dx > 0 ? 1 : -1);
-  } else if (distance < 120) {
-    if (action < 0.25) player2.punch(player1);
-    else if (action < 0.45) player2.kick(player1);
-    else if (action < 0.55 && player2.specialCooldown === 0) player2.special(player1);
-    else if (action < 0.7) player2.block();
-    else if (action < 0.8) player2.jump();
-    else if (action < 0.9) {
-      // Try roundhouse
-      player2.crouch();
-      setTimeout(() => player2.kick(player1), 100);
-    } else player2.move(dx > 0 ? -1 : 1);
-  } else {
-    if (action < 0.35) player2.move(dx > 0 ? 1 : -1);
-    else if (action < 0.55) player2.kick(player1);
-    else if (action < 0.65 && player2.specialCooldown === 0) player2.special(player1);
-    else if (action < 0.8) {
-      player2.jump();
-      setTimeout(() => player2.kick(player1), 200);
-    } else player2.jump();
+  if (adist > want + 45) player2.velocity.x = dir * SPEED;
+  else if (adist < want - 45) player2.velocity.x = -dir * SPEED;
+  else player2.velocity.x = 0;
+
+  player2.aiJump -= dt;
+  if (player2.aiJump <= 0) {
+    if (player2.onGround && adist > 250 && Math.random() < 0.4) {
+      player2.velocity.y = JUMP_V;
+    }
+    player2.aiJump = 0.8 + Math.random() * 1.2;
+  }
+
+  player2.aiAtk -= dt;
+  if (player2.aiAtk <= 0 && adist < 210 && player2.onGround) {
+    player2.attack();
+    player2.aiAtk = 0.7 + Math.random() * 0.8;
   }
 }
 
-setInterval(botThink, 600);
+// ════════ MAIN LOOP ════════
+function chooseSprite(f) {
+  if (f.velocity.y < 0) f.setAnim("jump");
+  else if (f.velocity.y > 0) f.setAnim("fall");
+  else if (f.velocity.x !== 0) f.setAnim("run");
+  else f.setAnim("idle");
+}
+
+function resolveHit(atk, def) {
+  if (!atk.isAttacking) { atk._applied = false; return; }
+  if (atk.image === atk.sprites.attack1.image &&
+      atk.framesCurrent === atk.hitFrame && !atk._applied) {
+    atk._applied = true;
+    atk.isAttacking = false;
+    if (!def.dead && collides(atk, def)) {
+      def.takeHit();
+      updateHpBars();
+      if (def.health <= 0) {
+        setTimeout(() => endRound(atk === player1 ? player1 : player2), 1500);
+      }
+    }
+  }
+}
+
+function collides(a, d) {
+  const b = a.attackBox;
+  return b.x + b.width >= d.position.x &&
+         b.x <= d.position.x + d.width &&
+         b.y + b.height >= d.position.y &&
+         b.y <= d.position.y + d.height;
+}
+
+// Input state
+const keys = { a: false, d: false };
+
+function frame(now) {
+  const dt = Math.min(0.05, (now - GAME.lastTime) / 1000);
+  GAME.lastTime = now;
+  requestAnimationFrame(frame);
+
+  // Background
+  c.fillStyle = "#000";
+  c.fillRect(0, 0, CW, CH);
+
+  background.update();
+  shop.update();
+
+  c.fillStyle = "rgba(255, 255, 255, 0.12)";
+  c.fillRect(0, 0, CW, CH);
+
+  if (!player1 || !player2) return;
+
+  const active = GAME.state === 'fighting';
+
+  // Input
+  if (active && !player1.dead) {
+    player1.velocity.x = 0;
+    if (keys.a && player1.lastKey === "a") player1.velocity.x = -SPEED;
+    else if (keys.d && player1.lastKey === "d") player1.velocity.x = SPEED;
+  } else {
+    player1.velocity.x = 0;
+  }
+
+  if (active && !player2.dead) {
+    if (GAME.isBotMode) {
+      runAI(dt);
+    }
+  } else {
+    player2.velocity.x = 0;
+  }
+
+  // Facing
+  if (!player1.dead) player1.facing = player1.cx <= player2.cx ? 1 : -1;
+  if (!player2.dead) player2.facing = player2.cx <= player1.cx ? 1 : -1;
+
+  // Physics
+  player1.physics();
+  player2.physics();
+  player1.updateAttackBox();
+  player2.updateAttackBox();
+
+  // Animation
+  if (active) {
+    chooseSprite(player1);
+    chooseSprite(player2);
+  }
+
+  // Draw fighters
+  player1.draw();
+  player1.animate();
+  player2.draw();
+  player2.animate();
+
+  // Hit resolution
+  resolveHit(player1, player2);
+  resolveHit(player2, player1);
+}
 
 // ════════ SOCKET EVENTS ════════
 socket.on("connect", () => {
@@ -1042,108 +552,103 @@ socket.on("connect_error", (err) => {
 
 socket.on("room-created", (data) => {
   console.log("🏠 Room created:", data.roomCode);
-  const roomEl = document.getElementById("room-code");
-  if (roomEl) {
-    roomEl.textContent = data.roomCode;
-  }
+  document.getElementById("room-code").textContent = data.roomCode;
 });
 
 socket.on("player-joined", (player) => {
   if (!player1) {
-    player1 = new Fighter(player.id, player.name.toUpperCase(), 'left');
-    document.getElementById('p1-name').textContent = player.name.toUpperCase();
+    player1 = createPlayer1(player.id, player.name);
     document.getElementById('slot-1').classList.add('filled');
-    document.getElementById('slot-1').querySelector('.slot-icon').textContent = player.name[0].toUpperCase();
-    document.getElementById('slot-1').querySelector('p').textContent = player.name;
+    document.getElementById('slot-1').querySelector('.player-name').textContent = player.name.toUpperCase();
+    document.getElementById('slot-1').querySelector('.status').textContent = 'Ready!';
   } else if (!player2 && !GAME.isBotMode) {
-    player2 = new Fighter(player.id, player.name.toUpperCase(), 'right');
-    document.getElementById('p2-name').textContent = player.name.toUpperCase();
+    player2 = createPlayer2(player.id, player.name);
     document.getElementById('slot-2').classList.add('filled');
-    document.getElementById('slot-2').querySelector('.slot-icon').textContent = player.name[0].toUpperCase();
-    document.getElementById('slot-2').querySelector('p').textContent = player.name;
+    document.getElementById('slot-2').querySelector('.player-name').textContent = player.name.toUpperCase();
+    document.getElementById('slot-2').querySelector('.status').textContent = 'Ready!';
 
     setTimeout(startMatch, 1500);
   }
 });
 
 socket.on("player-moved", (data) => {
-  const p = player1 && player1.id === data.playerId ? player1 : (player2 && player2.id === data.playerId ? player2 : null);
-  if (!p || GAME.state !== 'fighting' || p.dying) return;
+  if (GAME.state !== 'fighting') return;
 
-  const opponent = p === player1 ? player2 : player1;
+  const p = player1 && player1.id === data.playerId ? player1 : 
+            (player2 && player2.id === data.playerId ? player2 : null);
+  if (!p || p.dead) return;
 
   switch (data.direction) {
-    case "left": p.move(-1); break;
-    case "right": p.move(1); break;
-    case "up": p.jump(); break;
-    case "down": p.crouch(); break;
-    case "punch": p.punch(opponent); break;
-    case "kick": p.kick(opponent); break;
-    case "special": p.special(opponent); break;
-    case "block": p.block(); break;
+    case "left":
+      p.velocity.x = -SPEED;
+      p.lastKey = 'a';
+      break;
+    case "right":
+      p.velocity.x = SPEED;
+      p.lastKey = 'd';
+      break;
+    case "up":
+    case "jump":
+      p.jump();
+      break;
+    case "punch":
+    case "kick":
+    case "special":
+      p.attack();
+      break;
   }
 });
 
-// Bot mode button
+// ════════ BOT MODE ════════
 document.getElementById('bot-mode-btn').addEventListener('click', () => {
   GAME.isBotMode = true;
   if (!player1) {
-    player1 = new Fighter('dummy1', 'YOU', 'left');
-    document.getElementById('p1-name').textContent = 'YOU';
+    player1 = createPlayer1('local-p1', 'SAMURAI');
+    document.getElementById('slot-1').classList.add('filled');
+    document.getElementById('slot-1').querySelector('.status').textContent = 'Ready!';
   }
-  player2 = new Fighter('bot', 'BOT', 'right');
-  document.getElementById('p2-name').textContent = 'BOT';
+  player2 = createPlayer2('bot', 'KENJI');
+  player2.isCPU = true;
   document.getElementById('slot-2').classList.add('filled');
-  document.getElementById('slot-2').querySelector('.slot-icon').textContent = 'B';
-  document.getElementById('slot-2').querySelector('p').textContent = 'Bot';
+  document.getElementById('slot-2').querySelector('.status').textContent = 'CPU';
+
   setTimeout(startMatch, 800);
 });
 
-// ════════ GAME LOOP ════════
-let lastTime = 0;
-function gameLoop(currentTime) {
-  const dt = (currentTime - lastTime) / 16.67;
-  lastTime = currentTime;
+// ════════ KEYBOARD CONTROLS ════════
+const PREVENT = new Set(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "]);
 
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  // Draw ground line
-  ctx.strokeStyle = 'rgba(0, 224, 255, 0.3)';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.moveTo(0, GROUND_Y() + 8);
-  ctx.lineTo(canvas.width, GROUND_Y() + 8);
-  ctx.stroke();
-
-  if (player1 && player2) {
-    player1.update(dt, player2);
-    player2.update(dt, player1);
-
-    player1.draw();
-    player2.draw();
-  }
-
-  updateParticles();
-  drawParticles();
-
-  requestAnimationFrame(gameLoop);
-}
-
-requestAnimationFrame(gameLoop);
-
-// Keyboard fallback for testing
-document.addEventListener('keydown', (e) => {
-  if (GAME.state !== 'fighting' || !player1 || player1.dying) return;
-  const opp = player2;
+document.addEventListener("keydown", (e) => {
+  if (PREVENT.has(e.key)) e.preventDefault();
+  if (GAME.state !== 'fighting' || !player1 || player1.dead) return;
 
   switch (e.key.toLowerCase()) {
-    case 'a': player1.move(-1); break;
-    case 'd': player1.move(1); break;
-    case 'w': player1.jump(); break;
-    case 's': player1.crouch(); break;
-    case 'j': player1.punch(opp); break;
-    case 'k': player1.kick(opp); break;
-    case 'l': player1.special(opp); break;
-    case 'i': player1.block(); break;
+    case 'a':
+      keys.a = true;
+      player1.lastKey = 'a';
+      break;
+    case 'd':
+      keys.d = true;
+      player1.lastKey = 'd';
+      break;
+    case 'w':
+      if (player1.onGround) player1.jump();
+      break;
+    case 'j':
+    case ' ':
+      player1.attack();
+      break;
+    case 'k':
+      player1.attack(); // Special = same as attack for now
+      break;
   }
 });
+
+document.addEventListener("keyup", (e) => {
+  if (e.key === 'a') keys.a = false;
+  if (e.key === 'd') keys.d = false;
+});
+
+// ════════ START GAME LOOP ════════
+requestAnimationFrame(frame);
+console.log('⚔️ Samurai Showdown loaded!');
