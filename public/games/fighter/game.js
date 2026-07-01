@@ -13,7 +13,7 @@ const CDN = "https://cdn.jsdelivr.net/gh/chriscourses/fighting-game@main/img/";
 
 // ════════ GAME STATE ════════
 const GAME = {
-  state: 'waiting', // waiting, countdown, fighting, roundEnd, gameOver
+  state: 'waiting',
   round: 1,
   maxRounds: 3,
   timer: 60,
@@ -22,9 +22,9 @@ const GAME = {
   lastTime: performance.now()
 };
 
-// ════════ SPRITE CLASS (backgrounds) ════════
+// ════════ SPRITE CLASS ════════
 class Sprite {
-  constructor({ position, imageSrc, scale = 1, framesMax = 1, offset = {x:0, y:0} }) {
+  constructor({ position, imageSrc, scale = 1, framesMax = 1, offset = { x: 0, y: 0 } }) {
     this.position = position;
     this.scale = scale;
     this.framesMax = framesMax;
@@ -75,7 +75,6 @@ class Fighter {
     this.sprites = config.sprites;
     this.isCPU = false;
 
-    // Load all sprite images
     for (const key in this.sprites) {
       this.sprites[key].image = new Image();
       this.sprites[key].image.src = encodeURI(this.sprites[key].src);
@@ -104,6 +103,10 @@ class Fighter {
     this.framesCurrent = 0;
     this.framesElapsed = 0;
     this.framesHold = 6;
+
+    // NEW: Phone input hold timers
+    this.phoneLeft = 0;
+    this.phoneRight = 0;
   }
 
   get cx() { return this.position.x + this.width / 2; }
@@ -129,7 +132,7 @@ class Fighter {
 
   animate() {
     if (this.dead && this.image === this.sprites.death.image
-        && this.framesCurrent === this.sprites.death.framesMax - 1) return;
+      && this.framesCurrent === this.sprites.death.framesMax - 1) return;
     if (++this.framesElapsed % this.framesHold === 0) {
       if (this.framesCurrent < this.framesMax - 1) this.framesCurrent++;
       else if (!(this.image === this.sprites.death.image)) this.framesCurrent = 0;
@@ -161,9 +164,9 @@ class Fighter {
     const s = this.sprites[name];
     if (this.image === this.sprites.death.image) return;
     if (this.image === this.sprites.attack1.image &&
-        this.framesCurrent < this.sprites.attack1.framesMax - 1) return;
+      this.framesCurrent < this.sprites.attack1.framesMax - 1) return;
     if (this.image === this.sprites.takeHit.image &&
-        this.framesCurrent < this.sprites.takeHit.framesMax - 1) return;
+      this.framesCurrent < this.sprites.takeHit.framesMax - 1) return;
     if (this.image !== s.image) {
       this.image = s.image;
       this.framesMax = s.framesMax;
@@ -174,9 +177,9 @@ class Fighter {
   attack() {
     if (this.dead) return;
     if (this.image === this.sprites.attack1.image &&
-        this.framesCurrent < this.sprites.attack1.framesMax - 1) return;
+      this.framesCurrent < this.sprites.attack1.framesMax - 1) return;
     if (this.image === this.sprites.takeHit.image &&
-        this.framesCurrent < this.sprites.takeHit.framesMax - 1) return;
+      this.framesCurrent < this.sprites.takeHit.framesMax - 1) return;
 
     this.image = this.sprites.attack1.image;
     this.framesMax = this.sprites.attack1.framesMax;
@@ -241,13 +244,13 @@ function createPlayer1(id, name) {
     offset: { x: 215, y: 157 },
     hitFrame: 4,
     sprites: {
-      idle:    { src: CDN + "samuraiMack/Idle.png",    framesMax: 8 },
-      run:     { src: CDN + "samuraiMack/Run.png",     framesMax: 8 },
-      jump:    { src: CDN + "samuraiMack/Jump.png",    framesMax: 2 },
-      fall:    { src: CDN + "samuraiMack/Fall.png",    framesMax: 2 },
+      idle: { src: CDN + "samuraiMack/Idle.png", framesMax: 8 },
+      run: { src: CDN + "samuraiMack/Run.png", framesMax: 8 },
+      jump: { src: CDN + "samuraiMack/Jump.png", framesMax: 2 },
+      fall: { src: CDN + "samuraiMack/Fall.png", framesMax: 2 },
       attack1: { src: CDN + "samuraiMack/Attack1.png", framesMax: 6 },
       takeHit: { src: CDN + "samuraiMack/Take Hit - white silhouette.png", framesMax: 4 },
-      death:   { src: CDN + "samuraiMack/Death.png",   framesMax: 6 }
+      death: { src: CDN + "samuraiMack/Death.png", framesMax: 6 }
     }
   });
 }
@@ -262,13 +265,13 @@ function createPlayer2(id, name) {
     offset: { x: 215, y: 167 },
     hitFrame: 2,
     sprites: {
-      idle:    { src: CDN + "kenji/Idle.png",    framesMax: 4 },
-      run:     { src: CDN + "kenji/Run.png",     framesMax: 8 },
-      jump:    { src: CDN + "kenji/Jump.png",    framesMax: 2 },
-      fall:    { src: CDN + "kenji/Fall.png",    framesMax: 2 },
+      idle: { src: CDN + "kenji/Idle.png", framesMax: 4 },
+      run: { src: CDN + "kenji/Run.png", framesMax: 8 },
+      jump: { src: CDN + "kenji/Jump.png", framesMax: 2 },
+      fall: { src: CDN + "kenji/Fall.png", framesMax: 2 },
       attack1: { src: CDN + "kenji/Attack1.png", framesMax: 4 },
       takeHit: { src: CDN + "kenji/Take hit.png", framesMax: 3 },
-      death:   { src: CDN + "kenji/Death.png",   framesMax: 7 }
+      death: { src: CDN + "kenji/Death.png", framesMax: 7 }
     }
   });
 }
@@ -452,7 +455,7 @@ function chooseSprite(f) {
 function resolveHit(atk, def) {
   if (!atk.isAttacking) { atk._applied = false; return; }
   if (atk.image === atk.sprites.attack1.image &&
-      atk.framesCurrent === atk.hitFrame && !atk._applied) {
+    atk.framesCurrent === atk.hitFrame && !atk._applied) {
     atk._applied = true;
     atk.isAttacking = false;
     if (!def.dead && collides(atk, def)) {
@@ -468,13 +471,33 @@ function resolveHit(atk, def) {
 function collides(a, d) {
   const b = a.attackBox;
   return b.x + b.width >= d.position.x &&
-         b.x <= d.position.x + d.width &&
-         b.y + b.height >= d.position.y &&
-         b.y <= d.position.y + d.height;
+    b.x <= d.position.x + d.width &&
+    b.y + b.height >= d.position.y &&
+    b.y <= d.position.y + d.height;
 }
 
-// Input state
+// Input state (keyboard)
 const keys = { a: false, d: false };
+
+function applyPlayerInput(player) {
+  player.velocity.x = 0;
+
+  // Keyboard input (only for player1)
+  if (player === player1) {
+    if (keys.a && player.lastKey === "a") player.velocity.x = -SPEED;
+    else if (keys.d && player.lastKey === "d") player.velocity.x = SPEED;
+  }
+
+  // Phone input (for BOTH players - overrides keyboard)
+  if (player.phoneLeft > 0) {
+    player.velocity.x = -SPEED;
+    player.phoneLeft--;
+  }
+  if (player.phoneRight > 0) {
+    player.velocity.x = SPEED;
+    player.phoneRight--;
+  }
+}
 
 function frame(now) {
   const dt = Math.min(0.05, (now - GAME.lastTime) / 1000);
@@ -495,18 +518,19 @@ function frame(now) {
 
   const active = GAME.state === 'fighting';
 
-  // Input
+  // Player 1 input
   if (active && !player1.dead) {
-    player1.velocity.x = 0;
-    if (keys.a && player1.lastKey === "a") player1.velocity.x = -SPEED;
-    else if (keys.d && player1.lastKey === "d") player1.velocity.x = SPEED;
+    applyPlayerInput(player1);
   } else {
     player1.velocity.x = 0;
   }
 
+  // Player 2 input
   if (active && !player2.dead) {
-    if (GAME.isBotMode) {
+    if (GAME.isBotMode && player2.isCPU) {
       runAI(dt);
+    } else {
+      applyPlayerInput(player2);
     }
   } else {
     player2.velocity.x = 0;
@@ -556,13 +580,23 @@ socket.on("room-created", (data) => {
 });
 
 socket.on("player-joined", (player) => {
+  console.log("👤 Player joined:", player.name, player.id);
+
+  // If bot mode, ignore incoming players
+  if (GAME.isBotMode) {
+    console.log("⚠️ Bot mode active - ignoring player");
+    return;
+  }
+
   if (!player1) {
     player1 = createPlayer1(player.id, player.name);
+    console.log("🥋 Player1 (Samurai):", player1.id);
     document.getElementById('slot-1').classList.add('filled');
     document.getElementById('slot-1').querySelector('.player-name').textContent = player.name.toUpperCase();
     document.getElementById('slot-1').querySelector('.status').textContent = 'Ready!';
-  } else if (!player2 && !GAME.isBotMode) {
+  } else if (!player2) {
     player2 = createPlayer2(player.id, player.name);
+    console.log("⚔️ Player2 (Kenji):", player2.id);
     document.getElementById('slot-2').classList.add('filled');
     document.getElementById('slot-2').querySelector('.player-name').textContent = player.name.toUpperCase();
     document.getElementById('slot-2').querySelector('.status').textContent = 'Ready!';
@@ -571,44 +605,63 @@ socket.on("player-joined", (player) => {
   }
 });
 
+// ═══════ PHONE INPUT (FIXED) ═══════
 socket.on("player-moved", (data) => {
   if (GAME.state !== 'fighting') return;
 
-  const p = player1 && player1.id === data.playerId ? player1 : 
-            (player2 && player2.id === data.playerId ? player2 : null);
-  if (!p || p.dead) return;
+  const p = player1 && player1.id === data.playerId ? player1 :
+    (player2 && player2.id === data.playerId ? player2 : null);
+
+  if (!p) {
+    console.log("⚠️ No player found for id:", data.playerId);
+    return;
+  }
+
+  if (p.dead) return;
+
+  console.log(`🎮 ${p.name} action: ${data.direction}`);
+
+  const HOLD_FRAMES = 15; // Hold input for 15 frames (~250ms)
 
   switch (data.direction) {
     case "left":
-      p.velocity.x = -SPEED;
+      p.phoneLeft = HOLD_FRAMES;
       p.lastKey = 'a';
       break;
     case "right":
-      p.velocity.x = SPEED;
+      p.phoneRight = HOLD_FRAMES;
       p.lastKey = 'd';
       break;
     case "up":
     case "jump":
-      p.jump();
+      if (p.onGround) p.jump();
+      break;
+    case "down":
+      // Not implemented for sprite version yet
       break;
     case "punch":
     case "kick":
     case "special":
       p.attack();
       break;
+    case "block":
+      // Not implemented for sprite version yet
+      break;
   }
 });
 
 // ════════ BOT MODE ════════
 document.getElementById('bot-mode-btn').addEventListener('click', () => {
+  console.log("🤖 Bot mode activated");
   GAME.isBotMode = true;
-  if (!player1) {
-    player1 = createPlayer1('local-p1', 'SAMURAI');
-    document.getElementById('slot-1').classList.add('filled');
-    document.getElementById('slot-1').querySelector('.status').textContent = 'Ready!';
-  }
+
+  // Clear any existing players
+  player1 = createPlayer1('local-p1', 'SAMURAI');
   player2 = createPlayer2('bot', 'KENJI');
   player2.isCPU = true;
+
+  document.getElementById('slot-1').classList.add('filled');
+  document.getElementById('slot-1').querySelector('.status').textContent = 'You!';
   document.getElementById('slot-2').classList.add('filled');
   document.getElementById('slot-2').querySelector('.status').textContent = 'CPU';
 
@@ -639,7 +692,7 @@ document.addEventListener("keydown", (e) => {
       player1.attack();
       break;
     case 'k':
-      player1.attack(); // Special = same as attack for now
+      player1.attack();
       break;
   }
 });
