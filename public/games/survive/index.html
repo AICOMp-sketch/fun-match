@@ -3,60 +3,163 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Survive The Bots - Fun Match</title>
+  <title>UNO - Fun Match</title>
   <link rel="stylesheet" href="game.css">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
 <body>
 
-  <div id="game-container">
+  <!-- ════════ WAITING SCREEN ════════ -->
+  <div id="waiting-screen" class="screen active">
+    <a href="../../" class="back-btn">← Back to Hub</a>
 
-    <div id="header">
-      <a href="../../" class="back-btn">← Back</a>
-      <h1>🏃 Survive The Bots</h1>
-      <div id="room-info">
-        <p>ROOM CODE</p>
-        <h2 id="room-code">----</h2>
+    <div class="waiting-content">
+      <h1 class="game-title">U<span class="c1">N</span><span class="c2">O</span></h1>
+      <p class="game-subtitle">The classic card game - now digital!</p>
+
+      <div class="room-display">
+        <p class="room-label">ROOM CODE</p>
+        <h2 class="room-code-big" id="room-code">. . . .</h2>
+        <p class="room-hint">Join on phone: <span>fun-match.pages.dev/controller.html</span></p>
+      </div>
+
+      <div class="players-grid" id="players-grid">
+        <div class="player-slot empty" id="slot-1">
+          <div class="slot-avatar">?</div>
+          <p>Waiting...</p>
+        </div>
+        <div class="player-slot empty" id="slot-2">
+          <div class="slot-avatar">?</div>
+          <p>Waiting...</p>
+        </div>
+        <div class="player-slot empty" id="slot-3">
+          <div class="slot-avatar">?</div>
+          <p>Waiting...</p>
+        </div>
+        <div class="player-slot empty" id="slot-4">
+          <div class="slot-avatar">?</div>
+          <p>Waiting...</p>
+        </div>
+      </div>
+
+      <div class="action-buttons">
+        <button id="bot-mode-btn" class="action-btn primary">
+          PLAY VS 3 BOTS
+        </button>
+        <button id="start-game-btn" class="action-btn secondary" disabled>
+          START GAME
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ GAME SCREEN ════════ -->
+  <div id="game-screen" class="screen">
+
+    <!-- Top HUD -->
+    <div class="game-hud">
+      <div class="direction-indicator" id="direction">→</div>
+      <div class="turn-info">
+        <p class="turn-label">CURRENT TURN</p>
+        <p class="turn-name" id="current-player">-</p>
+      </div>
+      <div class="deck-info">
+        <p class="deck-label">DECK</p>
+        <p class="deck-count" id="deck-count">0</p>
       </div>
     </div>
 
-    <div id="game-area">
-      <canvas id="gameCanvas" width="800" height="500"></canvas>
+    <!-- Players around the table -->
+    <div class="table">
+      <!-- Opponents shown at positions -->
+      <div class="opponent-slot top" id="opp-top">
+        <div class="opp-info">
+          <p class="opp-name">-</p>
+          <div class="card-count">
+            <span class="card-back-mini"></span>
+            <span class="count">0</span>
+          </div>
+        </div>
+      </div>
 
-      <div id="sidebar">
-        <div class="info-box">
-          <h3>⏱️ TIME</h3>
-          <p id="timer">0</p>
+      <div class="opponent-slot left" id="opp-left">
+        <div class="opp-info">
+          <p class="opp-name">-</p>
+          <div class="card-count">
+            <span class="card-back-mini"></span>
+            <span class="count">0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="opponent-slot right" id="opp-right">
+        <div class="opp-info">
+          <p class="opp-name">-</p>
+          <div class="card-count">
+            <span class="card-back-mini"></span>
+            <span class="count">0</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Center of table -->
+      <div class="center-table">
+        <div class="draw-pile" id="draw-pile">
+          <div class="card-back-large">
+            <span>UNO</span>
+          </div>
+          <p class="pile-label">DRAW</p>
         </div>
 
-        <div class="info-box">
-          <h3>🤖 BOTS</h3>
-          <p id="bot-count">0</p>
+        <div class="discard-pile" id="discard-pile">
+          <div class="discard-card" id="top-card">
+            <span>-</span>
+          </div>
+          <p class="pile-label">DISCARD</p>
         </div>
+      </div>
 
-        <div class="info-box">
-          <h3>👤 PLAYERS</h3>
-          <ul id="players-list"></ul>
-        </div>
-
-        <div class="info-box join-info">
-          <h3>📱 JOIN</h3>
-          <p class="join-link">fun-match.pages.dev/controller.html</p>
-        </div>
+      <!-- Bottom (local player position) -->
+      <div class="local-player" id="local-player-display">
+        <p class="local-name" id="local-name">YOU</p>
+        <p class="local-status" id="local-status">Waiting for turn...</p>
       </div>
     </div>
 
-    <div id="game-over" class="hidden">
-      <h2>💀 GAME OVER</h2>
-      <p id="final-score">You survived for 0 seconds</p>
-      <button id="restart-btn">PLAY AGAIN</button>
-      <a href="../../" class="home-link">🏠 Back to Dashboard</a>
+    <!-- Announcement overlay -->
+    <div id="announcement" class="announcement hidden">
+      <h1 id="announcement-text"></h1>
     </div>
 
+    <!-- Wild color picker (shows on host when wild is played) -->
+    <div id="color-picker" class="color-picker hidden">
+      <h2>PICK A COLOR</h2>
+      <div class="colors">
+        <button class="color-btn red" data-color="red"></button>
+        <button class="color-btn blue" data-color="blue"></button>
+        <button class="color-btn green" data-color="green"></button>
+        <button class="color-btn yellow" data-color="yellow"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════ WIN SCREEN ════════ -->
+  <div id="win-screen" class="screen">
+    <div class="win-content">
+      <h1 class="win-title" id="win-title">-</h1>
+      <p class="win-subtitle">WINS!</p>
+
+      <div class="win-stats" id="win-stats"></div>
+
+      <div class="win-buttons">
+        <button class="action-btn primary" onclick="location.reload()">PLAY AGAIN</button>
+        <a href="../../" class="action-btn secondary">BACK TO HUB</a>
+      </div>
+    </div>
   </div>
 
   <script src="https://fun-match-production.up.railway.app/socket.io/socket.io.js"></script>
+  <script src="sounds.js"></script>
   <script src="game.js"></script>
-
 </body>
 </html>

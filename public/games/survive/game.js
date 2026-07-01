@@ -1,23 +1,411 @@
 const socket = io("https://fun-match-production.up.railway.app");
 
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
+// ════════ GAME STATE ════════
+const GAME = {
+  state: 'waiting',
+  players: [],           // Array of player objects
+  hands: {},             // playerId -> array of cards
+  deck: [],              // Draw pile
+  discard: [],           // Discard pile
+  currentPlayerIndex: 0,
+  direction: 1,          // 1 = clockwise, -1 = counter-clockwise
+  currentColor: null,    // Active color (for wild cards)
+  isBotMode: false,
+  pendingDraw: 0,        // For stacking draw cards
+  waitingForColor: false // When wild is played
+};
 
-const PLAYER_SIZE = 22;
-const BOT_SIZE = 18;
-const MOVE_SPEED = 6;
-const BOT_SPEED = 2;
+let LOCAL_PLAYER_ID = null;
 
-const players = {};
-const bots = [];
+// ════════ CARD DEFINITIONS ════════
+const COLORS = ['red', 'blue', 'green', 'yellow'];
+const NUMBERS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+const ACTIONS = ['skip', 'reverse', 'draw2'];
+const WILDS = ['wild', 'wild4'];
 
-let gameRunning = false;
-let startTime = 0;
-let elapsedTime = 0;
-let spawnInterval = null;
+// ════════ DECK CREATION ════════
+function createDeck() {
+  const deck = [];
 
+  COLORS.forEach(color => {
+    // One 0 per color
+    deck.push({ color, value: '0', type: 'number' });
+
+    // Two of each 1-9 per color
+    for (let i = 1; i <= 9; i++) {
+      deck.push({ color, value: String(i), type: 'number' });
+      deck.push({ color, value: String(i), type: 'number' });
+    }
+
+    // Two of each action card per color
+    ACTIONS.forEach(action => {
+      deck.push({ color, value: action, type: 'action' });
+      deck.push({ color, value: action, type: 'action' });
+    });
+  });
+
+  // 4 Wild cards
+  for (let i = 0; i < 4; i++) {
+    deck.push({ color: 'wild', value: 'wild', type: 'wild' });
+    deck.push({ color: 'wild', value: 'wild4', type: 'wild' });
+  }
+
+  return shuffle(deck);
+}
+
+function shuffle(array) {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// ════════ GAME LOGIC ════════
+function startGame() {
+  document.getElementById('waiting-screen').classList.remove('active');
+  document.getElementById('game-screen').classList.add('active');
+
+  GAME.state = 'playing';
+  GAME.deck = createDeck();
+  GAME.discard = [];
+  GAME.hands = {};
+  GAME.currentPlayerIndex = 0;
+  GAME.direction = 1;
+  GAME.pendingDraw = 0;
+
+  // Deal 7 cards to each player
+  GAME.players.forEach(player => {
+    GAME.hands[player.id] = [];
+    for (let i = 0; i < 7; i++) {
+      GAME.hands[player.id].push(GAME.deck.pop());
+    }
+  });
+
+  // Flip first card (must be a number card)
+  let firstCard;
+  do {
+    firstCard = GAME.deck.pop();
+    if (firstCard.type !== 'number') {
+      GAME.deck.unshift(firstCard); // Put back at bottom
+    }
+  } while (firstCard.type !== 'number');
+
+  GAME.discard.push(firstCard);
+  GAME.currentColor = firstCard.color;
+
+  updateDisplay();
+  sendHandsToPlayers();
+
+  Sounds.turn();
+  showAnnouncement("GAME START!");
+}
+
+function sendHandsToPlayers() {
+  // Send each player their hand via socket
+  GAME.players.forEach(player => {
+    if (!player.isBot) {
+      socket.emit('uno-hand', {
+        targetId: player.id,
+        hand: GAME.hands[player.id],
+        isMyTurn: player.id === getCurrentPlayer().id,
+        currentColor: GAME.currentColor,
+        topCard: GAME.discard[GAME.discard.length - 1]
+      });
+    }
+  });
+}
+
+function getCurrentPlayer() {
+  return GAME.players[GAME.currentPlayerIndex];
+}
+
+function isValidPlay(card, topCard, currentColor) {
+  // Wild cards can always be played
+  if (card.type === 'wild') return true;
+
+  // Match color
+  if (card.color === currentColor) return true;
+
+  // Match value
+  if (card.value === topCard.value) return true;
+
+  return false;
+}
+
+function playCard(playerId, cardIndex, chosenColor = null) {
+  const player = GAME.players.find(p => p.id === playerId);
+  if (!player) return { success: false, reason: 'Player not found' };
+
+  if (player.id !== getCurrentPlayer().id) {
+    return { success: false, reason: 'Not your turn' };
+  }
+
+  const hand = GAME.hands[playerId];
+  const card = hand[cardIndex];
+  if (!card) return { success: false, reason: 'Invalid card' };
+
+  const topCard = GAME.discard[GAME.discard.length - 1];
+
+  if (!isValidPlay(card, topCard, GAME.currentColor)) {
+    return { success: false, reason: 'Card does not match' };
+  }
+
+  // Remove card from hand
+  hand.splice(cardIndex, 1);
+  GAME.discard.push(card);
+
+  // Update color
+  if (card.type === 'wild') {
+    if (chosenColor) {
+      GAME.currentColor = chosenColor;
+    } else {
+      // Bot chooses color
+      GAME.currentColor = chooseBestColor(hand);
+    }
+  } else {
+    GAME.currentColor = card.color;
+  }
+
+  // Play sound
+  if (card.value === 'skip') Sounds.skip();
+  else if (card.value === 'reverse') Sounds.reverse();
+  else if (card.value === 'draw2') Sounds.draw2();
+  else if (card.value === 'wild') Sounds.wild();
+  else if (card.value === 'wild4') Sounds.draw4();
+  else Sounds.playCard();
+
+  // Check for UNO
+  if (hand.length === 1) {
+    Sounds.uno();
+    showAnnouncement(`${player.name} - UNO!`);
+  }
+
+  // Check for winner
+  if (hand.length === 0) {
+    endGame(player);
+    return { success: true, winner: true };
+  }
+
+  // Apply card effects
+  applyCardEffect(card);
+
+  // Next turn
+  nextTurn();
+
+  updateDisplay();
+  sendHandsToPlayers();
+
+  return { success: true };
+}
+
+function chooseBestColor(hand) {
+  // Bot AI: pick color with most cards
+  const counts = { red: 0, blue: 0, green: 0, yellow: 0 };
+  hand.forEach(c => {
+    if (COLORS.includes(c.color)) counts[c.color]++;
+  });
+  let bestColor = 'red';
+  let max = 0;
+  for (const color in counts) {
+    if (counts[color] > max) {
+      max = counts[color];
+      bestColor = color;
+    }
+  }
+  return bestColor;
+}
+
+function applyCardEffect(card) {
+  if (card.value === 'skip') {
+    advanceTurn(); // Skip next player (extra advance)
+  } else if (card.value === 'reverse') {
+    GAME.direction *= -1;
+    document.getElementById('direction').textContent = GAME.direction === 1 ? '→' : '←';
+    if (GAME.players.length === 2) {
+      advanceTurn(); // In 2-player, reverse acts like skip
+    }
+  } else if (card.value === 'draw2') {
+    const nextPlayer = getNextPlayer();
+    drawCards(nextPlayer.id, 2);
+    advanceTurn(); // Skip them
+  } else if (card.value === 'wild4') {
+    const nextPlayer = getNextPlayer();
+    drawCards(nextPlayer.id, 4);
+    advanceTurn(); // Skip them
+  }
+}
+
+function getNextPlayer() {
+  const nextIndex = (GAME.currentPlayerIndex + GAME.direction + GAME.players.length) % GAME.players.length;
+  return GAME.players[nextIndex];
+}
+
+function drawCards(playerId, count) {
+  for (let i = 0; i < count; i++) {
+    if (GAME.deck.length === 0) {
+      reshuffleDiscard();
+    }
+    if (GAME.deck.length > 0) {
+      GAME.hands[playerId].push(GAME.deck.pop());
+    }
+  }
+}
+
+function reshuffleDiscard() {
+  if (GAME.discard.length <= 1) return;
+  const topCard = GAME.discard.pop();
+  GAME.deck = shuffle(GAME.discard);
+  GAME.discard = [topCard];
+}
+
+function advanceTurn() {
+  GAME.currentPlayerIndex = (GAME.currentPlayerIndex + GAME.direction + GAME.players.length) % GAME.players.length;
+}
+
+function nextTurn() {
+  advanceTurn();
+  Sounds.turn();
+
+  // If bot's turn, make them play
+  const current = getCurrentPlayer();
+  if (current.isBot) {
+    setTimeout(() => botPlayTurn(), 1500);
+  }
+}
+
+function botPlayTurn() {
+  const bot = getCurrentPlayer();
+  if (!bot.isBot) return;
+
+  const hand = GAME.hands[bot.id];
+  const topCard = GAME.discard[GAME.discard.length - 1];
+
+  // Find playable cards
+  const playable = [];
+  hand.forEach((card, index) => {
+    if (isValidPlay(card, topCard, GAME.currentColor)) {
+      playable.push({ card, index });
+    }
+  });
+
+  if (playable.length === 0) {
+    // Draw a card
+    drawCards(bot.id, 1);
+    Sounds.drawCard();
+    updateDisplay();
+
+    // Check if drawn card is playable
+    const newCard = GAME.hands[bot.id][GAME.hands[bot.id].length - 1];
+    if (isValidPlay(newCard, topCard, GAME.currentColor)) {
+      setTimeout(() => {
+        playCard(bot.id, GAME.hands[bot.id].length - 1);
+      }, 1000);
+    } else {
+      setTimeout(() => {
+        nextTurn();
+        updateDisplay();
+      }, 800);
+    }
+    return;
+  }
+
+  // Bot strategy: Prefer action cards, then match by color
+  // Sort: wild4 > draw2 > skip > reverse > wild > numbers
+  playable.sort((a, b) => {
+    const priority = { wild4: 6, draw2: 5, skip: 4, reverse: 3, wild: 2 };
+    return (priority[b.card.value] || 1) - (priority[a.card.value] || 1);
+  });
+
+  const chosen = playable[0];
+  playCard(bot.id, chosen.index);
+}
+
+function endGame(winner) {
+  GAME.state = 'gameOver';
+  Sounds.win();
+
+  setTimeout(() => {
+    document.getElementById('game-screen').classList.remove('active');
+    document.getElementById('win-screen').classList.add('active');
+    document.getElementById('win-title').textContent = winner.name.toUpperCase();
+
+    // Stats
+    const stats = document.getElementById('win-stats');
+    const cardsLeft = GAME.players.map(p => 
+      `<div class="stat-row"><span>${p.name}</span><span>${GAME.hands[p.id].length} cards</span></div>`
+    ).join('');
+    stats.innerHTML = cardsLeft;
+  }, 2000);
+}
+
+// ════════ DISPLAY ════════
+function updateDisplay() {
+  // Update top card
+  const topCard = GAME.discard[GAME.discard.length - 1];
+  const topCardEl = document.getElementById('top-card');
+  topCardEl.className = 'discard-card ' + (topCard.type === 'wild' ? 'wild' : GAME.currentColor);
+
+  let displayValue = topCard.value;
+  if (topCard.value === 'skip') displayValue = '⊘';
+  else if (topCard.value === 'reverse') displayValue = '⟲';
+  else if (topCard.value === 'draw2') displayValue = '+2';
+  else if (topCard.value === 'wild') displayValue = 'W';
+  else if (topCard.value === 'wild4') displayValue = '+4';
+
+  topCardEl.querySelector('span').textContent = displayValue;
+
+  // Update deck count
+  document.getElementById('deck-count').textContent = GAME.deck.length;
+
+  // Update current player
+  const current = getCurrentPlayer();
+  document.getElementById('current-player').textContent = current.name.toUpperCase();
+
+  // Update opponent slots (show non-local players)
+  const opponents = GAME.players.filter(p => p.id !== LOCAL_PLAYER_ID);
+  const oppPositions = ['opp-left', 'opp-top', 'opp-right'];
+
+  oppPositions.forEach((slotId, i) => {
+    const slot = document.getElementById(slotId);
+    if (opponents[i]) {
+      const opp = opponents[i];
+      slot.style.display = 'block';
+      slot.querySelector('.opp-name').textContent = opp.name;
+      slot.querySelector('.count').textContent = GAME.hands[opp.id].length;
+
+      slot.classList.toggle('current-turn', opp.id === current.id);
+    } else {
+      slot.style.display = 'none';
+    }
+  });
+
+  // Update local player
+  const localPlayer = GAME.players.find(p => p.id === LOCAL_PLAYER_ID);
+  if (localPlayer) {
+    document.getElementById('local-name').textContent = localPlayer.name;
+    const isYourTurn = current.id === LOCAL_PLAYER_ID;
+    document.getElementById('local-player-display').classList.toggle('your-turn', isYourTurn);
+    document.getElementById('local-status').textContent = isYourTurn 
+      ? `Your turn! (${GAME.hands[LOCAL_PLAYER_ID].length} cards)` 
+      : `Waiting... (${GAME.hands[LOCAL_PLAYER_ID].length} cards)`;
+  }
+}
+
+function showAnnouncement(text) {
+  const el = document.getElementById('announcement');
+  document.getElementById('announcement-text').textContent = text;
+  el.classList.remove('hidden');
+  el.style.animation = 'none';
+  void el.offsetWidth;
+  el.style.animation = 'announceShow 2s ease-out';
+  setTimeout(() => el.classList.add('hidden'), 2000);
+}
+
+// ════════ SOCKET EVENTS ════════
 socket.on("connect", () => {
-  console.log("✅ Connected!");
+  console.log("✅ Connected to server!");
   socket.emit("create-room");
 });
 
@@ -26,207 +414,251 @@ socket.on("room-created", (data) => {
 });
 
 socket.on("player-joined", (player) => {
-  player.alive = true;
-  players[player.id] = player;
-  updatePlayersList();
-  if (!gameRunning) startGame();
-});
+  if (GAME.isBotMode) return;
+  if (GAME.players.length >= 4) return;
 
-socket.on("player-moved", (data) => {
-  const player = players[data.playerId];
-  if (!player || !player.alive) return;
+  const playerObj = {
+    id: player.id,
+    name: player.name.toUpperCase(),
+    isBot: false
+  };
 
-  switch (data.direction) {
-    case "up":    player.y -= MOVE_SPEED; break;
-    case "down":  player.y += MOVE_SPEED; break;
-    case "left":  player.x -= MOVE_SPEED; break;
-    case "right": player.x += MOVE_SPEED; break;
+  GAME.players.push(playerObj);
+
+  if (!LOCAL_PLAYER_ID) LOCAL_PLAYER_ID = player.id;
+
+  const slot = document.getElementById(`slot-${GAME.players.length}`);
+  if (slot) {
+    slot.classList.add('filled');
+    slot.querySelector('.slot-avatar').textContent = player.name[0].toUpperCase();
+    slot.querySelector('p').textContent = player.name;
   }
 
-  player.x = Math.max(PLAYER_SIZE, Math.min(canvas.width - PLAYER_SIZE, player.x));
-  player.y = Math.max(PLAYER_SIZE, Math.min(canvas.height - PLAYER_SIZE, player.y));
+  if (GAME.players.length >= 2) {
+    document.getElementById('start-game-btn').disabled = false;
+  }
+});
+
+// Phone plays a card
+socket.on("uno-play", (data) => {
+  const result = playCard(data.playerId, data.cardIndex, data.chosenColor);
+  if (!result.success) {
+    Sounds.error();
+    // Send error back to player
+    socket.emit('uno-error', { targetId: data.playerId, message: result.reason });
+  }
+});
+
+// Phone draws a card
+socket.on("uno-draw", (data) => {
+  const player = GAME.players.find(p => p.id === data.playerId);
+  if (!player || player.id !== getCurrentPlayer().id) return;
+
+  drawCards(data.playerId, 1);
+  Sounds.drawCard();
+
+  const topCard = GAME.discard[GAME.discard.length - 1];
+  const newCard = GAME.hands[data.playerId][GAME.hands[data.playerId].length - 1];
+
+  updateDisplay();
+  sendHandsToPlayers();
+
+  // If drawn card can't be played, next turn
+  if (!isValidPlay(newCard, topCard, GAME.currentColor)) {
+    setTimeout(() => {
+      nextTurn();
+      updateDisplay();
+    }, 1000);
+  }
 });
 
 socket.on("player-left", (data) => {
-  delete players[data.playerId];
-  updatePlayersList();
+  GAME.players = GAME.players.filter(p => p.id !== data.playerId);
 });
 
-function startGame() {
-  gameRunning = true;
-  startTime = Date.now();
-  bots.length = 0;
-  document.getElementById("game-over").classList.add("hidden");
+// ════════ BOT MODE ════════
+document.getElementById('bot-mode-btn').addEventListener('click', () => {
+  GAME.isBotMode = true;
+  GAME.players = [];
 
-  spawnBot();
-  spawnInterval = setInterval(() => {
-    if (gameRunning) spawnBot();
-  }, 8000);
-}
+  // Add local player
+  const localPlayer = { id: 'local-player', name: 'YOU', isBot: false };
+  GAME.players.push(localPlayer);
+  LOCAL_PLAYER_ID = 'local-player';
 
-function spawnBot() {
-  const edge = Math.floor(Math.random() * 4);
-  let x, y;
-  switch (edge) {
-    case 0: x = 0; y = Math.random() * canvas.height; break;
-    case 1: x = canvas.width; y = Math.random() * canvas.height; break;
-    case 2: x = Math.random() * canvas.width; y = 0; break;
-    case 3: x = Math.random() * canvas.width; y = canvas.height; break;
-  }
-  bots.push({ x, y });
-  document.getElementById("bot-count").textContent = bots.length;
-}
+  // Add 3 bots
+  const botNames = ['ALEX', 'JAMIE', 'CASEY'];
+  botNames.forEach((name, i) => {
+    GAME.players.push({ id: `bot-${i}`, name, isBot: true });
+  });
 
-function updateBots() {
-  bots.forEach(bot => {
-    let nearestPlayer = null;
-    let nearestDistance = Infinity;
-
-    for (const id in players) {
-      const player = players[id];
-      if (!player.alive) continue;
-
-      const dx = player.x - bot.x;
-      const dy = player.y - bot.y;
-      const distance = Math.sqrt(dx * dx + dy * dy);
-
-      if (distance < nearestDistance) {
-        nearestDistance = distance;
-        nearestPlayer = player;
-      }
-    }
-
-    if (!nearestPlayer) return;
-
-    const dx = nearestPlayer.x - bot.x;
-    const dy = nearestPlayer.y - bot.y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-
-    if (distance > 0) {
-      bot.x += (dx / distance) * BOT_SPEED;
-      bot.y += (dy / distance) * BOT_SPEED;
-    }
-
-    if (distance < PLAYER_SIZE + BOT_SIZE) {
-      nearestPlayer.alive = false;
-      checkGameOver();
+  // Fill UI slots
+  document.querySelectorAll('.player-slot').forEach((slot, i) => {
+    if (GAME.players[i]) {
+      slot.classList.add('filled');
+      slot.querySelector('.slot-avatar').textContent = GAME.players[i].name[0];
+      slot.querySelector('p').textContent = GAME.players[i].name;
     }
   });
-}
 
-function checkGameOver() {
-  updatePlayersList();
-  const alivePlayers = Object.values(players).filter(p => p.alive);
-  if (alivePlayers.length === 0 && Object.keys(players).length > 0) {
-    endGame();
-  }
-}
+  setTimeout(startGame, 800);
+});
 
-function endGame() {
-  gameRunning = false;
-  clearInterval(spawnInterval);
-
-  // Save stats
-  const highScore = parseInt(localStorage.getItem('highScore') || 0);
-  if (elapsedTime > highScore) {
-    localStorage.setItem('highScore', elapsedTime);
-  }
-  const games = parseInt(localStorage.getItem('gamesPlayed') || 0);
-  localStorage.setItem('gamesPlayed', games + 1);
-  const totalTime = parseInt(localStorage.getItem('totalTime') || 0);
-  localStorage.setItem('totalTime', totalTime + elapsedTime);
-
-  document.getElementById("final-score").textContent = 
-    `You survived for ${elapsedTime} seconds`;
-  document.getElementById("game-over").classList.remove("hidden");
-}
-
-function updatePlayersList() {
-  const list = document.getElementById("players-list");
-  list.innerHTML = "";
-
-  for (const id in players) {
-    const player = players[id];
-    const li = document.createElement("li");
-    if (!player.alive) li.classList.add("dead");
-    li.innerHTML = `
-      <span class="player-dot" style="background:${player.color}"></span>
-      <span>${player.name}</span>
-    `;
-    list.appendChild(li);
-  }
-}
-
-document.getElementById("restart-btn").addEventListener("click", () => {
-  for (const id in players) {
-    players[id].alive = true;
-    players[id].x = 400;
-    players[id].y = 250;
+// ════════ START MULTIPLAYER GAME ════════
+document.getElementById('start-game-btn').addEventListener('click', () => {
+  if (GAME.players.length < 2) {
+    alert('Need at least 2 players!');
+    return;
   }
   startGame();
 });
 
-function draw() {
-  ctx.fillStyle = "#151b3d";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+// ════════ LOCAL PLAYER CARD DISPLAY (bot mode uses keyboard) ════════
+// For bot mode, local player sees their cards displayed and clicks to play
+// We'll add a card display for bot mode
 
-  ctx.strokeStyle = "rgba(255, 255, 255, 0.05)";
-  for (let x = 0; x < canvas.width; x += 50) {
-    ctx.beginPath();
-    ctx.moveTo(x, 0);
-    ctx.lineTo(x, canvas.height);
-    ctx.stroke();
+function showLocalPlayerCards() {
+  if (!GAME.isBotMode) return;
+
+  // Create/update cards container for bot mode
+  let container = document.getElementById('local-cards');
+  if (!container) {
+    container = document.createElement('div');
+    container.id = 'local-cards';
+    container.style.cssText = `
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+      max-width: 90vw;
+      padding: 15px;
+      background: rgba(0, 0, 0, 0.7);
+      border-radius: 16px;
+      border: 2px solid #00e0ff;
+      z-index: 50;
+    `;
+    document.getElementById('game-screen').appendChild(container);
   }
-  for (let y = 0; y < canvas.height; y += 50) {
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(canvas.width, y);
-    ctx.stroke();
+
+  const hand = GAME.hands[LOCAL_PLAYER_ID] || [];
+  const topCard = GAME.discard[GAME.discard.length - 1];
+  const isMyTurn = getCurrentPlayer().id === LOCAL_PLAYER_ID;
+
+  container.innerHTML = hand.map((card, i) => {
+    const canPlay = isMyTurn && isValidPlay(card, topCard, GAME.currentColor);
+    const bgColor = card.type === 'wild' ? 'linear-gradient(135deg, #ff3860 0%, #ffaa00 33%, #aaff00 66%, #00e0ff 100%)' : 
+      card.color === 'red' ? '#ff3860' :
+      card.color === 'blue' ? '#00e0ff' :
+      card.color === 'green' ? '#aaff00' :
+      '#ffaa00';
+
+    let displayValue = card.value;
+    if (card.value === 'skip') displayValue = '⊘';
+    else if (card.value === 'reverse') displayValue = '⟲';
+    else if (card.value === 'draw2') displayValue = '+2';
+    else if (card.value === 'wild') displayValue = 'W';
+    else if (card.value === 'wild4') displayValue = '+4';
+
+    return `
+      <div class="mini-card" data-index="${i}" style="
+        width: 60px;
+        height: 85px;
+        background: ${bgColor};
+        border: 3px solid ${canPlay ? '#aaff00' : 'white'};
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: ${canPlay ? 'pointer' : 'not-allowed'};
+        opacity: ${canPlay ? '1' : '0.5'};
+        color: white;
+        font-family: 'Press Start 2P', monospace;
+        font-size: 1.2rem;
+        text-shadow: 2px 2px 0 rgba(0,0,0,0.4);
+        box-shadow: ${canPlay ? '0 0 15px rgba(170,255,0,0.6)' : '0 4px 10px rgba(0,0,0,0.5)'};
+        transition: all 0.2s;
+      ">${displayValue}</div>
+    `;
+  }).join('');
+
+  // Add draw button
+  if (isMyTurn) {
+    container.innerHTML += `
+      <button id="local-draw-btn" style="
+        padding: 15px 25px;
+        background: linear-gradient(135deg, #7c3aed, #ff3860);
+        color: white;
+        border: 3px solid white;
+        border-radius: 12px;
+        font-family: 'Press Start 2P', monospace;
+        font-size: 0.8rem;
+        cursor: pointer;
+        margin-left: 15px;
+      ">DRAW</button>
+    `;
+
+    document.getElementById('local-draw-btn').addEventListener('click', () => {
+      drawCards(LOCAL_PLAYER_ID, 1);
+      Sounds.drawCard();
+      const newCard = GAME.hands[LOCAL_PLAYER_ID][GAME.hands[LOCAL_PLAYER_ID].length - 1];
+      updateDisplay();
+      showLocalPlayerCards();
+
+      if (!isValidPlay(newCard, topCard, GAME.currentColor)) {
+        setTimeout(() => {
+          nextTurn();
+          updateDisplay();
+          showLocalPlayerCards();
+        }, 800);
+      }
+    });
   }
 
-  if (gameRunning) {
-    updateBots();
-    elapsedTime = Math.floor((Date.now() - startTime) / 1000);
-    document.getElementById("timer").textContent = elapsedTime;
-  }
+  // Add click handlers to cards
+  container.querySelectorAll('.mini-card').forEach(cardEl => {
+    cardEl.addEventListener('click', () => {
+      const index = parseInt(cardEl.dataset.index);
+      const card = hand[index];
+      if (!isValidPlay(card, topCard, GAME.currentColor)) return;
 
-  bots.forEach(bot => {
-    ctx.beginPath();
-    ctx.arc(bot.x, bot.y, BOT_SIZE, 0, Math.PI * 2);
-    ctx.fillStyle = "#e94560";
-    ctx.fill();
-    ctx.strokeStyle = "#ff0044";
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    ctx.fillStyle = "white";
-    ctx.beginPath();
-    ctx.arc(bot.x - 5, bot.y - 3, 3, 0, Math.PI * 2);
-    ctx.arc(bot.x + 5, bot.y - 3, 3, 0, Math.PI * 2);
-    ctx.fill();
+      // If wild, show color picker
+      if (card.type === 'wild') {
+        showColorPicker((color) => {
+          playCard(LOCAL_PLAYER_ID, index, color);
+          showLocalPlayerCards();
+        });
+      } else {
+        playCard(LOCAL_PLAYER_ID, index);
+        showLocalPlayerCards();
+      }
+    });
   });
-
-  for (const id in players) {
-    const player = players[id];
-    ctx.globalAlpha = player.alive ? 1 : 0.3;
-
-    ctx.beginPath();
-    ctx.arc(player.x, player.y, PLAYER_SIZE, 0, Math.PI * 2);
-    ctx.fillStyle = player.color;
-    ctx.fill();
-    ctx.strokeStyle = "white";
-    ctx.lineWidth = 3;
-    ctx.stroke();
-
-    ctx.fillStyle = "white";
-    ctx.font = "bold 14px Poppins";
-    ctx.textAlign = "center";
-    ctx.fillText(player.name, player.x, player.y - PLAYER_SIZE - 8);
-
-    ctx.globalAlpha = 1;
-  }
-
-  requestAnimationFrame(draw);
 }
 
-draw();
+function showColorPicker(callback) {
+  const picker = document.getElementById('color-picker');
+  picker.classList.remove('hidden');
+
+  const handlers = {};
+  picker.querySelectorAll('.color-btn').forEach(btn => {
+    handlers[btn.dataset.color] = () => {
+      picker.classList.add('hidden');
+      picker.querySelectorAll('.color-btn').forEach(b => {
+        b.removeEventListener('click', handlers[b.dataset.color]);
+      });
+      callback(btn.dataset.color);
+    };
+    btn.addEventListener('click', handlers[btn.dataset.color]);
+  });
+}
+
+// Hook into updateDisplay for bot mode
+const originalUpdateDisplay = updateDisplay;
+updateDisplay = function() {
+  originalUpdateDisplay();
+  if (GAME.isBotMode) showLocalPlayerCards();
+};
