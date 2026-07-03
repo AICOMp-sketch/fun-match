@@ -19,6 +19,12 @@ const SPRITES = {
     bloomer: {
       src: "https://i.ibb.co/TMdBW5dr/Bloomer-Trees.png",
       floorY: 380  // Different ground position - adjust this!
+    },
+    palace: {
+      src: "https://i.ibb.co/7xpJGJym/Palace.png",
+      floorY: 420,
+      name: "Palace",
+      description: "Beautiful arena"
     }
   },
   dread: {
