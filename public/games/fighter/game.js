@@ -8,7 +8,7 @@ const CH = canvas.height;
 const GRAVITY = 0.7;
 const SPEED = 5;
 const JUMP_V = -18;
-const FLOOR_Y = 330;
+const FLOOR_Y = 420;
 
 // ════════ SPRITE URLs ════════
 const SPRITES = {
