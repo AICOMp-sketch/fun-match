@@ -257,9 +257,9 @@ function createDread(id, name, side) {
     name,
     characterType: 'dread',
     startX: side === 'left' ? 200 : 760,
-    defaultFacing: 1,  // Sprites face RIGHT by default
+    defaultFacing: 1,
     scale: 2.5,
-    offset: { x: 200, y: 150 },
+    offset: { x: 200, y: 150 },  // Dread's offset
     hitFrame: 4,
     sprites: JSON.parse(JSON.stringify(SPRITES.dread))
   });
@@ -271,9 +271,9 @@ function createKungLao(id, name, side) {
     name,
     characterType: 'kunglao',
     startX: side === 'left' ? 200 : 760,
-    defaultFacing: 1,  // Sprites face RIGHT by default
+    defaultFacing: 1,
     scale: 2.5,
-    offset: { x: 200, y: 150 },
+    offset: { x: 200, y: 100 },  // ← CHANGED: Kung Lao needs lower offset (was 150)
     hitFrame: 3,
     sprites: JSON.parse(JSON.stringify(SPRITES.kunglao))
   });

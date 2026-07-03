@@ -452,7 +452,7 @@ socket.on("uno-play", (data) => {
 socket.on("uno-draw", (data) => {
   const player = GAME.players.find(p => p.id === data.playerId);
   if (!player || player.id !== getCurrentPlayer().id) return;
-
+  
   drawCards(data.playerId, 1);
   Sounds.drawCard();
 
