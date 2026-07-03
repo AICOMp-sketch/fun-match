@@ -8,13 +8,18 @@ const CH = canvas.height;
 const GRAVITY = 0.7;
 const SPEED = 5;
 const JUMP_V = -18;
-const FLOOR_Y = 420;
 
 // ════════ SPRITE URLs ════════
 const SPRITES = {
   backgrounds: {
-    mist: "https://i.ibb.co/tpY259PV/Mist-Trees.png",
-    bloomer: "https://i.ibb.co/TMdBW5dr/Bloomer-Trees.png"
+    mist: {
+      src: "https://i.ibb.co/tpY259PV/Mist-Trees.png",
+      floorY: 420  // Ground position for this map
+    },
+    bloomer: {
+      src: "https://i.ibb.co/TMdBW5dr/Bloomer-Trees.png",
+      floorY: 380  // Different ground position - adjust this!
+    }
   },
   dread: {
     idle: { src: "https://i.ibb.co/RGBKkbjg/Idle.png", framesMax: 10 },
@@ -49,19 +54,20 @@ const GAME = {
   timerInterval: null,
   isBotMode: false,
   lastTime: performance.now(),
-  selectedMap: null
+  selectedMap: null,
+  currentFloorY: 420  // ← ADD THIS
 };
 
 // ════════ BACKGROUND SPRITE ════════
 class Background {
-  constructor(src) {
+  constructor(mapData) {
     this.image = new Image();
-    this.image.src = src;
+    this.image.src = mapData.src;
+    this.floorY = mapData.floorY;
   }
 
   draw() {
     if (!this.image.complete || !this.image.naturalWidth) return;
-    // Scale to fit canvas
     c.drawImage(this.image, 0, 0, CW, CH);
   }
 }
@@ -96,7 +102,7 @@ class Fighter {
   }
 
   reset() {
-    this.position = { x: this.startX, y: 0 };
+    this.position = { x: this.startX, y: GAME.currentFloorY };
     this.velocity = { x: 0, y: 0 };
     this.health = 100;
     this.maxHealth = 100;
@@ -162,7 +168,7 @@ class Fighter {
     this.position.x = Math.max(-30, Math.min(CW - this.width + 30, this.position.x));
     if (this.position.y + this.height + this.velocity.y >= CH - 96) {
       this.velocity.y = 0;
-      this.position.y = FLOOR_Y;
+      this.position.y = GAME.currentFloorY;  // ← NEW - uses map's floor
       this.onGround = true;
     } else {
       this.velocity.y += GRAVITY;
@@ -331,8 +337,9 @@ function startMatch() {
   document.getElementById('map-select-screen').classList.remove('active');
   document.getElementById('fight-screen').classList.add('active');
 
-  // Load the selected background
-  background = new Background(SPRITES.backgrounds[GAME.selectedMap]);
+  const mapData = SPRITES.backgrounds[GAME.selectedMap];
+  background = new Background(mapData);
+  GAME.currentFloorY = mapData.floorY;  // ← ADD THIS LINE;
 
   GAME.round = 1;
   player1.roundsWon = 0;
