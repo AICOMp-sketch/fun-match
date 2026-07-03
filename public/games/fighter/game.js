@@ -276,7 +276,7 @@ function createKungLao(id, name, side) {
     id,
     name,
     characterType: 'kunglao',
-     startX: side === 'left' ? 200 : 820,  
+    startX: side === 'left' ? 200 : 850,
     defaultFacing: 1,
     scale: 2.5,
     offset: { x: 200, y: 100 },  // ← CHANGED: Kung Lao needs lower offset (was 150)
