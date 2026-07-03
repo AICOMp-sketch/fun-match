@@ -257,7 +257,7 @@ function createDread(id, name, side) {
     name,
     characterType: 'dread',
     startX: side === 'left' ? 200 : 760,
-    defaultFacing: side === 'left' ? 1 : -1,
+    defaultFacing: 1,  // Sprites face RIGHT by default
     scale: 2.5,
     offset: { x: 200, y: 150 },
     hitFrame: 4,
@@ -271,7 +271,7 @@ function createKungLao(id, name, side) {
     name,
     characterType: 'kunglao',
     startX: side === 'left' ? 200 : 760,
-    defaultFacing: side === 'left' ? 1 : -1,
+    defaultFacing: 1,  // Sprites face RIGHT by default
     scale: 2.5,
     offset: { x: 200, y: 150 },
     hitFrame: 3,
