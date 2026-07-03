@@ -22,7 +22,7 @@ const SPRITES = {
     },
     palace: {
       src: "https://i.ibb.co/7xpJGJym/Palace.png",
-      floorY: 420,
+      floorY: 350,
       name: "Palace",
       description: "Beautiful arena"
     }
