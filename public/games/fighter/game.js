@@ -9,55 +9,64 @@ const GRAVITY = 0.7;
 const SPEED = 5;
 const JUMP_V = -18;
 const FLOOR_Y = 330;
-const CDN = "https://cdn.jsdelivr.net/gh/chriscourses/fighting-game@main/img/";
+
+// ════════ SPRITE URLs ════════
+const SPRITES = {
+  backgrounds: {
+    mist: "https://i.ibb.co/tpY259PV/Mist-Trees.png",
+    bloomer: "https://i.ibb.co/TMdBW5dr/Bloomer-Trees.png"
+  },
+  dread: {
+    idle: { src: "https://i.ibb.co/RGBKkbjg/Idle.png", framesMax: 10 },
+    run: { src: "https://i.ibb.co/S7s7GHTb/Run.png", framesMax: 8 },
+    jump: { src: "https://i.ibb.co/DDwY1ng7/Jump.png", framesMax: 3 },
+    fall: { src: "https://i.ibb.co/n8MxfhkC/Fall.png", framesMax: 3 },
+    attack1: { src: "https://i.ibb.co/8LrX2HzP/Attack1.png", framesMax: 7 },
+    attack2: { src: "https://i.ibb.co/v6FdbMQh/Attack2.png", framesMax: 7 },
+    attack3: { src: "https://i.ibb.co/QvVnnNfN/Attack3.png", framesMax: 8 },
+    takeHit: { src: "https://i.ibb.co/5ggJMyWv/Take-hit.png", framesMax: 3 },
+    death: { src: "https://i.ibb.co/rGBF8MVG/Death.png", framesMax: 7 }
+  },
+  kunglao: {
+    idle: { src: "https://i.ibb.co/8n67DFYH/Idle.png", framesMax: 10 },
+    run: { src: "https://i.ibb.co/DxpYf2X/Run.png", framesMax: 8 },
+    jump: { src: "https://i.ibb.co/d0Pc68N2/Going-Up.png", framesMax: 3 },
+    fall: { src: "https://i.ibb.co/HDWN7NJH/Going-Down.png", framesMax: 3 },
+    attack1: { src: "https://i.ibb.co/zTbSDPqP/Attack1.png", framesMax: 7 },
+    attack2: { src: "https://i.ibb.co/pBQqx9QS/Attack2.png", framesMax: 6 },
+    attack3: { src: "https://i.ibb.co/B24V8kwK/Attack3.png", framesMax: 9 },
+    takeHit: { src: "https://i.ibb.co/d0ZHd4Jh/Take-Hit.png", framesMax: 3 },
+    death: { src: "https://i.ibb.co/JFdvPZ8c/Death.png", framesMax: 11 }
+  }
+};
 
 // ════════ GAME STATE ════════
 const GAME = {
-  state: 'waiting',
+  state: 'waiting', // waiting, mapSelect, countdown, fighting, roundEnd, gameOver
   round: 1,
   maxRounds: 3,
   timer: 60,
   timerInterval: null,
   isBotMode: false,
-  lastTime: performance.now()
+  lastTime: performance.now(),
+  selectedMap: null
 };
 
-// ════════ SPRITE CLASS ════════
-class Sprite {
-  constructor({ position, imageSrc, scale = 1, framesMax = 1, offset = { x: 0, y: 0 } }) {
-    this.position = position;
-    this.scale = scale;
-    this.framesMax = framesMax;
-    this.offset = offset;
+// ════════ BACKGROUND SPRITE ════════
+class Background {
+  constructor(src) {
     this.image = new Image();
-    this.image.src = encodeURI(imageSrc);
-    this.framesCurrent = 0;
-    this.framesElapsed = 0;
-    this.framesHold = 8;
+    this.image.src = src;
   }
 
   draw() {
     if (!this.image.complete || !this.image.naturalWidth) return;
-    const fw = this.image.width / this.framesMax;
-    c.drawImage(
-      this.image,
-      this.framesCurrent * fw, 0, fw, this.image.height,
-      this.position.x - this.offset.x, this.position.y - this.offset.y,
-      fw * this.scale, this.image.height * this.scale
-    );
-  }
-
-  animate() {
-    if (++this.framesElapsed % this.framesHold === 0) {
-      this.framesCurrent = (this.framesCurrent + 1) % this.framesMax;
-    }
-  }
-
-  update() {
-    this.draw();
-    this.animate();
+    // Scale to fit canvas
+    c.drawImage(this.image, 0, 0, CW, CH);
   }
 }
+
+let background = null;
 
 // ════════ FIGHTER CLASS ════════
 class Fighter {
@@ -66,18 +75,20 @@ class Fighter {
     this.name = config.name;
     this.startX = config.startX;
     this.defaultFacing = config.defaultFacing;
-    this.scale = config.scale;
-    this.drawOffset = config.offset;
-    this.hitFrame = config.hitFrame;
-    this.width = 50;
-    this.height = 150;
-    this.attackBox = { x: 0, y: 0, width: 160, height: 50, innerGap: 12, yOff: 50 };
+    this.scale = config.scale || 2.5;
+    this.drawOffset = config.offset || { x: 200, y: 150 };
+    this.hitFrame = config.hitFrame || 3;
+    this.width = 60;
+    this.height = 160;
+    this.attackBox = { x: 0, y: 0, width: 180, height: 60, innerGap: 12, yOff: 50 };
     this.sprites = config.sprites;
     this.isCPU = false;
+    this.characterType = config.characterType; // 'dread' or 'kunglao'
 
+    // Load all sprite images
     for (const key in this.sprites) {
       this.sprites[key].image = new Image();
-      this.sprites[key].image.src = encodeURI(this.sprites[key].src);
+      this.sprites[key].image.src = this.sprites[key].src;
     }
 
     this.roundsWon = 0;
@@ -98,13 +109,12 @@ class Fighter {
     this.aiTimer = 0;
     this.aiJump = 0;
     this.aiAtk = 0;
+    this.currentAttack = null;
     this.image = this.sprites.idle.image;
     this.framesMax = this.sprites.idle.framesMax;
     this.framesCurrent = 0;
     this.framesElapsed = 0;
     this.framesHold = 6;
-
-    // NEW: Phone input hold timers
     this.phoneLeft = 0;
     this.phoneRight = 0;
   }
@@ -160,11 +170,18 @@ class Fighter {
     }
   }
 
+  isInAttackAnimation() {
+    return (this.image === this.sprites.attack1.image ||
+      this.image === this.sprites.attack2.image ||
+      this.image === this.sprites.attack3.image) &&
+      this.framesCurrent < this.framesMax - 1;
+  }
+
   setAnim(name) {
     const s = this.sprites[name];
+    if (!s) return;
     if (this.image === this.sprites.death.image) return;
-    if (this.image === this.sprites.attack1.image &&
-      this.framesCurrent < this.sprites.attack1.framesMax - 1) return;
+    if (this.isInAttackAnimation()) return;
     if (this.image === this.sprites.takeHit.image &&
       this.framesCurrent < this.sprites.takeHit.framesMax - 1) return;
     if (this.image !== s.image) {
@@ -174,21 +191,34 @@ class Fighter {
     }
   }
 
-  attack() {
+  doAttack(attackName, damage, hitFrame) {
     if (this.dead) return;
-    if (this.image === this.sprites.attack1.image &&
-      this.framesCurrent < this.sprites.attack1.framesMax - 1) return;
+    if (this.isInAttackAnimation()) return;
     if (this.image === this.sprites.takeHit.image &&
       this.framesCurrent < this.sprites.takeHit.framesMax - 1) return;
 
-    this.image = this.sprites.attack1.image;
-    this.framesMax = this.sprites.attack1.framesMax;
+    const s = this.sprites[attackName];
+    if (!s) return;
+
+    this.image = s.image;
+    this.framesMax = s.framesMax;
     this.framesCurrent = 0;
     this.isAttacking = true;
+    this.currentAttack = attackName;
+    this.currentDamage = damage;
+    this.currentHitFrame = hitFrame;
     this._applied = false;
 
-    if (typeof Sounds !== 'undefined') Sounds.kick();
+    if (typeof Sounds !== 'undefined') {
+      if (attackName === 'attack1') Sounds.punch();
+      else if (attackName === 'attack2') Sounds.kick();
+      else if (attackName === 'attack3') Sounds.special();
+    }
   }
+
+  attack1() { this.doAttack('attack1', 8, 3); }
+  attack2() { this.doAttack('attack2', 12, 3); }
+  attack3() { this.doAttack('attack3', 18, 4); }
 
   jump() {
     if (this.onGround && !this.dead) {
@@ -197,8 +227,8 @@ class Fighter {
     }
   }
 
-  takeHit() {
-    this.health = Math.max(0, this.health - 15);
+  takeHit(damage) {
+    this.health = Math.max(0, this.health - damage);
     this.isAttacking = false;
     if (typeof Sounds !== 'undefined') Sounds.hit();
     screenShake();
@@ -217,62 +247,35 @@ class Fighter {
   }
 }
 
-// ════════ ASSETS ════════
-const background = new Sprite({
-  position: { x: 0, y: 0 },
-  imageSrc: CDN + "background.png"
-});
-
-const shop = new Sprite({
-  position: { x: 600, y: 128 },
-  imageSrc: CDN + "shop.png",
-  scale: 2.75,
-  framesMax: 6
-});
-
 // ════════ CREATE FIGHTERS ════════
 let player1 = null;
 let player2 = null;
 
-function createPlayer1(id, name) {
+function createDread(id, name, side) {
   return new Fighter({
     id,
     name,
-    startX: 200,
-    defaultFacing: 1,
+    characterType: 'dread',
+    startX: side === 'left' ? 200 : 760,
+    defaultFacing: side === 'left' ? 1 : -1,
     scale: 2.5,
-    offset: { x: 215, y: 157 },
+    offset: { x: 200, y: 150 },
     hitFrame: 4,
-    sprites: {
-      idle: { src: CDN + "samuraiMack/Idle.png", framesMax: 8 },
-      run: { src: CDN + "samuraiMack/Run.png", framesMax: 8 },
-      jump: { src: CDN + "samuraiMack/Jump.png", framesMax: 2 },
-      fall: { src: CDN + "samuraiMack/Fall.png", framesMax: 2 },
-      attack1: { src: CDN + "samuraiMack/Attack1.png", framesMax: 6 },
-      takeHit: { src: CDN + "samuraiMack/Take Hit - white silhouette.png", framesMax: 4 },
-      death: { src: CDN + "samuraiMack/Death.png", framesMax: 6 }
-    }
+    sprites: JSON.parse(JSON.stringify(SPRITES.dread))
   });
 }
 
-function createPlayer2(id, name) {
+function createKungLao(id, name, side) {
   return new Fighter({
     id,
     name,
-    startX: 760,
-    defaultFacing: -1,
+    characterType: 'kunglao',
+    startX: side === 'left' ? 200 : 760,
+    defaultFacing: side === 'left' ? 1 : -1,
     scale: 2.5,
-    offset: { x: 215, y: 167 },
-    hitFrame: 2,
-    sprites: {
-      idle: { src: CDN + "kenji/Idle.png", framesMax: 4 },
-      run: { src: CDN + "kenji/Run.png", framesMax: 8 },
-      jump: { src: CDN + "kenji/Jump.png", framesMax: 2 },
-      fall: { src: CDN + "kenji/Fall.png", framesMax: 2 },
-      attack1: { src: CDN + "kenji/Attack1.png", framesMax: 4 },
-      takeHit: { src: CDN + "kenji/Take hit.png", framesMax: 3 },
-      death: { src: CDN + "kenji/Death.png", framesMax: 7 }
-    }
+    offset: { x: 200, y: 150 },
+    hitFrame: 3,
+    sprites: JSON.parse(JSON.stringify(SPRITES.kunglao))
   });
 }
 
@@ -319,9 +322,17 @@ function updateRoundDots() {
   }
 }
 
-function startMatch() {
+function showMapSelect() {
   document.getElementById('waiting-screen').classList.remove('active');
+  document.getElementById('map-select-screen').classList.add('active');
+}
+
+function startMatch() {
+  document.getElementById('map-select-screen').classList.remove('active');
   document.getElementById('fight-screen').classList.add('active');
+
+  // Load the selected background
+  background = new Background(SPRITES.backgrounds[GAME.selectedMap]);
 
   GAME.round = 1;
   player1.roundsWon = 0;
@@ -438,9 +449,12 @@ function runAI(dt) {
   }
 
   player2.aiAtk -= dt;
-  if (player2.aiAtk <= 0 && adist < 210 && player2.onGround) {
-    player2.attack();
-    player2.aiAtk = 0.7 + Math.random() * 0.8;
+  if (player2.aiAtk <= 0 && adist < 220 && player2.onGround) {
+    const roll = Math.random();
+    if (roll < 0.4) player2.attack1();
+    else if (roll < 0.75) player2.attack2();
+    else player2.attack3();
+    player2.aiAtk = 0.9 + Math.random() * 0.9;
   }
 }
 
@@ -454,12 +468,16 @@ function chooseSprite(f) {
 
 function resolveHit(atk, def) {
   if (!atk.isAttacking) { atk._applied = false; return; }
-  if (atk.image === atk.sprites.attack1.image &&
-    atk.framesCurrent === atk.hitFrame && !atk._applied) {
+
+  const isAttackSprite = atk.image === atk.sprites.attack1.image ||
+    atk.image === atk.sprites.attack2.image ||
+    atk.image === atk.sprites.attack3.image;
+
+  if (isAttackSprite && atk.framesCurrent === atk.currentHitFrame && !atk._applied) {
     atk._applied = true;
     atk.isAttacking = false;
     if (!def.dead && collides(atk, def)) {
-      def.takeHit();
+      def.takeHit(atk.currentDamage);
       updateHpBars();
       if (def.health <= 0) {
         setTimeout(() => endRound(atk === player1 ? player1 : player2), 1500);
@@ -476,19 +494,16 @@ function collides(a, d) {
     b.y <= d.position.y + d.height;
 }
 
-// Input state (keyboard)
 const keys = { a: false, d: false };
 
 function applyPlayerInput(player) {
   player.velocity.x = 0;
 
-  // Keyboard input (only for player1)
   if (player === player1) {
     if (keys.a && player.lastKey === "a") player.velocity.x = -SPEED;
     else if (keys.d && player.lastKey === "d") player.velocity.x = SPEED;
   }
 
-  // Phone input (for BOTH players - overrides keyboard)
   if (player.phoneLeft > 0) {
     player.velocity.x = -SPEED;
     player.phoneLeft--;
@@ -504,28 +519,26 @@ function frame(now) {
   GAME.lastTime = now;
   requestAnimationFrame(frame);
 
-  // Background
+  // Draw background
   c.fillStyle = "#000";
   c.fillRect(0, 0, CW, CH);
 
-  background.update();
-  shop.update();
-
-  c.fillStyle = "rgba(255, 255, 255, 0.12)";
-  c.fillRect(0, 0, CW, CH);
+  if (background) {
+    background.draw();
+    c.fillStyle = "rgba(0, 0, 0, 0.25)";
+    c.fillRect(0, 0, CW, CH);
+  }
 
   if (!player1 || !player2) return;
 
   const active = GAME.state === 'fighting';
 
-  // Player 1 input
   if (active && !player1.dead) {
     applyPlayerInput(player1);
   } else {
     player1.velocity.x = 0;
   }
 
-  // Player 2 input
   if (active && !player2.dead) {
     if (GAME.isBotMode && player2.isCPU) {
       runAI(dt);
@@ -536,92 +549,67 @@ function frame(now) {
     player2.velocity.x = 0;
   }
 
-  // Facing
   if (!player1.dead) player1.facing = player1.cx <= player2.cx ? 1 : -1;
   if (!player2.dead) player2.facing = player2.cx <= player1.cx ? 1 : -1;
 
-  // Physics
   player1.physics();
   player2.physics();
   player1.updateAttackBox();
   player2.updateAttackBox();
 
-  // Animation
   if (active) {
     chooseSprite(player1);
     chooseSprite(player2);
   }
 
-  // Draw fighters
   player1.draw();
   player1.animate();
   player2.draw();
   player2.animate();
 
-  // Hit resolution
   resolveHit(player1, player2);
   resolveHit(player2, player1);
 }
 
 // ════════ SOCKET EVENTS ════════
 socket.on("connect", () => {
-  console.log("✅ Connected to server!");
+  console.log("✅ Connected!");
   socket.emit("create-room");
 });
 
-socket.on("connect_error", (err) => {
-  console.error("❌ Connection error:", err);
-  document.getElementById("room-code").textContent = "ERR!";
-});
-
 socket.on("room-created", (data) => {
-  console.log("🏠 Room created:", data.roomCode);
+  console.log("🏠 Room:", data.roomCode);
   document.getElementById("room-code").textContent = data.roomCode;
 });
 
 socket.on("player-joined", (player) => {
   console.log("👤 Player joined:", player.name, player.id);
 
-  // If bot mode, ignore incoming players
-  if (GAME.isBotMode) {
-    console.log("⚠️ Bot mode active - ignoring player");
-    return;
-  }
+  if (GAME.isBotMode) return;
 
   if (!player1) {
-    player1 = createPlayer1(player.id, player.name);
-    console.log("🥋 Player1 (Samurai):", player1.id);
+    player1 = createDread(player.id, player.name, 'left');
     document.getElementById('slot-1').classList.add('filled');
     document.getElementById('slot-1').querySelector('.player-name').textContent = player.name.toUpperCase();
     document.getElementById('slot-1').querySelector('.status').textContent = 'Ready!';
   } else if (!player2) {
-    player2 = createPlayer2(player.id, player.name);
-    console.log("⚔️ Player2 (Kenji):", player2.id);
+    player2 = createKungLao(player.id, player.name, 'right');
     document.getElementById('slot-2').classList.add('filled');
     document.getElementById('slot-2').querySelector('.player-name').textContent = player.name.toUpperCase();
     document.getElementById('slot-2').querySelector('.status').textContent = 'Ready!';
 
-    setTimeout(startMatch, 1500);
+    setTimeout(showMapSelect, 1500);
   }
 });
 
-// ═══════ PHONE INPUT (FIXED) ═══════
 socket.on("player-moved", (data) => {
   if (GAME.state !== 'fighting') return;
 
   const p = player1 && player1.id === data.playerId ? player1 :
     (player2 && player2.id === data.playerId ? player2 : null);
+  if (!p || p.dead) return;
 
-  if (!p) {
-    console.log("⚠️ No player found for id:", data.playerId);
-    return;
-  }
-
-  if (p.dead) return;
-
-  console.log(`🎮 ${p.name} action: ${data.direction}`);
-
-  const HOLD_FRAMES = 15; // Hold input for 15 frames (~250ms)
+  const HOLD_FRAMES = 15;
 
   switch (data.direction) {
     case "left":
@@ -636,28 +624,27 @@ socket.on("player-moved", (data) => {
     case "jump":
       if (p.onGround) p.jump();
       break;
-    case "down":
-      // Not implemented for sprite version yet
-      break;
     case "punch":
+      p.attack1();
+      break;
     case "kick":
+      p.attack2();
+      break;
     case "special":
-      p.attack();
+      p.attack3();
       break;
     case "block":
-      // Not implemented for sprite version yet
+      // Not used
       break;
   }
 });
 
 // ════════ BOT MODE ════════
 document.getElementById('bot-mode-btn').addEventListener('click', () => {
-  console.log("🤖 Bot mode activated");
   GAME.isBotMode = true;
 
-  // Clear any existing players
-  player1 = createPlayer1('local-p1', 'SAMURAI');
-  player2 = createPlayer2('bot', 'KENJI');
+  player1 = createDread('local-p1', 'DREAD', 'left');
+  player2 = createKungLao('bot', 'KUNG LAO', 'right');
   player2.isCPU = true;
 
   document.getElementById('slot-1').classList.add('filled');
@@ -665,10 +652,26 @@ document.getElementById('bot-mode-btn').addEventListener('click', () => {
   document.getElementById('slot-2').classList.add('filled');
   document.getElementById('slot-2').querySelector('.status').textContent = 'CPU';
 
-  setTimeout(startMatch, 800);
+  setTimeout(showMapSelect, 800);
 });
 
-// ════════ KEYBOARD CONTROLS ════════
+// ════════ MAP SELECT ════════
+document.querySelectorAll('.map-card').forEach(card => {
+  card.addEventListener('click', () => {
+    document.querySelectorAll('.map-card').forEach(c => c.classList.remove('selected'));
+    card.classList.add('selected');
+    GAME.selectedMap = card.dataset.map;
+    document.getElementById('start-fight-btn').disabled = false;
+  });
+});
+
+document.getElementById('start-fight-btn').addEventListener('click', () => {
+  if (GAME.selectedMap) {
+    startMatch();
+  }
+});
+
+// ════════ KEYBOARD ════════
 const PREVENT = new Set(["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", " "]);
 
 document.addEventListener("keydown", (e) => {
@@ -689,10 +692,13 @@ document.addEventListener("keydown", (e) => {
       break;
     case 'j':
     case ' ':
-      player1.attack();
+      player1.attack1();
       break;
     case 'k':
-      player1.attack();
+      player1.attack2();
+      break;
+    case 'l':
+      player1.attack3();
       break;
   }
 });
@@ -702,6 +708,6 @@ document.addEventListener("keyup", (e) => {
   if (e.key === 'd') keys.d = false;
 });
 
-// ════════ START GAME LOOP ════════
+// ════════ START ════════
 requestAnimationFrame(frame);
-console.log('⚔️ Samurai Showdown loaded!');
+console.log('⚔️ Mortal Arena loaded!');

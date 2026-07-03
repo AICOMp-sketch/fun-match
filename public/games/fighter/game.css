@@ -27,7 +27,7 @@ body {
 
 /* ════════ WAITING SCREEN ════════ */
 #waiting-screen {
-  background: 
+  background:
     radial-gradient(ellipse at top, rgba(242, 193, 78, 0.15) 0%, transparent 50%),
     radial-gradient(ellipse at bottom, rgba(180, 30, 30, 0.1) 0%, transparent 50%),
     #0c0a12;
@@ -148,25 +148,27 @@ body {
 }
 
 .character-preview {
-  width: 120px;
+  width: 160px;
   height: 160px;
   margin: 0 auto 15px;
   background-position: center;
   background-repeat: no-repeat;
   background-size: contain;
   filter: drop-shadow(0 5px 15px rgba(0, 0, 0, 0.5));
+  background-color: rgba(0, 0, 0, 0.3);
+  border-radius: 12px;
 }
 
-.samurai-preview {
-  background-image: url('https://cdn.jsdelivr.net/gh/chriscourses/fighting-game@main/img/samuraiMack/Idle.png');
-  background-position: -215px -157px;
-  background-size: 800px 200px;
+.dread-preview {
+  background-image: url('https://i.ibb.co/RGBKkbjg/Idle.png');
+  background-position: left center;
+  background-size: 900% auto;
 }
 
-.kenji-preview {
-  background-image: url('https://cdn.jsdelivr.net/gh/chriscourses/fighting-game@main/img/kenji/Idle.png');
-  background-position: -215px -167px;
-  background-size: 800px 200px;
+.lao-preview {
+  background-image: url('https://i.ibb.co/8n67DFYH/Idle.png');
+  background-position: left center;
+  background-size: 900% auto;
 }
 
 .player-name {
@@ -195,8 +197,15 @@ body {
 }
 
 @keyframes vsGlow {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.15); }
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.15);
+  }
 }
 
 .action-btn {
@@ -221,9 +230,111 @@ body {
   box-shadow: 0 8px 25px rgba(242, 193, 78, 0.3);
 }
 
-.action-btn.primary:hover {
+.action-btn.primary:hover:not(:disabled) {
   transform: translateY(-3px);
   box-shadow: 0 12px 35px rgba(242, 193, 78, 0.5);
+}
+
+.action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ════════ MAP SELECT SCREEN ════════ */
+#map-select-screen {
+  background:
+    radial-gradient(ellipse at center, rgba(242, 193, 78, 0.15) 0%, transparent 60%),
+    #0c0a12;
+  padding: 40px 20px;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+#map-select-screen.active {
+  display: flex;
+}
+
+.select-content {
+  max-width: 900px;
+  width: 100%;
+  text-align: center;
+}
+
+.select-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 2rem;
+  color: #f2c14e;
+  text-shadow:
+    4px 4px 0 #4a1414,
+    0 0 40px rgba(242, 193, 78, 0.4);
+  margin-bottom: 40px;
+  letter-spacing: 3px;
+}
+
+.maps-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+  margin-bottom: 40px;
+}
+
+.map-card {
+  background: rgba(0, 0, 0, 0.5);
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.map-card:hover {
+  transform: translateY(-5px);
+  border-color: #f2c14e;
+  box-shadow: 0 15px 40px rgba(242, 193, 78, 0.3);
+}
+
+.map-card.selected {
+  border-color: #f2c14e;
+  box-shadow: 0 0 40px rgba(242, 193, 78, 0.6);
+  transform: scale(1.02);
+}
+
+.map-preview {
+  height: 200px;
+  background-size: cover;
+  background-position: center;
+  border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+  image-rendering: pixelated;
+}
+
+.mist-map {
+  background-image: url('https://i.ibb.co/tpY259PV/Mist-Trees.png');
+  background-color: #1a2530;
+}
+
+.bloomer-map {
+  background-image: url('https://i.ibb.co/TMdBW5dr/Bloomer-Trees.png');
+  background-color: #2a1530;
+}
+
+.map-info {
+  padding: 20px;
+}
+
+.map-info h3 {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 1rem;
+  color: #f2c14e;
+  margin-bottom: 8px;
+  letter-spacing: 2px;
+}
+
+.map-info p {
+  color: #94a3b8;
+  font-size: 0.85rem;
+  font-style: italic;
 }
 
 /* ════════ FIGHT SCREEN ════════ */
@@ -238,7 +349,6 @@ body {
   display: flex;
 }
 
-/* HUD */
 .hud {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
@@ -313,7 +423,6 @@ body {
   margin-left: auto;
 }
 
-/* Center HUD - Timer */
 .center-hud {
   text-align: center;
   display: flex;
@@ -340,8 +449,15 @@ body {
 }
 
 @keyframes timerPulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.15); }
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.15);
+  }
 }
 
 .round-text {
@@ -352,7 +468,6 @@ body {
   margin-top: 4px;
 }
 
-/* Arena */
 .arena {
   flex: 1;
   position: relative;
@@ -374,7 +489,6 @@ body {
   image-rendering: crisp-edges;
 }
 
-/* Announcement */
 .announcement {
   position: absolute;
   top: 50%;
@@ -393,21 +507,38 @@ body {
   font-family: 'Press Start 2P', monospace;
   font-size: 4rem;
   color: #f2c14e;
-  text-shadow: 
+  text-shadow:
     0 0 60px rgba(242, 193, 78, 0.8),
     4px 4px 0 #4a1414;
   letter-spacing: 4px;
 }
 
 @keyframes announceShow {
-  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
-  20% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
-  40% { transform: translate(-50%, -50%) scale(1); }
-  80% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-  100% { opacity: 0; transform: translate(-50%, -50%) scale(1.5); }
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.5);
+  }
+
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.2);
+  }
+
+  40% {
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  80% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.5);
+  }
 }
 
-/* Bottom Info */
 .bottom-info {
   padding: 12px 30px;
   background: rgba(0, 0, 0, 0.9);
@@ -418,9 +549,11 @@ body {
 .control-hint {
   display: flex;
   align-items: center;
-  gap: 25px;
+  gap: 20px;
   font-size: 0.8rem;
   color: #94a3b8;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .control-hint span {
@@ -441,20 +574,34 @@ kbd {
   margin-right: 3px;
 }
 
-/* Screen Shake */
 .shake {
   animation: shake 0.3s;
 }
 
 @keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  20% { transform: translateX(-8px) translateY(-4px); }
-  40% { transform: translateX(8px) translateY(4px); }
-  60% { transform: translateX(-6px) translateY(2px); }
-  80% { transform: translateX(6px) translateY(-2px); }
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  20% {
+    transform: translateX(-8px) translateY(-4px);
+  }
+
+  40% {
+    transform: translateX(8px) translateY(4px);
+  }
+
+  60% {
+    transform: translateX(-6px) translateY(2px);
+  }
+
+  80% {
+    transform: translateX(6px) translateY(-2px);
+  }
 }
 
-/* Game Over */
 .game-over-overlay {
   position: absolute;
   inset: 0;
@@ -496,9 +643,6 @@ kbd {
   transition: all 0.3s;
   border: none;
   text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
 }
 
 .go-btn.primary {

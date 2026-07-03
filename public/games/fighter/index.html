@@ -1,12 +1,16 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Samurai Showdown - Fun Match</title>
+  <title>Mortal Arena - Fun Match</title>
   <link rel="stylesheet" href="game.css">
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;600;700;800;900&display=swap"
+    rel="stylesheet">
 </head>
+
 <body>
 
   <!-- ════════ WAITING SCREEN ════════ -->
@@ -14,8 +18,8 @@
     <a href="../../" class="back-btn">← Back to Hub</a>
 
     <div class="waiting-content">
-      <h1 class="game-title">SAMURAI<br><span>SHOWDOWN</span></h1>
-      <p class="game-subtitle">Master the blade. Defeat your foe.</p>
+      <h1 class="game-title">MORTAL<br><span>ARENA</span></h1>
+      <p class="game-subtitle">Two warriors enter. One legend rises.</p>
 
       <div class="room-display">
         <p class="room-label">ROOM CODE</p>
@@ -25,14 +29,14 @@
 
       <div class="players-waiting">
         <div class="player-slot" id="slot-1">
-          <div class="character-preview samurai-preview"></div>
-          <p class="player-name">SAMURAI</p>
+          <div class="character-preview dread-preview"></div>
+          <p class="player-name">DREAD</p>
           <span class="status">Waiting...</span>
         </div>
         <div class="vs-divider">VS</div>
         <div class="player-slot" id="slot-2">
-          <div class="character-preview kenji-preview"></div>
-          <p class="player-name">KENJI</p>
+          <div class="character-preview lao-preview"></div>
+          <p class="player-name">KUNG LAO</p>
           <span class="status">Waiting...</span>
         </div>
       </div>
@@ -43,14 +47,42 @@
     </div>
   </div>
 
+  <!-- ════════ MAP SELECTION SCREEN ════════ -->
+  <div id="map-select-screen" class="screen">
+    <div class="select-content">
+      <h1 class="select-title">CHOOSE YOUR ARENA</h1>
+
+      <div class="maps-grid">
+        <div class="map-card" data-map="mist">
+          <div class="map-preview mist-map"></div>
+          <div class="map-info">
+            <h3>MIST TREES</h3>
+            <p>Ancient misty forest</p>
+          </div>
+        </div>
+
+        <div class="map-card" data-map="bloomer">
+          <div class="map-preview bloomer-map"></div>
+          <div class="map-info">
+            <h3>BLOOMER TREES</h3>
+            <p>Cherry blossom garden</p>
+          </div>
+        </div>
+      </div>
+
+      <button id="start-fight-btn" class="action-btn primary" disabled>
+        START FIGHT
+      </button>
+    </div>
+  </div>
+
   <!-- ════════ FIGHT SCREEN ════════ -->
   <div id="fight-screen" class="screen">
 
-    <!-- Top HUD -->
     <div class="hud">
       <div class="player-hud left">
         <div class="player-info">
-          <h3 class="player-name" id="p1-name">SAMURAI</h3>
+          <h3 class="player-name" id="p1-name">DREAD</h3>
           <div class="rounds-won" id="p1-rounds">
             <span class="round-dot"></span>
             <span class="round-dot"></span>
@@ -68,7 +100,7 @@
 
       <div class="player-hud right">
         <div class="player-info">
-          <h3 class="player-name" id="p2-name">KENJI</h3>
+          <h3 class="player-name" id="p2-name">KUNG LAO</h3>
           <div class="rounds-won" id="p2-rounds">
             <span class="round-dot"></span>
             <span class="round-dot"></span>
@@ -80,24 +112,21 @@
       </div>
     </div>
 
-    <!-- Battle Arena -->
     <div class="arena">
       <canvas id="gameCanvas" width="1024" height="576"></canvas>
 
-      <!-- Round Announcement -->
       <div id="announcement" class="announcement">
         <h1 id="announcement-text">ROUND 1</h1>
       </div>
     </div>
 
-    <!-- Controls hint -->
     <div class="bottom-info">
       <div class="control-hint">
         <span><kbd>A</kbd><kbd>D</kbd> Move</span>
         <span><kbd>W</kbd> Jump</span>
-        <span><kbd>S</kbd> Crouch</span>
-        <span><kbd>J</kbd> Attack</span>
-        <span><kbd>K</kbd> Special</span>
+        <span><kbd>J</kbd> Attack 1</span>
+        <span><kbd>K</kbd> Attack 2</span>
+        <span><kbd>L</kbd> Attack 3</span>
       </div>
     </div>
 
@@ -107,4 +136,5 @@
   <script src="sounds.js"></script>
   <script src="game.js"></script>
 </body>
+
 </html>
