@@ -47,6 +47,58 @@
     </div>
   </div>
 
+  <!-- ════════ CHARACTER SELECTION SCREEN ════════ -->
+  <div id="character-select-screen" class="screen">
+    <div class="select-content">
+      <h1 class="select-title" id="char-select-title">PLAYER 1 - CHOOSE YOUR FIGHTER</h1>
+
+      <div class="characters-grid">
+        <div class="character-card" data-character="dread">
+          <div class="char-portrait dread-portrait"></div>
+          <div class="char-info">
+            <h3>DREAD</h3>
+            <p class="char-subtitle">The Warrior</p>
+            <p class="char-desc">Balanced fighter with sword combos</p>
+          </div>
+        </div>
+
+        <div class="character-card" data-character="kunglao">
+          <div class="char-portrait kunglao-portrait"></div>
+          <div class="char-info">
+            <h3>KUNG LAO</h3>
+            <p class="char-subtitle">The Monk</p>
+            <p class="char-desc">Fast strikes with hat weapon</p>
+          </div>
+        </div>
+
+        <div class="character-card" data-character="ninja">
+          <div class="char-portrait ninja-portrait"></div>
+          <div class="char-info">
+            <h3>NINJA</h3>
+            <p class="char-subtitle">The Shadow</p>
+            <p class="char-desc">Quick and stealthy assassin</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="selection-display">
+        <div class="selected-player" id="selected-p1">
+          <p class="sel-label">PLAYER 1</p>
+          <p class="sel-name" id="p1-selected-name">-</p>
+        </div>
+        <div class="vs-mini">VS</div>
+        <div class="selected-player" id="selected-p2">
+          <p class="sel-label">PLAYER 2</p>
+          <p class="sel-name" id="p2-selected-name">-</p>
+        </div>
+      </div>
+
+      <button id="confirm-chars-btn" class="action-btn primary" disabled>
+        CONFIRM SELECTION
+      </button>
+    </div>
+  </div>
+
   <!-- ════════ MAP SELECTION SCREEN ════════ -->
   <div id="map-select-screen" class="screen">
     <div class="select-content">

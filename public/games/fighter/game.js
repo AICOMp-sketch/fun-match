@@ -9,20 +9,23 @@ const GRAVITY = 0.7;
 const SPEED = 5;
 const JUMP_V = -18;
 
-// ════════ SPRITE URLs ════════
 const SPRITES = {
   backgrounds: {
     mist: {
       src: "https://i.ibb.co/tpY259PV/Mist-Trees.png",
-      floorY: 420  // Ground position for this map
+      floorY: 420,
+      name: "Mist Trees",
+      description: "Ancient misty forest"
     },
     bloomer: {
       src: "https://i.ibb.co/TMdBW5dr/Bloomer-Trees.png",
-      floorY: 380  // Different ground position - adjust this!
+      floorY: 380,
+      name: "Bloomer Trees",
+      description: "Cherry blossom garden"
     },
     palace: {
       src: "https://i.ibb.co/7xpJGJym/Palace.png",
-      floorY: 350,
+      floorY: 420,
       name: "Palace",
       description: "Beautiful arena"
     }
@@ -48,6 +51,39 @@ const SPRITES = {
     attack3: { src: "https://i.ibb.co/B24V8kwK/Attack3.png", framesMax: 9 },
     takeHit: { src: "https://i.ibb.co/d0ZHd4Jh/Take-Hit.png", framesMax: 3 },
     death: { src: "https://i.ibb.co/JFdvPZ8c/Death.png", framesMax: 11 }
+  },
+  ninja: {
+    idle: { src: "https://i.ibb.co/Fv2JnPn/Idle.png", framesMax: 4 },
+    run: { src: "https://i.ibb.co/Q7mn9Qrf/Run.png", framesMax: 8 },
+    jump: { src: "https://i.ibb.co/vxS6VBfX/Jump.png", framesMax: 2 },
+    fall: { src: "https://i.ibb.co/svC1PFQq/Fall.png", framesMax: 2 },
+    attack1: { src: "https://i.ibb.co/84sdTLHZ/Attack1.png", framesMax: 4 },
+    attack2: { src: "https://i.ibb.co/yFH9xzy5/Attack2.png", framesMax: 4 },
+    attack3: { src: "https://i.ibb.co/84sdTLHZ/Attack1.png", framesMax: 4 },
+    takeHit: { src: "https://i.ibb.co/3ZnvL9g/Take-hit.png", framesMax: 3 },
+    death: { src: "https://i.ibb.co/DHb8ct2t/Death.png", framesMax: 7 }
+  }
+};
+
+// Character metadata for select screen
+const CHARACTERS = {
+  dread: {
+    name: "DREAD",
+    subtitle: "The Warrior",
+    description: "Balanced fighter with sword combos",
+    color: "#f2c14e"
+  },
+  kunglao: {
+    name: "KUNG LAO",
+    subtitle: "The Monk",
+    description: "Fast strikes with hat weapon",
+    color: "#ff3860"
+  },
+  ninja: {
+    name: "NINJA",
+    subtitle: "The Shadow",
+    description: "Quick and stealthy assassin",
+    color: "#00e0ff"
   }
 };
 
@@ -61,7 +97,9 @@ const GAME = {
   isBotMode: false,
   lastTime: performance.now(),
   selectedMap: null,
-  currentFloorY: 420  // ← ADD THIS
+  currentFloorY: 420, // ← ADD THIS 
+  player1Character: null,  // NEW
+  player2Character: null   // NEW
 };
 
 // ════════ BACKGROUND SPRITE ════════
@@ -263,31 +301,30 @@ class Fighter {
 let player1 = null;
 let player2 = null;
 
-function createDread(id, name, side) {
+function createFighter(id, name, side, characterType) {
+  const spriteSet = SPRITES[characterType];
+  if (!spriteSet) {
+    console.error(`Character type "${characterType}" not found!`);
+    return null;
+  }
+
+  // Custom offsets per character (adjust if needed)
+  const offsets = {
+    dread: { x: 200, y: 150 },
+    kunglao: { x: 200, y: 100 },
+    ninja: { x: 200, y: 120 }
+  };
+
   return new Fighter({
     id,
     name,
-    characterType: 'dread',
+    characterType,
     startX: side === 'left' ? 200 : 760,
     defaultFacing: 1,
     scale: 2.5,
-    offset: { x: 200, y: 150 },  // Dread's offset
-    hitFrame: 4,
-    sprites: JSON.parse(JSON.stringify(SPRITES.dread))
-  });
-}
-
-function createKungLao(id, name, side) {
-  return new Fighter({
-    id,
-    name,
-    characterType: 'kunglao',
-    startX: side === 'left' ? 200 : 850,
-    defaultFacing: 1,
-    scale: 2.5,
-    offset: { x: 200, y: 100 },  // ← CHANGED: Kung Lao needs lower offset (was 150)
-    hitFrame: 3,
-    sprites: JSON.parse(JSON.stringify(SPRITES.kunglao))
+    offset: offsets[characterType] || { x: 200, y: 150 },
+    hitFrame: characterType === 'dread' ? 4 : 3,
+    sprites: JSON.parse(JSON.stringify(spriteSet))
   });
 }
 
@@ -595,23 +632,27 @@ socket.on("room-created", (data) => {
   document.getElementById("room-code").textContent = data.roomCode;
 });
 
+// Store player info for multiplayer
+let multiplayerPlayer1 = null;
+let multiplayerPlayer2 = null;
+
 socket.on("player-joined", (player) => {
   console.log("👤 Player joined:", player.name, player.id);
-
   if (GAME.isBotMode) return;
 
-  if (!player1) {
-    player1 = createDread(player.id, player.name, 'left');
+  if (!multiplayerPlayer1) {
+    multiplayerPlayer1 = { id: player.id, name: player.name };
     document.getElementById('slot-1').classList.add('filled');
     document.getElementById('slot-1').querySelector('.player-name').textContent = player.name.toUpperCase();
     document.getElementById('slot-1').querySelector('.status').textContent = 'Ready!';
-  } else if (!player2) {
-    player2 = createKungLao(player.id, player.name, 'right');
+  } else if (!multiplayerPlayer2) {
+    multiplayerPlayer2 = { id: player.id, name: player.name };
     document.getElementById('slot-2').classList.add('filled');
     document.getElementById('slot-2').querySelector('.player-name').textContent = player.name.toUpperCase();
     document.getElementById('slot-2').querySelector('.status').textContent = 'Ready!';
 
-    setTimeout(showMapSelect, 1500);
+    // Both players joined, show character select
+    setTimeout(showCharacterSelect, 1500);
   }
 });
 
@@ -656,16 +697,112 @@ socket.on("player-moved", (data) => {
 document.getElementById('bot-mode-btn').addEventListener('click', () => {
   GAME.isBotMode = true;
 
-  player1 = createDread('local-p1', 'DREAD', 'left');
-  player2 = createKungLao('bot', 'KUNG LAO', 'right');
-  player2.isCPU = true;
-
   document.getElementById('slot-1').classList.add('filled');
   document.getElementById('slot-1').querySelector('.status').textContent = 'You!';
   document.getElementById('slot-2').classList.add('filled');
   document.getElementById('slot-2').querySelector('.status').textContent = 'CPU';
 
-  setTimeout(showMapSelect, 800);
+  setTimeout(showCharacterSelect, 800);
+});
+
+function showCharacterSelect() {
+  document.getElementById('waiting-screen').classList.remove('active');
+  document.getElementById('character-select-screen').classList.add('active');
+
+  // Reset selections
+  GAME.player1Character = null;
+  GAME.player2Character = null;
+  updateCharacterSelectUI();
+}
+
+function updateCharacterSelectUI() {
+  // Update selected names
+  document.getElementById('p1-selected-name').textContent =
+    GAME.player1Character ? CHARACTERS[GAME.player1Character].name : '-';
+  document.getElementById('p2-selected-name').textContent =
+    GAME.player2Character ? CHARACTERS[GAME.player2Character].name : '-';
+
+  // Update card highlights
+  document.querySelectorAll('.character-card').forEach(card => {
+    const type = card.dataset.character;
+    card.classList.remove('selected-p1', 'selected-p2', 'selected-both');
+
+    if (type === GAME.player1Character && type === GAME.player2Character) {
+      card.classList.add('selected-both');
+    } else if (type === GAME.player1Character) {
+      card.classList.add('selected-p1');
+    } else if (type === GAME.player2Character) {
+      card.classList.add('selected-p2');
+    }
+  });
+
+  // Update title
+  const title = document.getElementById('char-select-title');
+  if (!GAME.player1Character) {
+    title.textContent = 'PLAYER 1 - CHOOSE YOUR FIGHTER';
+  } else if (!GAME.player2Character) {
+    title.textContent = 'PLAYER 2 - CHOOSE YOUR FIGHTER';
+  } else {
+    title.textContent = 'READY TO FIGHT!';
+  }
+
+  // Enable confirm when both selected
+  document.getElementById('confirm-chars-btn').disabled =
+    !GAME.player1Character || !GAME.player2Character;
+}
+
+// Character selection handlers
+document.querySelectorAll('.character-card').forEach(card => {
+  card.addEventListener('click', () => {
+    const character = card.dataset.character;
+
+    if (!GAME.player1Character) {
+      GAME.player1Character = character;
+    } else if (!GAME.player2Character) {
+      GAME.player2Character = character;
+    } else {
+      // Both selected - clicking resets both to allow re-picking
+      GAME.player1Character = character;
+      GAME.player2Character = null;
+    }
+
+    updateCharacterSelectUI();
+  });
+});
+
+// Confirm characters button
+document.getElementById('confirm-chars-btn').addEventListener('click', () => {
+  if (!GAME.player1Character || !GAME.player2Character) return;
+
+  // Create fighters based on mode
+  if (GAME.isBotMode) {
+    player1 = createFighter('local-p1',
+      CHARACTERS[GAME.player1Character].name,
+      'left',
+      GAME.player1Character);
+
+    player2 = createFighter('bot',
+      CHARACTERS[GAME.player2Character].name,
+      'right',
+      GAME.player2Character);
+
+    player2.isCPU = true;
+  } else {
+    // Multiplayer - use socket IDs
+    player1 = createFighter(multiplayerPlayer1.id,
+      multiplayerPlayer1.name.toUpperCase(),
+      'left',
+      GAME.player1Character);
+
+    player2 = createFighter(multiplayerPlayer2.id,
+      multiplayerPlayer2.name.toUpperCase(),
+      'right',
+      GAME.player2Character);
+  }
+
+  // Go to map select
+  document.getElementById('character-select-screen').classList.remove('active');
+  document.getElementById('map-select-screen').classList.add('active');
 });
 
 // ════════ MAP SELECT ════════
