@@ -18,7 +18,7 @@ function initSupabase() {
 
     return supabaseClient;
 }
-
+s
 // ═══════════════ AUTH FUNCTIONS ═══════════════
 
 // Sign up with email
@@ -90,30 +90,6 @@ async function signInWithGoogle() {
         return { data };
     } catch (err) {
         return { error: 'Google sign in failed' };
-    }
-}
-
-// Sign in with Discord
-async function signInWithDiscord() {
-    const client = initSupabase();
-    if (!client) return { error: 'Supabase not initialized' };
-
-    try {
-        const { data, error } = await client.auth.signInWithOAuth({
-            provider: 'discord',
-            options: {
-                redirectTo: window.location.origin + '/hub/'
-            }
-        });
-
-        if (error) {
-            console.error('Discord sign in error:', error.message);
-            return { error: error.message };
-        }
-
-        return { data };
-    } catch (err) {
-        return { error: 'Discord sign in failed' };
     }
 }
 
@@ -451,6 +427,30 @@ function onAuthChange(callback) {
         console.log('Auth event:', event);
         callback(event, session);
     });
+}
+
+// Sign in with Facebook
+async function signInWithFacebook() {
+    var client = initSupabase();
+    if (!client) return { error: 'Supabase not initialized' };
+
+    try {
+        var result = await client.auth.signInWithOAuth({
+            provider: 'facebook',
+            options: {
+                redirectTo: window.location.origin + '/hub/'
+            }
+        });
+
+        if (result.error) {
+            console.error('Facebook sign in error:', result.error.message);
+            return { error: result.error.message };
+        }
+
+        return { data: result.data };
+    } catch (err) {
+        return { error: 'Facebook sign in failed' };
+    }
 }
 
 console.log('🔐 Supabase module loaded!');

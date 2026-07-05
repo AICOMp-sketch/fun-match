@@ -449,7 +449,7 @@ body {
     transition: color 0.3s;
     width: 18px;
     height: 18px;
-}   
+}
 
 .input-wrapper input {
     width: 100%;
@@ -925,4 +925,133 @@ body {
 
 .submit-btn:hover .btn-arrow {
     transform: translateX(4px);
+}
+
+/* ═══════════════ FORM MESSAGES ═══════════════ */
+.error-message {
+    background: rgba(255, 56, 96, 0.1);
+    border: 1px solid rgba(255, 56, 96, 0.3);
+    color: #ff3860;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-align: center;
+    animation: messageSlide 0.3s ease;
+}
+
+.success-message {
+    background: rgba(170, 255, 0, 0.1);
+    border: 1px solid rgba(170, 255, 0, 0.3);
+    color: #aaff00;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-align: center;
+    animation: messageSlide 0.3s ease;
+}
+
+@keyframes messageSlide {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ═══════════════ BUTTON LOADING SPINNER ═══════════════ */
+.submit-btn {
+    position: relative;
+    min-height: 50px;
+}
+
+.submit-btn.loading {
+    pointer-events: none;
+    opacity: 0.8;
+}
+
+.submit-btn .btn-text {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    transition: opacity 0.3s, transform 0.3s;
+}
+
+.submit-btn.loading .btn-text {
+    opacity: 0;
+    transform: scale(0.8);
+}
+
+.btn-spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 24px;
+    height: 24px;
+    border: 3px solid rgba(5, 8, 16, 0.3);
+    border-top: 3px solid var(--bg-primary);
+    border-radius: 50%;
+    opacity: 0;
+    transition: opacity 0.3s;
+    animation: spin 0.8s linear infinite;
+}
+
+.submit-btn.loading .btn-spinner {
+    opacity: 1;
+}
+
+@keyframes spin {
+    0% {
+        transform: translate(-50%, -50%) rotate(0deg);
+    }
+
+    100% {
+        transform: translate(-50%, -50%) rotate(360deg);
+    }
+}
+
+/* Success state */
+.submit-btn.success {
+    background: linear-gradient(135deg, #aaff00, #00ff88) !important;
+    pointer-events: none;
+}
+
+.submit-btn.success .btn-text {
+    opacity: 1;
+    transform: scale(1);
+}
+
+/* Error shake */
+.submit-btn.error {
+    animation: btnShake 0.5s ease;
+}
+
+@keyframes btnShake {
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    20% {
+        transform: translateX(-8px);
+    }
+
+    40% {
+        transform: translateX(8px);
+    }
+
+    60% {
+        transform: translateX(-4px);
+    }
+
+    80% {
+        transform: translateX(4px);
+    }
 }
