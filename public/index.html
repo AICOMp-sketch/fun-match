@@ -2,459 +2,529 @@
 <html lang="en">
 
 <head>
+    <script src="global/loader.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fun Match — Gaming Hub</title>
-    <link rel="stylesheet" href="dashboard.css">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+    <title>Fun Match — Play With Friends, Anywhere</title>
+    <link rel="stylesheet" href="landing.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Press+Start+2P&display=swap"
         rel="stylesheet">
 </head>
 
 <body>
 
-    <div class="app">
-
-        <!-- ════════ LEFT SIDEBAR ════════ -->
-        <aside class="sidebar-left">
-            <div class="logo">
-                <svg viewBox="0 0 24 24" width="24" height="24" fill="none">
-                    <path d="M4 4L12 12L4 20M12 4L20 12L12 20" stroke="currentColor" stroke-width="2.5"
-                        stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-            </div>
-
-            <nav class="nav-items">
-                <button class="nav-item active" data-tip="Home">
+    <!-- ═══════════════ NAVIGATION ═══════════════ -->
+    <nav class="nav">
+        <div class="nav-inner">
+            <a href="#" class="nav-logo">
+                <div class="logo-icon">
                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-                        <path d="M3 9.5L12 3l9 6.5V20a2 2 0 01-2 2h-4v-7h-6v7H5a2 2 0 01-2-2V9.5z" stroke="currentColor"
-                            stroke-width="2" stroke-linejoin="round" />
-                    </svg>
-                </button>
-                <button class="nav-item" data-tip="Games">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-                        <rect x="2" y="6" width="20" height="12" rx="6" stroke="currentColor" stroke-width="2" />
-                        <path d="M7 12h4M9 10v4M15 12h.01M18 11h.01" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" />
-                    </svg>
-                </button>
-                <button class="nav-item" data-tip="Tournaments">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-                        <path
-                            d="M6 9H4.5a2.5 2.5 0 010-5H6M18 9h1.5a2.5 2.5 0 000-5H18M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22M18 2H6v7a6 6 0 0012 0V2z"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
-                </button>
-                <button class="nav-item" data-tip="Stats">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-                        <path d="M18 20V10M12 20V4M6 20v-6" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" />
-                    </svg>
-                </button>
-                <button class="nav-item" data-tip="Store">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-                        <path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" stroke="currentColor" stroke-width="2"
+                        <path d="M4 4L12 12L4 20M12 4L20 12L12 20" stroke="currentColor" stroke-width="2.5"
                             stroke-linecap="round" stroke-linejoin="round" />
                     </svg>
-                </button>
-                <button class="nav-item" data-tip="Messages">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-                        <path
-                            d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
-                </button>
-            </nav>
+                </div>
+            </a>
 
-            <button class="add-btn">
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-                    <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
+            <div class="nav-right">
+                <div class="nav-links">
+                    <a href="#how">How It Works</a>
+                    <a href="#games">Games</a>
+                    <a href="#features">Features</a>
+                    <a href="auth/signin.html">Sign In</a>
+                </div>
+
+                <a href="hub/" class="nav-cta">
+                    ENTER HUB
+                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none">
+                        <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                </a>
+
+                <button class="hamburger" id="hamburger" aria-label="Menu">
+                    <span class="hamburger-line"></span>
+                    <span class="hamburger-line"></span>
+                    <span class="hamburger-line"></span>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ═══════════════ MOBILE SIDEBAR ═══════════════ -->
+    <div class="mobile-sidebar" id="mobile-sidebar">
+        <div class="sidebar-header">
+            <a href="#" class="nav-logo">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+                        <path d="M4 4L12 12L4 20M12 4L20 12L12 20" stroke="currentColor" stroke-width="2.5"
+                            stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </div>
+                <span>FUN MATCH</span>
+            </a>
+
+            <!-- Close button INSIDE sidebar -->
+            <button class="sidebar-close" id="sidebar-close" aria-label="Close menu">
+                <svg viewBox="0 0 24 24" width="24" height="24" fill="none">
+                    <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
                 </svg>
             </button>
-        </aside>
+        </div>
 
-        <!-- ════════ MAIN CONTENT ════════ -->
-        <main class="main">
+        <div class="sidebar-links">
+            <a href="#how" class="sidebar-link">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
+                    <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" />
+                </svg>
+                <span>How It Works</span>
+            </a>
+            <a href="#games" class="sidebar-link">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+                    <rect x="2" y="6" width="20" height="12" rx="6" stroke="currentColor" stroke-width="2" />
+                    <path d="M7 12h4M9 10v4M15 12h.01M18 11h.01" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" />
+                </svg>
+                <span>Games</span>
+            </a>
+            <a href="#features" class="sidebar-link">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="2"
+                        stroke-linejoin="round" />
+                </svg>
+                <span>Features</span>
+            </a>
+            <a href="auth/signin.html" class="sidebar-link">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="2"
+                        stroke-linejoin="round" />
+                </svg>
+                <span>Sign In</span>
+            </a>
+        </div>
 
-            <!-- Top Bar -->
-            <header class="topbar">
-                <div class="greeting">
-                    <p class="hello">Good evening,</p>
-                    <h2 class="username">PLAYER</h2>
-                </div>
-
-                <div class="search-wrapper">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none" class="search-icon">
-                        <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2" />
-                        <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-                    </svg>
-                    <input type="text" placeholder="Search games, players...">
-                </div>
-
-                <div class="top-actions">
-                    <button class="action-btn">
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
-                            <path d="M9 20h6M3 9.5a9 9 0 1118 0c0 4-3 6.5-3 10.5H6c0-4-3-6.5-3-10.5z"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
-                        <span class="dot"></span>
-                    </button>
-                    <button class="action-btn">
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
-                            <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
-                        <span class="dot"></span>
-                    </button>
-                </div>
-            </header>
-
-            <!-- Content Grid -->
-            <div class="content-grid">
-
-                <!-- LEFT COLUMN -->
-                <div class="left-col">
-
-                    <!-- Hero Card -->
-                    <section class="hero-card">
-                        <div class="hero-bg"></div>
-                        <div class="hero-content">
-                            <div class="hero-tags">
-                                <span class="tag tag-popular">
-                                    <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
-                                        <path
-                                            d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z" />
-                                    </svg>
-                                    Popular
-                                </span>
-                                <span class="tag tag-icon">
-                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none">
-                                        <rect x="2" y="6" width="20" height="12" rx="6" stroke="currentColor"
-                                            stroke-width="2" />
-                                        <path d="M8 12h2M9 11v2M14 12h.01M17 11h.01" stroke="currentColor"
-                                            stroke-width="2" stroke-linecap="round" />
-                                    </svg>
-                                </span>
-                                <span class="tag tag-icon">
-                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none">
-                                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
-                                        <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2"
-                                            stroke-linecap="round" />
-                                    </svg>
-                                </span>
-                            </div>
-
-                            <h1 class="hero-title">Survive<br>The Bots</h1>
-
-                            <p class="hero-desc">
-                                A real-time multiplayer survival arena where you and your friends use phones as
-                                controllers. Outrun the AI, outlast them all.
-                            </p>
-
-                            <div class="hero-footer">
-                                <div class="players-avatars">
-                                    <div class="mini-avatar"
-                                        style="background: linear-gradient(135deg, #ff6b6b, #ee5a6f)"></div>
-                                    <div class="mini-avatar"
-                                        style="background: linear-gradient(135deg, #4facfe, #00f2fe)"></div>
-                                    <div class="mini-avatar"
-                                        style="background: linear-gradient(135deg, #fa709a, #fee140)"></div>
-                                    <div class="mini-avatar more">+12</div>
-                                </div>
-
-                                <a href="games/survive/" class="play-btn">
-                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                                        <path d="M8 5v14l11-7z" />
-                                    </svg>
-                                    Play Now
-                                </a>
-                            </div>
-                        </div>
-                    </section>
-
-                    <!-- New Games -->
-                    <section class="section">
-                        <div class="section-header">
-                            <h3>New Games</h3>
-                            <a href="#" class="see-more">See More</a>
-                        </div>
-
-                        <div class="games-row">
-                            <a href="games/survive/" class="game-card-mini active-card">
-                                <div class="card-bg survive-grad">
-                                    <div class="card-overlay"></div>
-                                    <button class="card-play">
-                                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                                            <path d="M8 5v14l11-7z" />
-                                        </svg>
-                                    </button>
-                                    <span class="live-dot"></span>
-                                </div>
-                                <div class="card-content">
-                                    <h4>UNO</h4>
-                                    <p>Card Game / 2-4 Players</p>
-                                </div>
-                            </a>
-
-                            <a href="games/fighter/" class="game-card-mini active-card">
-                                <div class="card-bg draw-grad">
-                                    <div class="card-overlay"></div>
-                                    <button class="card-play">
-                                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                                            <path d="M8 5v14l11-7z" />
-                                        </svg>
-                                    </button>
-                                    <span class="live-dot"></span>
-                                </div>
-                                <div class="card-content">
-                                    <h4>Mortal Arena</h4>
-                                    <p>Fighting / 3 Characters / 3 Maps</p>
-                                </div>
-                            </a>
-
-                            <a href="games/racer/" class="game-card-mini active-card">
-                                <div class="card-bg race-grad">
-                                    <div class="card-overlay"></div>
-                                    <button class="card-play">
-                                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                                            <path d="M8 5v14l11-7z" />
-                                        </svg>
-                                    </button>
-                                    <span class="live-dot"></span>
-                                </div>
-                                <div class="card-content">
-                                    <h4>Neon Racers</h4>
-                                    <p>Racing / Multiplayer</p>
-                                </div>
-                            </a>
-
-                            <button class="scroll-arrow">
-                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-                                    <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2.5"
-                                        stroke-linecap="round" stroke-linejoin="round" />
-                                </svg>
-                            </button>
-                        </div>
-                    </section>
-
-                    <!-- Recent Activity -->
-                    <section class="section">
-                        <div class="section-header">
-                            <h3>Recent Activity</h3>
-                            <a href="#" class="see-more">See More</a>
-                        </div>
-
-                        <div class="activity-card">
-                            <div class="activity-thumb survive-grad">
-                                <svg viewBox="0 0 24 24" width="22" height="22" fill="none">
-                                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="2"
-                                        stroke-linejoin="round" />
-                                </svg>
-                            </div>
-                            <div class="activity-info">
-                                <h4>Survive The Bots</h4>
-                                <p>Action / Survival</p>
-                            </div>
-                            <div class="activity-meta">
-                                <span class="time-played">
-                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none">
-                                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
-                                        <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2"
-                                            stroke-linecap="round" />
-                                    </svg>
-                                    <span id="last-time">0 min</span>
-                                </span>
-                            </div>
-                            <a href="games/survive/" class="mini-play">
-                                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-                                    <path d="M8 5v14l11-7z" />
-                                </svg>
-                            </a>
-                        </div>
-                    </section>
-
-                </div>
-
-                <!-- RIGHT COLUMN -->
-                <div class="right-col">
-
-                    <!-- Quick Access -->
-                    <section class="quick-access">
-                        <a href="games/survive/" class="quick-card">
-                            <div class="quick-icon survive-grad">
-                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-                                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="2"
-                                        stroke-linejoin="round" />
-                                </svg>
-                            </div>
-                            <div class="quick-info">
-                                <h5>Survive The Bots</h5>
-                                <p>Multiplayer Arena</p>
-                            </div>
-                            <span class="live-tag">Live</span>
-                        </a>
-
-                        <div class="quick-card disabled">
-                            <div class="quick-icon quiz-grad">
-                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-                                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
-                                    <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01" stroke="currentColor"
-                                        stroke-width="2" stroke-linecap="round" />
-                                </svg>
-                            </div>
-                            <div class="quick-info">
-                                <h5>Trivia Battle</h5>
-                                <p>Coming Soon</p>
-                            </div>
-                        </div>
-
-                        <div class="quick-card disabled">
-                            <div class="quick-icon draw-grad">
-                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-                                    <path d="M17 3a2.85 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z" stroke="currentColor"
-                                        stroke-width="2" stroke-linejoin="round" />
-                                </svg>
-                            </div>
-                            <div class="quick-info">
-                                <h5>Draw & Guess</h5>
-                                <p>Coming Soon</p>
-                            </div>
-                        </div>
-                    </section>
-
-                    <!-- Statistics -->
-                    <section class="stats-section">
-                        <h3>Your Statistics</h3>
-
-                        <div class="stats-ring">
-                            <svg viewBox="0 0 200 200" class="ring-svg">
-                                <defs>
-                                    <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                                        <stop offset="0%" stop-color="#ff4757" />
-                                        <stop offset="50%" stop-color="#c44569" />
-                                        <stop offset="100%" stop-color="#3742fa" />
-                                    </linearGradient>
-                                </defs>
-                                <circle cx="100" cy="100" r="80" fill="none" stroke="rgba(255,255,255,0.05)"
-                                    stroke-width="14" />
-                                <circle cx="100" cy="100" r="80" fill="none" stroke="url(#ringGrad)" stroke-width="14"
-                                    stroke-linecap="round" stroke-dasharray="380" stroke-dashoffset="80"
-                                    transform="rotate(-90 100 100)" class="ring-progress" />
-                            </svg>
-                            <div class="ring-center">
-                                <p class="ring-label">Total Time</p>
-                                <p class="ring-value" id="total-time">0h</p>
-                            </div>
-                        </div>
-
-                        <div class="stats-row">
-                            <div class="stat-item">
-                                <div class="stat-icon-sm survive-grad">
-                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
-                                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="2"
-                                            stroke-linejoin="round" />
-                                    </svg>
-                                </div>
-                                <p class="stat-num" id="games-played">0</p>
-                                <p class="stat-text">Games</p>
-                            </div>
-
-                            <div class="stat-item">
-                                <div class="stat-icon-sm gold-grad">
-                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
-                                        <path
-                                            d="M6 9H4.5a2.5 2.5 0 010-5H6M18 9h1.5a2.5 2.5 0 000-5H18M4 22h16M18 2H6v7a6 6 0 0012 0V2z"
-                                            stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
-                                    </svg>
-                                </div>
-                                <p class="stat-num" id="high-score">0s</p>
-                                <p class="stat-text">Best</p>
-                            </div>
-
-                            <div class="stat-item">
-                                <div class="stat-icon-sm blue-grad">
-                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
-                                        <path
-                                            d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75M9 11a4 4 0 100-8 4 4 0 000 8z"
-                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                            stroke-linejoin="round" />
-                                    </svg>
-                                </div>
-                                <p class="stat-num">0</p>
-                                <p class="stat-text">Friends</p>
-                            </div>
-                        </div>
-                    </section>
-
-                </div>
-
-            </div>
-
-            <!-- Controller Link -->
-            <div class="controller-bar">
-                <div class="bar-info">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-                        <rect x="5" y="2" width="14" height="20" rx="2" stroke="currentColor" stroke-width="2" />
-                        <path d="M12 18h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-                    </svg>
-                    <div>
-                        <p class="bar-label">Phone Controller</p>
-                        <p class="bar-link">fun-match.pages.dev/controller.html</p>
-                    </div>
-                </div>
-                <button class="copy-link-btn" onclick="copyLink()">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
-                        <rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" stroke-width="2" />
-                        <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke="currentColor"
-                            stroke-width="2" />
-                    </svg>
-                    Copy Link
-                </button>
-            </div>
-
-        </main>
-
-        <!-- ════════ RIGHT SIDEBAR (Friends) ════════ -->
-        <aside class="sidebar-right">
-            <div class="profile-pic">
-                <div class="avatar-img"></div>
-                <span class="online-dot"></span>
-            </div>
-
-            <div class="friends-list">
-                <div class="friend">
-                    <div class="friend-avatar grad-1"></div>
-                    <span class="status-dot online"></span>
-                </div>
-                <div class="friend">
-                    <div class="friend-avatar grad-2"></div>
-                    <span class="status-dot online"></span>
-                </div>
-                <div class="friend">
-                    <div class="friend-avatar grad-3"></div>
-                    <span class="status-dot"></span>
-                </div>
-                <div class="friend">
-                    <div class="friend-avatar grad-4"></div>
-                    <span class="status-dot online"></span>
-                </div>
-                <div class="friend">
-                    <div class="friend-avatar grad-5"></div>
-                    <span class="status-dot"></span>
-                </div>
-                <div class="friend">
-                    <div class="friend-avatar grad-6"></div>
-                    <span class="status-dot online"></span>
-                </div>
-                <div class="friend">
-                    <div class="friend-avatar grad-7"></div>
-                    <span class="status-dot"></span>
-                </div>
-            </div>
-        </aside>
-
+        <div class="sidebar-footer">
+            <a href="hub/" class="sidebar-cta">
+                ENTER HUB
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
+                    <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                        stroke-linejoin="round" />
+                </svg>
+            </a>
+        </div>
     </div>
 
-    <script src="dashboard.js"></script>
+    <!-- Backdrop -->
+    <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
+
+    <!-- ═══════════════ HERO SECTION with VIDEO BG ═══════════════ -->
+    <section class="hero">
+        <!-- Video Background -->
+        <div class="hero-video-container">
+            <video autoplay muted loop playsinline class="hero-video" id="hero-video">
+                <!-- Source will be set by JavaScript based on time -->
+                Your browser does not support video.
+            </video>
+
+            <div class="video-overlay"></div>
+            <div class="video-grid"></div>
+        </div>
+
+        <div class="hero-content">
+            <div class="hero-left">
+                <h1 class="hero-title">
+                    Play With<br>
+                    <span class="gradient-text">Friends,</span><br>
+                    Anywhere
+                </h1>
+
+                <p class="hero-subtitle">
+                    Turn your phone into a controller. Play together on any screen.
+                    No downloads. No accounts. Just <strong>pure fun.</strong>
+                </p>
+
+                <div class="hero-actions">
+                    <a href="hub/" class="btn btn-primary">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                            <path d="M8 5v14l11-7z" />
+                        </svg>
+                        Start Playing
+                    </a>
+                    <a href="#how" class="btn btn-secondary">
+                        How It Works
+                    </a>
+                </div>
+            </div>
+
+            <div class="hero-right">
+                <div class="device-showcase">
+                    <!-- Big Monitor (star of the show) -->
+                    <div class="device monitor-main">
+                        <div class="monitor-screen-big">
+                            <div class="game-preview-big">
+                                <!-- HP Bars -->
+                                <div class="preview-hp-container">
+                                    <div class="preview-hp1"></div>
+                                    <div class="preview-hp2"></div>
+                                </div>
+
+                                <!-- Fighters -->
+                                <div class="preview-player p1"></div>
+                                <div class="preview-player p2"></div>
+                                <div class="preview-vs">VS</div>
+
+                                <!-- Ground -->
+                                <div class="preview-ground"></div>
+                            </div>
+                        </div>
+                        <div class="monitor-stand-big"></div>
+                        <div class="monitor-base-big"></div>
+                    </div>
+
+                    <!-- Wireless signal effect -->
+                    <div class="signal-effect">
+                        <div class="signal-ring signal-1"></div>
+                        <div class="signal-ring signal-2"></div>
+                        <div class="signal-ring signal-3"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="scroll-indicator">
+            <div class="mouse">
+                <div class="wheel"></div>
+            </div>
+            <span>Scroll to explore</span>
+        </div>
+    </section>
+
+    <!-- ═══════════════ HOW IT WORKS ═══════════════ -->
+    <section class="how-section parallax-section" id="how">
+        <div class="parallax-layer layer-bg" data-speed="0.2">
+            <div class="floating-shape shape-1"></div>
+            <div class="floating-shape shape-2"></div>
+        </div>
+
+        <div class="parallax-layer layer-mid" data-speed="0.5">
+            <div class="floating-icon icon-1">🎮</div>
+            <div class="floating-icon icon-2">⚡</div>
+            <div class="floating-icon icon-3">🎯</div>
+        </div>
+
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">GET STARTED</span>
+                <h2 class="section-title">How It <span class="gradient-text">Works</span></h2>
+                <p class="section-subtitle">Get playing in less than 30 seconds</p>
+            </div>
+
+            <div class="steps-grid">
+                <!-- STEP 1 - With Video -->
+                <div class="step-card has-video" data-video="videos/Opening-Laptop.mp4">
+                    <div class="step-video-container">
+                        <video class="step-video" muted loop playsinline>
+                            <source src="videos/Opening-Laptop.mp4" type="video/mp4">
+                        </video>
+                        <div class="step-video-title">
+                            <span class="step-video-number">01</span>
+                            <h3>Open on TV/Laptop</h3>
+                        </div>
+                    </div>
+                    <div class="step-content">
+                        <div class="step-number">01</div>
+                        <div class="step-icon">
+                            <svg viewBox="0 0 24 24" width="40" height="40" fill="none">
+                                <rect x="2" y="4" width="20" height="14" rx="2" stroke="currentColor"
+                                    stroke-width="2" />
+                                <line x1="8" y1="20" x2="16" y2="20" stroke="currentColor" stroke-width="2" />
+                                <line x1="12" y1="18" x2="12" y2="20" stroke="currentColor" stroke-width="2" />
+                            </svg>
+                        </div>
+                        <h3>Open on TV/Laptop</h3>
+                        <p>Visit our hub on any big screen. Choose a game to start.</p>
+                        <div class="play-hint">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                                <path d="M8 5v14l11-7z" />
+                            </svg>
+                            <span>Tap to preview</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-arrow">→</div>
+
+                <!-- STEP 2 - With Video -->
+                <div class="step-card has-video" data-video="videos/Show QR.mp4">
+                    <div class="step-video-container">
+                        <video class="step-video" muted loop playsinline>
+                            <source src="videos/Show QR.mp4" type="video/mp4">
+                        </video>
+                        <div class="step-video-title">
+                            <span class="step-video-number">02</span>
+                            <h3>Grab Your Phone</h3>
+                        </div>
+                    </div>
+                    <div class="step-content">
+                        <div class="step-number">02</div>
+                        <div class="step-icon">
+                            <svg viewBox="0 0 24 24" width="40" height="40" fill="none">
+                                <rect x="5" y="2" width="14" height="20" rx="2" stroke="currentColor"
+                                    stroke-width="2" />
+                                <line x1="12" y1="18" x2="12.01" y2="18" stroke="currentColor" stroke-width="2" />
+                            </svg>
+                        </div>
+                        <h3>Grab Your Phone</h3>
+                        <p>Scan QR code or type the room code. Your phone becomes a controller!</p>
+                        <div class="play-hint">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                                <path d="M8 5v14l11-7z" />
+                            </svg>
+                            <span>Tap to preview</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="step-arrow">→</div>
+
+                <!-- STEP 3 - No Video -->
+                <div class="step-card">
+                    <div class="step-content">
+                        <div class="step-number">03</div>
+                        <div class="step-icon">
+                            <svg viewBox="0 0 24 24" width="40" height="40" fill="none">
+                                <path d="M6 3h12l4 6-10 13L2 9z" stroke="currentColor" stroke-width="2"
+                                    stroke-linejoin="round" />
+                            </svg>
+                        </div>
+                        <h3>Play Together</h3>
+                        <p>Battle friends, race, or play cards. Everyone on the same screen. Pure fun!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════ GAMES SHOWCASE ═══════════════ -->
+    <section class="games-section parallax-section" id="games">
+        <div class="parallax-layer layer-bg" data-speed="0.15">
+            <div class="floating-shape shape-3"></div>
+            <div class="floating-shape shape-4"></div>
+        </div>
+
+        <div class="parallax-layer layer-mid" data-speed="0.4">
+            <div class="floating-icon icon-4">🕹️</div>
+            <div class="floating-icon icon-5">🎨</div>
+        </div>
+
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">GAMES LIBRARY</span>
+                <h2 class="section-title">Choose Your <span class="gradient-text">Battle</span></h2>
+                <p class="section-subtitle">Three unique games. Endless fun.</p>
+            </div>
+
+            <div class="games-showcase">
+                <!-- Mortal Arena -->
+                <div class="game-showcase-card game-1">
+                    <div class="game-preview-bg">
+                        <img src="images/Mortal Arena.png" alt="Mortal Arena" class="game-image">
+                        <div class="game-image-overlay"></div>
+                    </div>
+                    <div class="game-info">
+                        <span class="game-genre">Fighting</span>
+                        <h3>Mortal Arena</h3>
+                        <p>1v1 fighting game with 3 characters and epic arenas. Master combos to win.</p>
+                        <div class="game-meta">
+                            <span>👥 1-2 Players</span>
+                            <span>🥋 3 Characters</span>
+                            <span>🗺️ 3 Maps</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Neon Racers -->
+                <div class="game-showcase-card game-2">
+                    <div class="game-preview-bg">
+                        <img src="images/Neon Racer.png" alt="Neon Racers" class="game-image">
+                        <div class="game-image-overlay"></div>
+                    </div>
+                    <div class="game-info">
+                        <span class="game-genre">Racing</span>
+                        <h3>Neon Racers</h3>
+                        <p>Top-down arcade racing at neon speeds. Boost, drift, and dominate the track.</p>
+                        <div class="game-meta">
+                            <span>👥 1-4 Players</span>
+                            <span>🏁 3 Laps</span>
+                            <span>⚡ Boost System</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- UNO Battle -->
+                <div class="game-showcase-card game-3">
+                    <div class="game-preview-bg">
+                        <img src="images/Metal Slug.png" alt="UNO Battle" class="game-image">
+                        <div class="game-image-overlay"></div>
+                    </div>
+                    <div class="game-info">
+                        <span class="game-genre">Shooting Game</span>
+                        <h3>Reinforce</h3>
+                        <p>The classic card game reimagined. Empty your hand first to win the round.</p>
+                        <div class="game-meta">
+                            <span>👥 2-4 Players</span>
+                            <span>🎴 108 Cards</span>
+                            <span>🤖 Bot Mode</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════ FEATURES ═══════════════ -->
+    <section class="features-section" id="features">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-tag">WHY FUN MATCH</span>
+                <h2 class="section-title">Everything You <span class="gradient-text">Need</span></h2>
+                <p class="section-subtitle">Simple, fast, and made for having fun together</p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon feature-icon-1">
+                        <svg viewBox="0 0 24 24" width="28" height="28" fill="none">
+                            <path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </div>
+                    <h3>100% Free</h3>
+                    <p>All games are completely free to play. No hidden fees or paywalls.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon feature-icon-2">
+                        <svg viewBox="0 0 24 24" width="28" height="28" fill="none">
+                            <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0zM12 8v4M12 16h.01" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" />
+                        </svg>
+                    </div>
+                    <h3>No Downloads</h3>
+                    <p>Everything runs in your browser. Just open a link and play.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon feature-icon-3">
+                        <svg viewBox="0 0 24 24" width="28" height="28" fill="none">
+                            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="2"
+                                stroke-linejoin="round" />
+                        </svg>
+                    </div>
+                    <h3>Instant Play</h3>
+                    <p>Real-time multiplayer with zero setup. Just scan and start.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon feature-icon-4">
+                        <svg viewBox="0 0 24 24" width="28" height="28" fill="none">
+                            <rect x="5" y="2" width="14" height="20" rx="2" stroke="currentColor" stroke-width="2" />
+                            <line x1="12" y1="18" x2="12.01" y2="18" stroke="currentColor" stroke-width="2" />
+                        </svg>
+                    </div>
+                    <h3>Phone as Controller</h3>
+                    <p>Your smartphone becomes a gamepad. Simple, intuitive controls.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon feature-icon-5">
+                        <svg viewBox="0 0 24 24" width="28" height="28" fill="none">
+                            <path
+                                d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75M9 11a4 4 0 100-8 4 4 0 000 8z"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </div>
+                    <h3>1-4 Players</h3>
+                    <p>Play solo against bots or bring up to 4 friends for chaos.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon feature-icon-6">
+                        <svg viewBox="0 0 24 24" width="28" height="28" fill="none">
+                            <path
+                                d="M6 9H4.5a2.5 2.5 0 010-5H6M18 9h1.5a2.5 2.5 0 000-5H18M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22M18 2H6v7a6 6 0 0012 0V2z"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </div>
+                    <h3>Fair Competition</h3>
+                    <p>Everyone gets the same experience. Pure skill-based gameplay.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════ CTA SECTION ═══════════════ -->
+    <section class="cta-section">
+        <div class="container">
+            <div class="cta-card">
+                <div class="cta-bg-orbs">
+                    <div class="cta-orb orb-a"></div>
+                    <div class="cta-orb orb-b"></div>
+                </div>
+                <h2 class="cta-title">Ready to <span class="gradient-text">Play?</span></h2>
+                <p class="cta-subtitle">Grab your friends. Grab your phone. Start playing in seconds.</p>
+                <a href="hub/" class="btn btn-primary btn-large">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                        <path d="M8 5v14l11-7z" />
+                    </svg>
+                    Enter Game Hub
+                </a>
+                <p class="cta-hint">No account needed • No download • 100% free</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ═══════════════ FOOTER ═══════════════ -->
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <div class="nav-logo">
+                        <div class="logo-icon">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+                                <path d="M4 4L12 12L4 20M12 4L20 12L12 20" stroke="currentColor" stroke-width="2.5"
+                                    stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </div>
+                        <span>FUN MATCH</span>
+                    </div>
+                    <p>Play together, anywhere.</p>
+                </div>
+                <div class="footer-links">
+                    <div class="footer-column">
+                        <h4>Games</h4>
+                        <a href="games/fighter/">Mortal Arena</a>
+                        <a href="games/racer/">Neon Racers</a>
+                        <a href="games/survive/">UNO Battle</a>
+                    </div>
+                    <div class="footer-column">
+                        <h4>Learn</h4>
+                        <a href="#how">How It Works</a>
+                        <a href="#features">Features</a>
+                        <a href="hub/">Game Hub</a>
+                        <a href="auth/signin.html">Sign In</a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>© 2025 Fun Match. Made with ❤️ for gamers.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="landing.js"></script>
 </body>
 
 </html>

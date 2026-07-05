@@ -1,0 +1,74 @@
+/* ═══════════════ GLOBAL LOADING SCREEN ═══════════════ */
+.page-loader {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: #050810;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.6s ease, visibility 0.6s ease;
+}
+
+.page-loader.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+/* Grid line background */
+.page-loader::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(0, 224, 255, 0.05) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 224, 255, 0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Steve video */
+.loader-video {
+    width: 400px;
+    height: 400px;
+    object-fit: contain;
+    position: relative;
+    z-index: 2;
+    animation: steveBounce 1.5s ease-in-out infinite;
+    mix-blend-mode: screen;
+}
+
+@keyframes steveBounce {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+/* Prevent scroll while loading */
+body.loading {
+    overflow: hidden;
+    height: 100vh;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+    .loader-video {
+        width: 280px;
+        height: 280px;
+    }
+}
+
+@media (max-width: 400px) {
+    .loader-video {
+        width: 220px;
+        height: 220px;
+    }
+}
