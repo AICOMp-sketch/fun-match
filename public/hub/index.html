@@ -25,7 +25,7 @@
             </div>
 
             <nav class="nav-items">
-                <button class="nav-item active" data-tip="Home">
+                <button class="nav-item active" data-tip="Home" onclick="showHub()">
                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
                         <path d="M3 9.5L12 3l9 6.5V20a2 2 0 01-2 2h-4v-7h-6v7H5a2 2 0 01-2-2V9.5z" stroke="currentColor"
                             stroke-width="2" stroke-linejoin="round" />
@@ -76,11 +76,11 @@
         <!-- ════════ MAIN CONTENT ════════ -->
         <main class="main">
 
-            <!-- Top Bar -->
+            <!-- Top Bar (ALWAYS VISIBLE) -->
             <header class="topbar">
                 <div class="greeting">
-                    <p class="hello">Good evening,</p>
-                    <h2 class="username">PLAYER</h2>
+                    <p class="hello" id="greeting-time">Good evening,</p>
+                    <h2 class="username" id="greeting-name">PLAYER</h2>
                 </div>
 
                 <div class="search-wrapper">
@@ -94,354 +94,480 @@
                 <div class="top-actions">
                     <button class="action-btn">
                         <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
-                            <path d="M9 20h6M3 9.5a9 9 0 1118 0c0 4-3 6.5-3 10.5H6c0-4-3-6.5-3-10.5z"
-                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                        </svg>
-                        <span class="dot"></span>
-                    </button>
-                    <button class="action-btn">
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
                             <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"
                                 stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                         </svg>
                         <span class="dot"></span>
                     </button>
+
+                    <div class="profile-wrapper" id="profile-wrapper">
+                        <div class="user-avatar" id="user-avatar" onclick="toggleProfileMenu()">
+                            <svg class="default-avatar-icon" viewBox="0 0 24 24" width="20" height="20" fill="none">
+                                <path d="M4 4L12 12L4 20M12 4L20 12L12 20" stroke="currentColor" stroke-width="2.5"
+                                    stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                        </div>
+
+                        <div class="profile-menu hidden" id="profile-menu">
+                            <div class="menu-header">
+                                <div class="menu-avatar" id="menu-avatar">
+                                    <svg class="default-avatar-icon" viewBox="0 0 24 24" width="24" height="24"
+                                        fill="none">
+                                        <path d="M4 4L12 12L4 20M12 4L20 12L12 20" stroke="currentColor"
+                                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <p class="menu-name" id="menu-name">Player</p>
+                                    <p class="menu-email" id="menu-email">player@email.com</p>
+                                </div>
+                            </div>
+                            <div class="menu-divider"></div>
+                            <a href="#" class="menu-item" onclick="editProfile()">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
+                                    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke="currentColor"
+                                        stroke-width="2" />
+                                    <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2" />
+                                </svg>
+                                Edit Profile
+                            </a>
+                            <a href="#" class="menu-item" onclick="viewStats()">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
+                                    <path d="M18 20V10M12 20V4M6 20v-6" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" />
+                                </svg>
+                                My Stats
+                            </a>
+                            <div class="menu-divider"></div>
+                            <a href="#" class="menu-item menu-item-danger" onclick="handleSignOut()">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
+                                    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"
+                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" />
+                                </svg>
+                                Sign Out
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </header>
 
-            <!-- Content Grid -->
-            <div class="content-grid">
-
-                <!-- LEFT COLUMN -->
-                <div class="left-col">
-
-                    <!-- Hero Card -->
-                    <section class="hero-card">
-                        <div class="hero-bg"></div>
-                        <div class="hero-content">
-                            <div class="hero-tags">
-                                <span class="tag tag-popular">
-                                    <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
-                                        <path
-                                            d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67zM11.71 19c-1.78 0-3.22-1.4-3.22-3.14 0-1.62 1.05-2.76 2.81-3.12 1.77-.36 3.6-1.21 4.62-2.58.39 1.29.59 2.65.59 4.04 0 2.65-2.15 4.8-4.8 4.8z" />
-                                    </svg>
-                                    Popular
-                                </span>
-                                <span class="tag tag-icon">
-                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none">
-                                        <rect x="2" y="6" width="20" height="12" rx="6" stroke="currentColor"
-                                            stroke-width="2" />
-                                        <path d="M8 12h2M9 11v2M14 12h.01M17 11h.01" stroke="currentColor"
-                                            stroke-width="2" stroke-linecap="round" />
-                                    </svg>
-                                </span>
-                                <span class="tag tag-icon">
-                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none">
-                                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
-                                        <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2"
-                                            stroke-linecap="round" />
-                                    </svg>
-                                </span>
-                            </div>
-
-                            <h1 class="hero-title">Survive<br>The Bots</h1>
-
-                            <p class="hero-desc">
-                                A real-time multiplayer survival arena where you and your friends use phones as
-                                controllers. Outrun the AI, outlast them all.
-                            </p>
-
-                            <div class="hero-footer">
-                                <div class="players-avatars">
-                                    <div class="mini-avatar"
-                                        style="background: linear-gradient(135deg, #ff6b6b, #ee5a6f)"></div>
-                                    <div class="mini-avatar"
-                                        style="background: linear-gradient(135deg, #4facfe, #00f2fe)"></div>
-                                    <div class="mini-avatar"
-                                        style="background: linear-gradient(135deg, #fa709a, #fee140)"></div>
-                                    <div class="mini-avatar more">+12</div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
-
-                    <!-- New Games -->
-                    <section class="section">
-                        <div class="section-header">
-                            <h3>New Games</h3>
-                            <a href="#" class="see-more">See More</a>
-                        </div>
-
-                        <div class="games-row">
-                            <a href="../games/survive/" class="game-card-mini active-card">
-                                <div class="card-bg survive-grad">
-                                    <div class="card-overlay"></div>
-                                    <button class="card-play">
-                                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                                            <path d="M8 5v14l11-7z" />
+            <!-- ════════ HUB CONTENT (default view) ════════ -->
+            <div id="hub-content">
+                <div class="content-grid">
+                    <div class="left-col">
+                        <section class="hero-card">
+                            <div class="hero-bg"></div>
+                            <div class="hero-content">
+                                <div class="hero-tags">
+                                    <span class="tag tag-popular">
+                                        <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
+                                            <path
+                                                d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67z" />
                                         </svg>
-                                    </button>
-                                    <span class="live-dot"></span>
-                                </div>
-                                <div class="card-content">
-                                    <h4>UNO</h4>
-                                    <p>Card Game / 2-4 Players</p>
-                                </div>
-                            </a>
-
-                            <a href="../games/fighter/" class="game-card-mini active-card">
-                                <div class="card-bg draw-grad">
-                                    <div class="card-overlay"></div>
-                                    <button class="card-play">
-                                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                                            <path d="M8 5v14l11-7z" />
+                                        Popular
+                                    </span>
+                                    <span class="tag tag-icon">
+                                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none">
+                                            <rect x="2" y="6" width="20" height="12" rx="6" stroke="currentColor"
+                                                stroke-width="2" />
+                                            <path d="M8 12h2M9 11v2M14 12h.01M17 11h.01" stroke="currentColor"
+                                                stroke-width="2" stroke-linecap="round" />
                                         </svg>
-                                    </button>
-                                    <span class="live-dot"></span>
+                                    </span>
                                 </div>
-                                <div class="card-content">
-                                    <h4>Mortal Arena</h4>
-                                    <p>Fighting / 3 Characters / 3 Maps</p>
+                                <h1 class="hero-title">Survive<br>The Bots</h1>
+                                <p class="hero-desc">A real-time multiplayer survival arena where you and your friends
+                                    use phones as controllers.</p>
+                                <div class="hero-footer">
+                                    <div class="players-avatars">
+                                        <div class="mini-avatar"
+                                            style="background: linear-gradient(135deg, #ff6b6b, #ee5a6f)"></div>
+                                        <div class="mini-avatar"
+                                            style="background: linear-gradient(135deg, #4facfe, #00f2fe)"></div>
+                                        <div class="mini-avatar"
+                                            style="background: linear-gradient(135deg, #fa709a, #fee140)"></div>
+                                        <div class="mini-avatar more">+12</div>
+                                    </div>
                                 </div>
-                            </a>
-
-                            <a href="../games/racer/" class="game-card-mini active-card">
-                                <div class="card-bg race-grad">
-                                    <div class="card-overlay"></div>
-                                    <button class="card-play">
-                                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-                                            <path d="M8 5v14l11-7z" />
-                                        </svg>
-                                    </button>
-                                    <span class="live-dot"></span>
-                                </div>
-                                <div class="card-content">
-                                    <h4>Neon Racers</h4>
-                                    <p>Racing / Multiplayer</p>
-                                </div>
-                            </a>
-
-                            <button class="scroll-arrow">
-                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-                                    <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2.5"
-                                        stroke-linecap="round" stroke-linejoin="round" />
-                                </svg>
-                            </button>
-                        </div>
-                    </section>
-
-                    <!-- Recent Activity -->
-                    <section class="section">
-                        <div class="section-header">
-                            <h3>Recent Activity</h3>
-                            <a href="#" class="see-more">See More</a>
-                        </div>
-
-                        <div class="activity-card">
-                            <div class="activity-thumb survive-grad">
-                                <svg viewBox="0 0 24 24" width="22" height="22" fill="none">
-                                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="2"
-                                        stroke-linejoin="round" />
-                                </svg>
                             </div>
-                            <div class="activity-info">
-                                <h4>Survive The Bots</h4>
-                                <p>Action / Survival</p>
-                            </div>
-                            <div class="activity-meta">
-                                <span class="time-played">
-                                    <svg viewBox="0 0 24 24" width="14" height="14" fill="none">
-                                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
-                                        <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2"
-                                            stroke-linecap="round" />
-                                    </svg>
-                                    <span id="last-time">0 min</span>
-                                </span>
-                            </div>
-                            <a href="games/survive/" class="mini-play">
-                                <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor">
-                                    <path d="M8 5v14l11-7z" />
-                                </svg>
-                            </a>
-                        </div>
-                    </section>
+                        </section>
 
-                </div>
-
-                <!-- RIGHT COLUMN -->
-                <div class="right-col">
-
-                    <!-- Quick Access -->
-                    <section class="quick-access">
-                        <a href="games/survive/" class="quick-card">
-                            <div class="quick-icon survive-grad">
-                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-                                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="2"
-                                        stroke-linejoin="round" />
-                                </svg>
+                        <section class="section">
+                            <div class="section-header">
+                                <h3>New Games</h3>
+                                <a href="#" class="see-more">See More</a>
                             </div>
-                            <div class="quick-info">
-                                <h5>Survive The Bots</h5>
-                                <p>Multiplayer Arena</p>
+                            <div class="games-row">
+                                <a href="../games/survive/" class="game-card-mini active-card">
+                                    <div class="card-bg survive-grad">
+                                        <div class="card-overlay"></div><button class="card-play"><svg
+                                                viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                                                <path d="M8 5v14l11-7z" />
+                                            </svg></button><span class="live-dot"></span>
+                                    </div>
+                                    <div class="card-content">
+                                        <h4>UNO</h4>
+                                        <p>Card Game / 2-4 Players</p>
+                                    </div>
+                                </a>
+                                <a href="../games/fighter/" class="game-card-mini active-card">
+                                    <div class="card-bg draw-grad">
+                                        <div class="card-overlay"></div><button class="card-play"><svg
+                                                viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                                                <path d="M8 5v14l11-7z" />
+                                            </svg></button><span class="live-dot"></span>
+                                    </div>
+                                    <div class="card-content">
+                                        <h4>Mortal Arena</h4>
+                                        <p>Fighting / 3 Characters</p>
+                                    </div>
+                                </a>
+                                <a href="../games/racer/" class="game-card-mini active-card">
+                                    <div class="card-bg race-grad">
+                                        <div class="card-overlay"></div><button class="card-play"><svg
+                                                viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                                                <path d="M8 5v14l11-7z" />
+                                            </svg></button><span class="live-dot"></span>
+                                    </div>
+                                    <div class="card-content">
+                                        <h4>Neon Racers</h4>
+                                        <p>Racing / Multiplayer</p>
+                                    </div>
+                                </a>
+                                <button class="scroll-arrow"><svg viewBox="0 0 24 24" width="20" height="20"
+                                        fill="none">
+                                        <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2.5"
+                                            stroke-linecap="round" stroke-linejoin="round" />
+                                    </svg></button>
                             </div>
-                            <span class="live-tag">Live</span>
-                        </a>
+                        </section>
 
-                        <div class="quick-card disabled">
-                            <div class="quick-icon quiz-grad">
-                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-                                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
-                                    <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01" stroke="currentColor"
-                                        stroke-width="2" stroke-linecap="round" />
-                                </svg>
+                        <section class="section">
+                            <div class="section-header">
+                                <h3>Recent Activity</h3>
+                                <a href="#" class="see-more">See More</a>
                             </div>
-                            <div class="quick-info">
-                                <h5>Trivia Battle</h5>
-                                <p>Coming Soon</p>
-                            </div>
-                        </div>
-
-                        <div class="quick-card disabled">
-                            <div class="quick-icon draw-grad">
-                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-                                    <path d="M17 3a2.85 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z" stroke="currentColor"
-                                        stroke-width="2" stroke-linejoin="round" />
-                                </svg>
-                            </div>
-                            <div class="quick-info">
-                                <h5>Draw & Guess</h5>
-                                <p>Coming Soon</p>
-                            </div>
-                        </div>
-                    </section>
-
-                    <!-- Statistics -->
-                    <section class="stats-section">
-                        <h3>Your Statistics</h3>
-
-                        <div class="stats-ring">
-                            <svg viewBox="0 0 200 200" class="ring-svg">
-                                <defs>
-                                    <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                                        <stop offset="0%" stop-color="#ff4757" />
-                                        <stop offset="50%" stop-color="#c44569" />
-                                        <stop offset="100%" stop-color="#3742fa" />
-                                    </linearGradient>
-                                </defs>
-                                <circle cx="100" cy="100" r="80" fill="none" stroke="rgba(255,255,255,0.05)"
-                                    stroke-width="14" />
-                                <circle cx="100" cy="100" r="80" fill="none" stroke="url(#ringGrad)" stroke-width="14"
-                                    stroke-linecap="round" stroke-dasharray="380" stroke-dashoffset="80"
-                                    transform="rotate(-90 100 100)" class="ring-progress" />
-                            </svg>
-                            <div class="ring-center">
-                                <p class="ring-label">Total Time</p>
-                                <p class="ring-value" id="total-time">0h</p>
-                            </div>
-                        </div>
-
-                        <div class="stats-row">
-                            <div class="stat-item">
-                                <div class="stat-icon-sm survive-grad">
-                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
+                            <div class="activity-card">
+                                <div class="activity-thumb survive-grad">
+                                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none">
                                         <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="2"
                                             stroke-linejoin="round" />
                                     </svg>
                                 </div>
-                                <p class="stat-num" id="games-played">0</p>
-                                <p class="stat-text">Games</p>
-                            </div>
-
-                            <div class="stat-item">
-                                <div class="stat-icon-sm gold-grad">
-                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
-                                        <path
-                                            d="M6 9H4.5a2.5 2.5 0 010-5H6M18 9h1.5a2.5 2.5 0 000-5H18M4 22h16M18 2H6v7a6 6 0 0012 0V2z"
-                                            stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
-                                    </svg>
+                                <div class="activity-info">
+                                    <h4>Survive The Bots</h4>
+                                    <p>Action / Survival</p>
                                 </div>
-                                <p class="stat-num" id="high-score">0s</p>
-                                <p class="stat-text">Best</p>
+                                <div class="activity-meta"><span class="time-played"><svg viewBox="0 0 24 24" width="14"
+                                            height="14" fill="none">
+                                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
+                                            <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2"
+                                                stroke-linecap="round" />
+                                        </svg><span id="last-time">0 min</span></span></div>
+                                <a href="../games/survive/" class="mini-play"><svg viewBox="0 0 24 24" width="14"
+                                        height="14" fill="currentColor">
+                                        <path d="M8 5v14l11-7z" />
+                                    </svg></a>
                             </div>
+                        </section>
+                    </div>
 
-                            <div class="stat-item">
-                                <div class="stat-icon-sm blue-grad">
-                                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
-                                        <path
-                                            d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75M9 11a4 4 0 100-8 4 4 0 000 8z"
-                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                    <div class="right-col">
+                        <section class="quick-access">
+                            <a href="../games/survive/" class="quick-card">
+                                <div class="quick-icon survive-grad"><svg viewBox="0 0 24 24" width="20" height="20"
+                                        fill="none">
+                                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="2"
                                             stroke-linejoin="round" />
-                                    </svg>
+                                    </svg></div>
+                                <div class="quick-info">
+                                    <h5>Survive The Bots</h5>
+                                    <p>Multiplayer Arena</p>
                                 </div>
-                                <p class="stat-num">0</p>
-                                <p class="stat-text">Friends</p>
+                                <span class="live-tag">Live</span>
+                            </a>
+                            <div class="quick-card disabled">
+                                <div class="quick-icon quiz-grad"><svg viewBox="0 0 24 24" width="20" height="20"
+                                        fill="none">
+                                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
+                                        <path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3M12 17h.01" stroke="currentColor"
+                                            stroke-width="2" stroke-linecap="round" />
+                                    </svg></div>
+                                <div class="quick-info">
+                                    <h5>Trivia Battle</h5>
+                                    <p>Coming Soon</p>
+                                </div>
                             </div>
-                        </div>
-                    </section>
+                            <div class="quick-card disabled">
+                                <div class="quick-icon draw-grad"><svg viewBox="0 0 24 24" width="20" height="20"
+                                        fill="none">
+                                        <path d="M17 3a2.85 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"
+                                            stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+                                    </svg></div>
+                                <div class="quick-info">
+                                    <h5>Draw & Guess</h5>
+                                    <p>Coming Soon</p>
+                                </div>
+                            </div>
+                        </section>
 
-                </div>
-
-            </div>
-
-            <!-- Controller Link -->
-            <div class="controller-bar">
-                <div class="bar-info">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-                        <rect x="5" y="2" width="14" height="20" rx="2" stroke="currentColor" stroke-width="2" />
-                        <path d="M12 18h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-                    </svg>
-                    <div>
-                        <p class="bar-label">Phone Controller</p>
-                        <p class="bar-link">fun-match.pages.dev/controller.html</p>
+                        <section class="stats-section">
+                            <h3>Your Statistics</h3>
+                            <div class="stats-ring">
+                                <svg viewBox="0 0 200 200" class="ring-svg">
+                                    <defs>
+                                        <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#00e0ff" />
+                                            <stop offset="50%" stop-color="#0099ff" />
+                                            <stop offset="100%" stop-color="#7c3aed" />
+                                        </linearGradient>
+                                    </defs>
+                                    <circle cx="100" cy="100" r="80" fill="none" stroke="rgba(255,255,255,0.05)"
+                                        stroke-width="14" />
+                                    <circle cx="100" cy="100" r="80" fill="none" stroke="url(#ringGrad)"
+                                        stroke-width="14" stroke-linecap="round" stroke-dasharray="380"
+                                        stroke-dashoffset="80" transform="rotate(-90 100 100)" class="ring-progress" />
+                                </svg>
+                                <div class="ring-center">
+                                    <p class="ring-label">Total Time</p>
+                                    <p class="ring-value" id="total-time">0h</p>
+                                </div>
+                            </div>
+                            <div class="stats-row">
+                                <div class="stat-item">
+                                    <div class="stat-icon-sm survive-grad"><svg viewBox="0 0 24 24" width="16"
+                                            height="16" fill="none">
+                                            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor"
+                                                stroke-width="2" stroke-linejoin="round" />
+                                        </svg></div>
+                                    <p class="stat-num" id="games-played">0</p>
+                                    <p class="stat-text">Games</p>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-icon-sm gold-grad"><svg viewBox="0 0 24 24" width="16" height="16"
+                                            fill="none">
+                                            <path
+                                                d="M6 9H4.5a2.5 2.5 0 010-5H6M18 9h1.5a2.5 2.5 0 000-5H18M4 22h16M18 2H6v7a6 6 0 0012 0V2z"
+                                                stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+                                        </svg></div>
+                                    <p class="stat-num" id="high-score">0s</p>
+                                    <p class="stat-text">Best</p>
+                                </div>
+                                <div class="stat-item">
+                                    <div class="stat-icon-sm blue-grad"><svg viewBox="0 0 24 24" width="16" height="16"
+                                            fill="none">
+                                            <path
+                                                d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75M9 11a4 4 0 100-8 4 4 0 000 8z"
+                                                stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                                stroke-linejoin="round" />
+                                        </svg></div>
+                                    <p class="stat-num" id="friends-count">0</p>
+                                    <p class="stat-text">Friends</p>
+                                </div>
+                            </div>
+                        </section>
                     </div>
                 </div>
-                <button class="copy-link-btn" onclick="copyLink()">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
-                        <rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" stroke-width="2" />
-                        <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke="currentColor"
-                            stroke-width="2" />
+
+                <div class="controller-bar">
+                    <div class="bar-info">
+                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+                            <rect x="5" y="2" width="14" height="20" rx="2" stroke="currentColor" stroke-width="2" />
+                            <path d="M12 18h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                        </svg>
+                        <div>
+                            <p class="bar-label">Phone Controller</p>
+                            <p class="bar-link">fun-match.pages.dev/controller.html</p>
+                        </div>
+                    </div>
+                    <button class="copy-link-btn" onclick="copyLink()">
+                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
+                            <rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" stroke-width="2" />
+                            <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke="currentColor"
+                                stroke-width="2" />
+                        </svg>
+                        Copy Link
+                    </button>
+                </div>
+            </div>
+
+            <!-- ════════ PROFILE PANEL ════════ -->
+            <div class="profile-panel hidden" id="profile-panel">
+                <div class="profile-back" onclick="closeProfile()">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+                        <path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
                     </svg>
-                    Copy Link
-                </button>
+                    <span>Back to Hub</span>
+                </div>
+
+                <div class="profile-layout">
+                    <!-- LEFT SIDE: Profile Info -->
+                    <div class="profile-left">
+                        <!-- User Card -->
+                        <div class="profile-user-card">
+                            <div class="profile-avatar-large" id="profile-avatar-large">
+                                <svg class="default-avatar-icon" viewBox="0 0 24 24" width="40" height="40" fill="none">
+                                    <path d="M4 4L12 12L4 20M12 4L20 12L12 20" stroke="currentColor" stroke-width="2.5"
+                                        stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                            </div>
+                            <div class="profile-user-info">
+                                <h2 class="profile-display-name" id="profile-display-name">Player</h2>
+                                <p class="profile-email-display" id="profile-email-display">player@email.com</p>
+                                <div class="profile-badges">
+                                    <span class="profile-badge badge-level" id="profile-level">Level 1</span>
+                                    <span class="profile-badge badge-xp" id="profile-xp">0 XP</span>
+                                </div>
+                            </div>
+                            <button class="profile-edit-btn" onclick="toggleEditForm()">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
+                                    <path d="M17 3a2.85 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z" stroke="currentColor"
+                                        stroke-width="2" stroke-linejoin="round" />
+                                </svg>
+                                Edit
+                            </button>
+                        </div>
+
+                        <!-- Quick Stats -->
+                        <div class="profile-quick-stats">
+                            <div class="quick-stat">
+                                <p class="quick-stat-value" id="stat-total-games">0</p>
+                                <p class="quick-stat-label">Games</p>
+                            </div>
+                            <div class="quick-stat-divider"></div>
+                            <div class="quick-stat">
+                                <p class="quick-stat-value" id="stat-total-wins">0</p>
+                                <p class="quick-stat-label">Wins</p>
+                            </div>
+                            <div class="quick-stat-divider"></div>
+                            <div class="quick-stat">
+                                <p class="quick-stat-value" id="stat-playtime">0h</p>
+                                <p class="quick-stat-label">Play Time</p>
+                            </div>
+                            <div class="quick-stat-divider"></div>
+                            <div class="quick-stat">
+                                <p class="quick-stat-value" id="stat-level">1</p>
+                                <p class="quick-stat-label">Level</p>
+                            </div>
+                        </div>
+
+                        <!-- Edit Form (hidden by default) -->
+                        <div class="profile-edit-form hidden" id="profile-edit-form">
+                            <form id="profile-form" class="profile-form">
+                                <div class="profile-form-group">
+                                    <label>Display Name</label>
+                                    <input type="text" id="edit-display-name" placeholder="Your display name"
+                                        maxlength="20">
+                                </div>
+                                <div class="profile-form-group">
+                                    <label>Username</label>
+                                    <div class="username-input-wrapper">
+                                        <span class="username-prefix">@</span>
+                                        <input type="text" id="edit-username" placeholder="username" maxlength="15">
+                                    </div>
+                                </div>
+                                <div class="profile-form-group">
+                                    <label>Email</label>
+                                    <input type="email" id="edit-email" disabled>
+                                </div>
+                                <div class="edit-form-actions">
+                                    <button type="submit" class="profile-save-btn" id="profile-save-btn">
+                                        <span class="btn-text">Save Changes</span>
+                                        <div class="btn-spinner"></div>
+                                    </button>
+                                    <button type="button" class="profile-cancel-btn"
+                                        onclick="toggleEditForm()">Cancel</button>
+                                </div>
+                                <div id="profile-message"></div>
+                            </form>
+                        </div>
+
+                        <!-- Achievements -->
+                        <div class="profile-achievements">
+                            <h3 class="profile-section-title">
+                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+                                    <path
+                                        d="M6 9H4.5a2.5 2.5 0 010-5H6M18 9h1.5a2.5 2.5 0 000-5H18M4 22h16M18 2H6v7a6 6 0 0012 0V2z"
+                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" />
+                                </svg>
+                                Achievements
+                            </h3>
+                            <div class="achievements-grid" id="achievements-list">
+                                <div class="achievement-item locked">
+                                    <div class="achievement-icon">🏆</div>
+                                    <p>First Win</p>
+                                </div>
+                                <div class="achievement-item locked">
+                                    <div class="achievement-icon">⚡</div>
+                                    <p>10 Games</p>
+                                </div>
+                                <div class="achievement-item locked">
+                                    <div class="achievement-icon">🎯</div>
+                                    <p>Sharpshooter</p>
+                                </div>
+                                <div class="achievement-item locked">
+                                    <div class="achievement-icon">🏎️</div>
+                                    <p>Speed Demon</p>
+                                </div>
+                                <div class="achievement-item locked">
+                                    <div class="achievement-icon">🃏</div>
+                                    <p>Card Master</p>
+                                </div>
+                                <div class="achievement-item locked">
+                                    <div class="achievement-icon">👥</div>
+                                    <p>Social</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT SIDE: Character Display -->
+                    <div class="profile-right">
+                        <div class="character-display">
+                            <canvas id="character-canvas" width="400" height="500"></canvas>
+                            <p class="character-label">Favorite Fighter</p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
         </main>
 
         <!-- ════════ RIGHT SIDEBAR (Friends) ════════ -->
         <aside class="sidebar-right">
-            <div class="profile-pic">
-                <div class="avatar-img"></div>
-                <span class="online-dot"></span>
+            <div class="friends-header">
+                <div class="friends-icon">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+                        <path
+                            d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75M9 11a4 4 0 100-8 4 4 0 000 8z"
+                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+                </div>
             </div>
-
             <div class="friends-list">
                 <div class="friend">
-                    <div class="friend-avatar grad-1"></div>
-                    <span class="status-dot online"></span>
+                    <div class="friend-avatar grad-1"></div><span class="status-dot online"></span>
                 </div>
                 <div class="friend">
-                    <div class="friend-avatar grad-2"></div>
-                    <span class="status-dot online"></span>
+                    <div class="friend-avatar grad-2"></div><span class="status-dot online"></span>
                 </div>
                 <div class="friend">
-                    <div class="friend-avatar grad-3"></div>
-                    <span class="status-dot"></span>
+                    <div class="friend-avatar grad-3"></div><span class="status-dot"></span>
                 </div>
                 <div class="friend">
-                    <div class="friend-avatar grad-4"></div>
-                    <span class="status-dot online"></span>
+                    <div class="friend-avatar grad-4"></div><span class="status-dot online"></span>
                 </div>
                 <div class="friend">
-                    <div class="friend-avatar grad-5"></div>
-                    <span class="status-dot"></span>
+                    <div class="friend-avatar grad-5"></div><span class="status-dot"></span>
                 </div>
                 <div class="friend">
-                    <div class="friend-avatar grad-6"></div>
-                    <span class="status-dot online"></span>
+                    <div class="friend-avatar grad-6"></div><span class="status-dot online"></span>
                 </div>
                 <div class="friend">
-                    <div class="friend-avatar grad-7"></div>
-                    <span class="status-dot"></span>
+                    <div class="friend-avatar grad-7"></div><span class="status-dot"></span>
                 </div>
             </div>
         </aside>
@@ -449,6 +575,393 @@
     </div>
 
     <script src="dashboard.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="../global/supabase.js"></script>
+
+    <script>
+        // ═══════════════ LOAD USER PROFILE ═══════════════
+        (async function () {
+            var user = await getCurrentUser();
+            if (!user) { window.location.href = '../auth/signin.html'; return; }
+
+            var profile = await getUserProfile();
+
+            var hour = new Date().getHours();
+            var timeGreeting = 'Good evening,';
+            if (hour >= 5 && hour < 12) timeGreeting = 'Good morning,';
+            else if (hour >= 12 && hour < 17) timeGreeting = 'Good afternoon,';
+            else if (hour >= 17 && hour < 21) timeGreeting = 'Good evening,';
+            else timeGreeting = 'Good night,';
+
+            var greetingEl = document.getElementById('greeting-time');
+            if (greetingEl) greetingEl.textContent = timeGreeting;
+
+            var displayName = 'PLAYER';
+            if (profile && profile.display_name) displayName = profile.display_name.toUpperCase();
+            else if (user.user_metadata && user.user_metadata.full_name) displayName = user.user_metadata.full_name.toUpperCase();
+            else if (user.email) displayName = user.email.split('@')[0].toUpperCase();
+
+            var nameEl = document.getElementById('greeting-name');
+            if (nameEl) nameEl.textContent = displayName;
+
+            var avatarUrl = null;
+            if (user.user_metadata && user.user_metadata.avatar_url) avatarUrl = user.user_metadata.avatar_url;
+            else if (user.user_metadata && user.user_metadata.picture) avatarUrl = user.user_metadata.picture;
+            else if (profile && profile.avatar_url && profile.avatar_url !== '') avatarUrl = profile.avatar_url;
+
+            if (avatarUrl) {
+                document.getElementById('user-avatar').innerHTML = '<img src="' + avatarUrl + '" alt="Avatar">';
+                document.getElementById('menu-avatar').innerHTML = '<img src="' + avatarUrl + '" alt="Avatar">';
+            }
+
+            var menuName = document.getElementById('menu-name');
+            var menuEmail = document.getElementById('menu-email');
+            if (menuName) menuName.textContent = profile && profile.display_name ? profile.display_name : user.email.split('@')[0];
+            if (menuEmail) menuEmail.textContent = user.email;
+
+            if (profile) {
+                var gamesEl = document.getElementById('games-played');
+                if (gamesEl) gamesEl.textContent = profile.total_games || 0;
+                var friendsEl = document.getElementById('friends-count');
+                if (friendsEl) friendsEl.textContent = 0;
+                var timeEl = document.getElementById('total-time');
+                if (timeEl) timeEl.textContent = ((profile.total_playtime || 0) / 3600).toFixed(1) + 'h';
+            }
+            // Start stickman animation
+            initStickman();
+        })();
+
+        // ═══════════════ NAVIGATION ═══════════════
+        function toggleProfileMenu() {
+            document.getElementById('profile-menu').classList.toggle('hidden');
+        }
+
+        document.addEventListener('click', function (e) {
+            var menu = document.getElementById('profile-menu');
+            var wrapper = document.getElementById('profile-wrapper');
+            if (menu && wrapper && !wrapper.contains(e.target)) menu.classList.add('hidden');
+        });
+
+        async function handleSignOut() { await signOut(); }
+
+        function showHub() {
+            document.getElementById('hub-content').style.display = '';
+            document.getElementById('profile-panel').classList.add('hidden');
+            // Update active nav
+            document.querySelectorAll('.nav-item').forEach(function (btn) { btn.classList.remove('active'); });
+            document.querySelector('.nav-item[data-tip="Home"]').classList.add('active');
+        }
+
+        // ═══════════════ PROFILE ═══════════════
+        function editProfile() {
+            document.getElementById('profile-menu').classList.add('hidden');
+            document.getElementById('hub-content').style.display = 'none';
+            document.getElementById('profile-panel').classList.remove('hidden');
+            loadProfileData();
+        }
+
+        function closeProfile() {
+            showHub();
+        }
+
+        function viewStats() {
+            editProfile(); // Go to profile which has stats
+        }
+
+        async function loadProfileData() {
+            var user = await getCurrentUser();
+            var profile = await getUserProfile();
+            if (!user) return;
+
+            var avatarUrl = null;
+            if (user.user_metadata && user.user_metadata.avatar_url) avatarUrl = user.user_metadata.avatar_url;
+            else if (user.user_metadata && user.user_metadata.picture) avatarUrl = user.user_metadata.picture;
+            else if (profile && profile.avatar_url) avatarUrl = profile.avatar_url;
+
+            var largeAvatar = document.getElementById('profile-avatar-large');
+            if (avatarUrl && largeAvatar) largeAvatar.innerHTML = '<img src="' + avatarUrl + '" alt="Avatar">';
+
+            var displayName = profile && profile.display_name ? profile.display_name : user.email.split('@')[0];
+            document.getElementById('profile-display-name').textContent = displayName;
+            document.getElementById('profile-email-display').textContent = user.email;
+            document.getElementById('edit-display-name').value = displayName;
+            document.getElementById('edit-username').value = profile && profile.username ? profile.username : '';
+            document.getElementById('edit-email').value = user.email;
+
+            if (profile) {
+                document.getElementById('profile-level').textContent = 'Level ' + (profile.level || 1);
+                document.getElementById('profile-xp').textContent = (profile.xp || 0) + ' XP';
+                document.getElementById('stat-total-games').textContent = profile.total_games || 0;
+                document.getElementById('stat-total-wins').textContent = profile.total_wins || 0;
+                document.getElementById('stat-level').textContent = profile.level || 1;
+                document.getElementById('stat-playtime').textContent = ((profile.total_playtime || 0) / 3600).toFixed(1) + 'h';
+            }
+        }
+
+        document.getElementById('profile-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            var saveBtn = document.getElementById('profile-save-btn');
+            saveBtn.classList.add('loading');
+
+            var result = await updateProfile({
+                display_name: document.getElementById('edit-display-name').value.trim(),
+                username: document.getElementById('edit-username').value.trim()
+            });
+
+            saveBtn.classList.remove('loading');
+            var msgEl = document.getElementById('profile-message');
+
+            if (result.error) {
+                msgEl.innerHTML = '<div class="error-message">' + result.error + '</div>';
+            } else {
+                msgEl.innerHTML = '<div class="success-message">Profile updated!</div>';
+                var name = document.getElementById('edit-display-name').value.trim();
+                document.getElementById('profile-display-name').textContent = name;
+                document.getElementById('greeting-name').textContent = name.toUpperCase();
+                document.getElementById('menu-name').textContent = name;
+            }
+            setTimeout(function () { msgEl.innerHTML = ''; }, 3000);
+        });
+
+        function copyLink() {
+            navigator.clipboard.writeText('https://fun-match.pages.dev/controller.html').then(function () {
+                var btn = document.querySelector('.copy-link-btn');
+                var original = btn.innerHTML;
+                btn.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg> Copied!';
+                btn.style.background = '#aaff00';
+                btn.style.color = '#050810';
+                setTimeout(function () { btn.innerHTML = original; btn.style.background = ''; btn.style.color = ''; }, 2000);
+            });
+        }
+
+        // ═══════════════ ANIMATED STICKMAN ═══════════════
+        function initStickman() {
+            var canvas = document.getElementById('character-canvas');
+            if (!canvas) return;
+
+            var ctx = canvas.getContext('2d');
+            var frame = 0;
+            var animSpeed = 0.05;
+            var SCALE = 2;
+
+            function drawStickman() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                var cx = canvas.width / 2;
+                var cy = canvas.height * 0.55;
+                var t = frame * animSpeed;
+
+                // Determine action based on animation cycle
+                var cycle = Math.floor(t % 4);
+                var progress = (t % 1);
+
+                ctx.strokeStyle = '#00e0ff';
+                ctx.lineWidth = 6 * SCALE;
+                ctx.lineCap = 'round';
+                ctx.lineJoin = 'round';
+                ctx.shadowColor = 'rgba(0, 224, 255, 0.5)';
+                ctx.shadowBlur = 15;
+
+                // Head
+                var headY = cy - 80 * SCALE;
+                if (cycle === 1) headY -= Math.sin(progress * Math.PI) * 10;
+                if (cycle === 3) headY -= Math.sin(progress * Math.PI) * 5;
+
+                ctx.beginPath();
+                ctx.arc(cx, headY, 14 * SCALE, 0, Math.PI * 2);
+                ctx.fillStyle = '#00e0ff';
+                ctx.fill();
+
+                // Eyes
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = '#050810';
+                ctx.beginPath();
+                ctx.arc(cx - 5 * SCALE, headY - 2 * SCALE, 2.5 * SCALE, 0, Math.PI * 2);
+                ctx.arc(cx + 5 * SCALE, headY - 2 * SCALE, 2.5 * SCALE, 0, Math.PI * 2);
+                ctx.fill();
+
+                ctx.shadowColor = 'rgba(0, 224, 255, 0.5)';
+                ctx.shadowBlur = 15;
+                ctx.strokeStyle = '#00e0ff';
+
+                // Body
+                var bodyTop = headY + 14 * SCALE;
+                var bodyBottom = cy + 10 * SCALE;
+
+                ctx.beginPath();
+                ctx.moveTo(cx, bodyTop);
+                ctx.lineTo(cx, bodyBottom);
+                ctx.stroke();
+
+                // Arms and Legs based on cycle
+                if (cycle === 0) {
+                    // Idle - breathing
+                    var breathe = Math.sin(progress * Math.PI * 2) * 3;
+
+                    // Arms
+                    ctx.beginPath();
+                    ctx.moveTo(cx, bodyTop + 15 * SCALE);
+                    ctx.lineTo(cx - 25 * SCALE, bodyTop + 30 * SCALE + breathe);
+                    ctx.lineTo(cx - 30 * SCALE, bodyTop + 50 * SCALE + breathe);
+                    ctx.stroke();
+
+                    ctx.beginPath();
+                    ctx.moveTo(cx, bodyTop + 15 * SCALE);
+                    ctx.lineTo(cx + 25 * SCALE, bodyTop + 30 * SCALE + breathe);
+                    ctx.lineTo(cx + 30 * SCALE, bodyTop + 50 * SCALE + breathe);
+                    ctx.stroke();
+
+                    // Legs
+                    ctx.beginPath();
+                    ctx.moveTo(cx, bodyBottom);
+                    ctx.lineTo(cx - 15 * SCALE, bodyBottom + 40 * SCALE);
+                    ctx.lineTo(cx - 18 * SCALE, bodyBottom + 70 * SCALE);
+                    ctx.stroke();
+
+                    ctx.beginPath();
+                    ctx.moveTo(cx, bodyBottom);
+                    ctx.lineTo(cx + 15 * SCALE, bodyBottom + 40 * SCALE);
+                    ctx.lineTo(cx + 18 * SCALE, bodyBottom + 70 * SCALE);
+                    ctx.stroke();
+
+                } else if (cycle === 1) {
+                    // Punch
+                    var punch = Math.sin(progress * Math.PI);
+
+                    ctx.beginPath();
+                    ctx.moveTo(cx, bodyTop + 15 * SCALE);
+                    ctx.lineTo(cx + 30 * SCALE * punch, bodyTop + 10 * SCALE);
+                    ctx.lineTo(cx + 60 * SCALE * punch, bodyTop + 5 * SCALE);
+                    ctx.stroke();
+
+                    ctx.beginPath();
+                    ctx.moveTo(cx, bodyTop + 15 * SCALE);
+                    ctx.lineTo(cx - 20 * SCALE, bodyTop + 35 * SCALE);
+                    ctx.stroke();
+
+                    // Impact star
+                    if (punch > 0.7) {
+                        ctx.shadowColor = '#aaff00';
+                        ctx.shadowBlur = 20;
+                        ctx.fillStyle = '#aaff00';
+                        var starX = cx + 65 * SCALE;
+                        var starY = bodyTop + 5 * SCALE;
+                        for (var i = 0; i < 6; i++) {
+                            var angle = (i / 6) * Math.PI * 2;
+                            var r = (i % 2 === 0 ? 10 : 5) * SCALE;
+                            ctx.beginPath();
+                            ctx.arc(starX + Math.cos(angle) * r, starY + Math.sin(angle) * r, 3, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                        ctx.shadowColor = 'rgba(0, 224, 255, 0.5)';
+                        ctx.shadowBlur = 15;
+                    }
+
+                    // Legs (stance)
+                    ctx.beginPath();
+                    ctx.moveTo(cx, bodyBottom);
+                    ctx.lineTo(cx - 20 * SCALE, bodyBottom + 35 * SCALE);
+                    ctx.lineTo(cx - 25 * SCALE, bodyBottom + 70 * SCALE);
+                    ctx.stroke();
+
+                    ctx.beginPath();
+                    ctx.moveTo(cx, bodyBottom);
+                    ctx.lineTo(cx + 20 * SCALE, bodyBottom + 35 * SCALE);
+                    ctx.lineTo(cx + 15 * SCALE, bodyBottom + 70 * SCALE);
+                    ctx.stroke();
+
+                } else if (cycle === 2) {
+                    // Idle again
+                    var breathe2 = Math.sin(progress * Math.PI * 2) * 3;
+
+                    ctx.beginPath();
+                    ctx.moveTo(cx, bodyTop + 15 * SCALE);
+                    ctx.lineTo(cx - 25 * SCALE, bodyTop + 30 * SCALE + breathe2);
+                    ctx.lineTo(cx - 30 * SCALE, bodyTop + 50 * SCALE + breathe2);
+                    ctx.stroke();
+
+                    ctx.beginPath();
+                    ctx.moveTo(cx, bodyTop + 15 * SCALE);
+                    ctx.lineTo(cx + 25 * SCALE, bodyTop + 30 * SCALE + breathe2);
+                    ctx.lineTo(cx + 30 * SCALE, bodyTop + 50 * SCALE + breathe2);
+                    ctx.stroke();
+
+                    ctx.beginPath();
+                    ctx.moveTo(cx, bodyBottom);
+                    ctx.lineTo(cx - 15 * SCALE, bodyBottom + 40 * SCALE);
+                    ctx.lineTo(cx - 18 * SCALE, bodyBottom + 70 * SCALE);
+                    ctx.stroke();
+
+                    ctx.beginPath();
+                    ctx.moveTo(cx, bodyBottom);
+                    ctx.lineTo(cx + 15 * SCALE, bodyBottom + 40 * SCALE);
+                    ctx.lineTo(cx + 18 * SCALE, bodyBottom + 70 * SCALE);
+                    ctx.stroke();
+
+                } else {
+                    // Kick
+                    var kick = Math.sin(progress * Math.PI);
+
+                    // Arms guard
+                    ctx.beginPath();
+                    ctx.moveTo(cx, bodyTop + 15 * SCALE);
+                    ctx.lineTo(cx - 15 * SCALE, bodyTop + 5 * SCALE);
+                    ctx.lineTo(cx - 25 * SCALE, bodyTop + 15 * SCALE);
+                    ctx.stroke();
+
+                    ctx.beginPath();
+                    ctx.moveTo(cx, bodyTop + 15 * SCALE);
+                    ctx.lineTo(cx + 15 * SCALE, bodyTop + 5 * SCALE);
+                    ctx.lineTo(cx + 25 * SCALE, bodyTop + 15 * SCALE);
+                    ctx.stroke();
+
+                    // Standing leg
+                    ctx.beginPath();
+                    ctx.moveTo(cx, bodyBottom);
+                    ctx.lineTo(cx - 15 * SCALE, bodyBottom + 40 * SCALE);
+                    ctx.lineTo(cx - 20 * SCALE, bodyBottom + 70 * SCALE);
+                    ctx.stroke();
+
+                    // Kicking leg
+                    ctx.beginPath();
+                    ctx.moveTo(cx, bodyBottom);
+                    ctx.lineTo(cx + 25 * SCALE * kick, bodyBottom + 15 * SCALE);
+                    ctx.lineTo(cx + 60 * SCALE * kick, bodyBottom + 10 * SCALE);
+                    ctx.stroke();
+
+                    // Kick trail
+                    if (kick > 0.5) {
+                        ctx.strokeStyle = 'rgba(0, 224, 255, 0.3)';
+                        ctx.lineWidth = 8 * SCALE;
+                        ctx.beginPath();
+                        ctx.moveTo(cx + 20 * SCALE, bodyBottom + 20 * SCALE);
+                        ctx.lineTo(cx + 60 * SCALE * kick, bodyBottom + 10 * SCALE);
+                        ctx.stroke();
+                        ctx.strokeStyle = '#00e0ff';
+                        ctx.lineWidth = 6 * SCALE;
+                    }
+                }
+
+                // Ground shadow
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = 'rgba(0, 224, 255, 0.1)';
+                ctx.beginPath();
+                ctx.ellipse(cx, bodyBottom + 75 * SCALE, 40 * SCALE, 8 * SCALE, 0, 0, Math.PI * 2);
+                ctx.fill();
+
+                frame++;
+                requestAnimationFrame(drawStickman);
+            }
+
+            drawStickman();
+        }
+
+        // Toggle edit form
+        function toggleEditForm() {
+            var form = document.getElementById('profile-edit-form');
+            form.classList.toggle('hidden');
+        }
+    </script>
 </body>
 
 </html>
