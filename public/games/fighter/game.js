@@ -624,7 +624,15 @@ function frame(now) {
 // ════════ SOCKET EVENTS ════════
 socket.on("connect", () => {
   console.log("✅ Connected!");
-  socket.emit("create-room");
+  let roomCode = null;
+  const configStr = sessionStorage.getItem('roomConfig');
+  if (configStr) {
+    try {
+      const config = JSON.parse(configStr);
+      roomCode = config.roomCode;
+    } catch(e) {}
+  }
+  socket.emit("create-room", { roomCode });
 });
 
 socket.on("room-created", (data) => {

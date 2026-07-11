@@ -35,8 +35,8 @@ function generateRoomCode() {
 io.on("connection", (socket) => {
   console.log("✅ User connected:", socket.id);
 
-  socket.on("create-room", () => {
-    let roomCode = generateRoomCode();
+  socket.on("create-room", (data) => {
+    let roomCode = (data && data.roomCode) ? data.roomCode.toUpperCase() : generateRoomCode();
     while (rooms[roomCode]) {
       roomCode = generateRoomCode();
     }
