@@ -630,7 +630,7 @@ socket.on("connect", () => {
     try {
       const config = JSON.parse(configStr);
       roomCode = config.roomCode;
-    } catch(e) {}
+    } catch (e) { }
   }
   socket.emit("create-room", { roomCode });
 });
@@ -639,6 +639,16 @@ socket.on("room-created", (data) => {
   console.log("🏠 Room:", data.roomCode);
   document.getElementById("room-code").textContent = data.roomCode;
 });
+
+function renderLobbyQR(roomCode) {
+  const qrEl = document.getElementById('lobby-qr-code');
+  if (!qrEl || !roomCode) return;
+
+  const joinUrl = window.location.origin + '/controller.html?room=' + roomCode;
+  qrEl.innerHTML = '<img src="https://api.qrserver.com/v1/create-qr-code/?size=400x400&data='
+    + encodeURIComponent(joinUrl)
+    + '&bgcolor=ffffff&color=0c0a12&margin=0" alt="Scan to join room ' + roomCode + '">';
+}
 
 // Store player info for multiplayer
 let multiplayerPlayer1 = null;
@@ -653,13 +663,14 @@ socket.on("player-joined", (player) => {
     document.getElementById('slot-1').classList.add('filled');
     document.getElementById('slot-1').querySelector('.player-name').textContent = player.name.toUpperCase();
     document.getElementById('slot-1').querySelector('.status').textContent = 'Ready!';
+    setSlotAvatar('slot-1', player.avatarUrl); // ← NEW (no-op if server doesn't send it yet)
   } else if (!multiplayerPlayer2) {
     multiplayerPlayer2 = { id: player.id, name: player.name };
     document.getElementById('slot-2').classList.add('filled');
     document.getElementById('slot-2').querySelector('.player-name').textContent = player.name.toUpperCase();
     document.getElementById('slot-2').querySelector('.status').textContent = 'Ready!';
+    setSlotAvatar('slot-2', player.avatarUrl); // ← NEW
 
-    // Both players joined, show character select
     setTimeout(showCharacterSelect, 1500);
   }
 });
@@ -707,7 +718,7 @@ document.getElementById('bot-mode-btn').addEventListener('click', () => {
 
   document.getElementById('slot-1').classList.add('filled');
   document.getElementById('slot-1').querySelector('.status').textContent = 'You!';
-  document.getElementById('slot-2').classList.add('filled');
+  document.getElementById('slot-2').classList.add('filled', 'cpu'); // ← added 'cpu' class
   document.getElementById('slot-2').querySelector('.status').textContent = 'CPU';
 
   setTimeout(showCharacterSelect, 800);
@@ -864,6 +875,68 @@ document.addEventListener("keydown", (e) => {
 document.addEventListener("keyup", (e) => {
   if (e.key === 'a') keys.a = false;
   if (e.key === 'd') keys.d = false;
+});
+
+// Helper: drop a player's avatar image into their bubble
+function setSlotAvatar(slotId, avatarUrl) {
+  const slot = document.getElementById(slotId);
+  if (!slot) return;
+  const img = slot.querySelector('.bubble-avatar-img');
+  const url = avatarUrl || '../../images/default-avatar.png';
+  img.src = url;
+  img.onerror = () => { img.style.display = 'none'; }; // falls back to the SVG placeholder underneath
+  img.onload = () => { img.style.display = 'block'; };
+}
+
+setSlotAvatar('slot-1', null);
+setSlotAvatar('slot-2', null);
+
+function toggleRoomInfo() {
+  const popover = document.getElementById('room-info-popover');
+  if (!popover) return;
+
+  const willShow = popover.classList.contains('hidden');
+  popover.classList.toggle('hidden');
+
+  if (willShow) populateRoomInfo();
+}
+
+function populateRoomInfo() {
+  const configStr = sessionStorage.getItem('roomConfig');
+  if (!configStr) return;
+
+  let config;
+  try {
+    config = JSON.parse(configStr);
+  } catch (e) {
+    return;
+  }
+
+  document.getElementById('info-room-name').textContent = config.roomName || '—';
+  document.getElementById('info-privacy').textContent =
+    config.privacy === 'private' ? 'Private 🔒' : 'Public 🌐';
+  document.getElementById('info-mode').textContent =
+    config.mode === 'survival' ? 'Survival' : 'Time Limit';
+  document.getElementById('info-room-code').textContent = config.roomCode || '—';
+
+  // Fighter is a fixed 2-player game — hide the Max Players row entirely
+  const maxPlayersRow = document.getElementById('info-max-players-row');
+  if (config.game === 'fighter') {
+    maxPlayersRow.classList.add('hidden');
+  } else {
+    maxPlayersRow.classList.remove('hidden');
+    document.getElementById('info-max-players').textContent = config.maxPlayers || '—';
+  }
+}
+
+// Close popover when clicking outside it
+document.addEventListener('click', function (e) {
+  const popover = document.getElementById('room-info-popover');
+  const btn = document.getElementById('room-info-btn');
+  if (!popover || popover.classList.contains('hidden')) return;
+  if (!popover.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
+    popover.classList.add('hidden');
+  }
 });
 
 // ════════ START ════════

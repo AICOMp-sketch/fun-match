@@ -15,72 +15,44 @@
 
     <div class="app">
 
-        <!-- ════════ LEFT SIDEBAR ════════ -->
-        <aside class="sidebar-left">
-            <div class="logo">
-                <svg viewBox="0 0 24 24" width="24" height="24" fill="none">
-                    <path d="M4 4L12 12L4 20M12 4L20 12L12 20" stroke="currentColor" stroke-width="2.5"
-                        stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-            </div>
-
-            <nav class="nav-items">
-                <button class="nav-item active" data-tip="Home" onclick="showHub()">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-                        <path d="M3 9.5L12 3l9 6.5V20a2 2 0 01-2 2h-4v-7h-6v7H5a2 2 0 01-2-2V9.5z" stroke="currentColor"
-                            stroke-width="2" stroke-linejoin="round" />
-                    </svg>
-                </button>
-                <button class="nav-item" data-tip="Games">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-                        <rect x="2" y="6" width="20" height="12" rx="6" stroke="currentColor" stroke-width="2" />
-                        <path d="M7 12h4M9 10v4M15 12h.01M18 11h.01" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" />
-                    </svg>
-                </button>
-                <button class="nav-item" data-tip="Tournaments">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-                        <path
-                            d="M6 9H4.5a2.5 2.5 0 010-5H6M18 9h1.5a2.5 2.5 0 000-5H18M4 22h16M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22M18 2H6v7a6 6 0 0012 0V2z"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
-                </button>
-                <button class="nav-item" data-tip="Stats">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-                        <path d="M18 20V10M12 20V4M6 20v-6" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" />
-                    </svg>
-                </button>
-                <button class="nav-item" data-tip="Store">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-                        <path d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" stroke="currentColor" stroke-width="2"
-                            stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
-                </button>
-                <button class="nav-item" data-tip="Messages">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-                        <path
-                            d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
-                </button>
-            </nav>
-
-            <button class="add-btn">
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-                    <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
+        <nav class="floating-nav" id="floating-nav">
+            <button class="floating-nav-btn active" data-view="home" onclick="showView('home')" title="Home">
+                <svg viewBox="0 0 24 24" width="19" height="19" fill="none">
+                    <path d="M3 9.5L12 3l9 6.5V20a2 2 0 01-2 2h-4v-7h-6v7H5a2 2 0 01-2-2V9.5z" stroke="currentColor"
+                        stroke-width="2" stroke-linejoin="round" />
                 </svg>
             </button>
-        </aside>
+            <button class="floating-nav-btn" data-view="games" onclick="showView('games')" title="Games">
+                <svg viewBox="0 0 24 24" width="19" height="19" fill="none">
+                    <rect x="2" y="6" width="20" height="12" rx="6" stroke="currentColor" stroke-width="2" />
+                    <path d="M7 12h4M9 10v4M15 12h.01M18 11h.01" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" />
+                </svg>
+            </button>
+            <button class="floating-nav-btn" data-view="leaderboard" onclick="showView('leaderboard')"
+                title="Leaderboard">
+                <svg viewBox="0 0 24 24" width="19" height="19" fill="none">
+                    <path d="M18 20V10M12 20V4M6 20v-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                </svg>
+            </button>
+            <button class="floating-nav-btn" data-view="profile" onclick="showView('profile')" title="Profile">
+                <svg viewBox="0 0 24 24" width="19" height="19" fill="none">
+                    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke="currentColor" stroke-width="2" />
+                    <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2" />
+                </svg>
+            </button>
+        </nav>
 
         <!-- ════════ MAIN CONTENT ════════ -->
         <main class="main">
 
             <!-- Top Bar (ALWAYS VISIBLE) -->
             <header class="topbar">
-                <div class="greeting">
-                    <p class="hello" id="greeting-time">Good evening,</p>
-                    <h2 class="username" id="greeting-name">PLAYER</h2>
+                <div class="greeting-row">
+                    <div class="greeting">
+                        <p class="hello" id="greeting-time">Good evening,</p>
+                        <h2 class="username" id="greeting-name">PLAYER</h2>
+                    </div>
                 </div>
 
                 <div class="search-wrapper">
@@ -92,6 +64,13 @@
                 </div>
 
                 <div class="top-actions">
+                    <button class="action-btn">
+                        <svg viewBox="0 0 24 24" width="17" height="17" fill="none">
+                            <path
+                                d="M21 11.5a8.38 8.38 0 01-.9 3.8 8.5 8.5 0 01-7.6 4.7 8.38 8.38 0 01-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 01-.9-3.8 8.5 8.5 0 014.7-7.6 8.38 8.38 0 013.8-.9h.5a8.48 8.48 0 018 8v.5z"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </button>
                     <button class="action-btn">
                         <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
                             <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0"
@@ -109,46 +88,19 @@
                         </div>
 
                         <div class="profile-menu hidden" id="profile-menu">
-                            <div class="menu-header">
-                                <div class="menu-avatar" id="menu-avatar">
-                                    <svg class="default-avatar-icon" viewBox="0 0 24 24" width="24" height="24"
-                                        fill="none">
-                                        <path d="M4 4L12 12L4 20M12 4L20 12L12 20" stroke="currentColor"
-                                            stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
-                                    </svg>
-                                </div>
-                                <div>
-                                    <p class="menu-name" id="menu-name">Player</p>
-                                    <p class="menu-email" id="menu-email">player@email.com</p>
-                                </div>
-                            </div>
-                            <div class="menu-divider"></div>
-                            <a href="#" class="menu-item" onclick="editProfile()">
-                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
-                                    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" stroke="currentColor"
-                                        stroke-width="2" />
-                                    <circle cx="12" cy="7" r="4" stroke="currentColor" stroke-width="2" />
-                                </svg>
-                                Edit Profile
-                            </a>
-                            <a href="#" class="menu-item" onclick="viewStats()">
-                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
-                                    <path d="M18 20V10M12 20V4M6 20v-6" stroke="currentColor" stroke-width="2"
-                                        stroke-linecap="round" />
-                                </svg>
-                                My Stats
-                            </a>
-                            <div class="menu-divider"></div>
-                            <a href="#" class="menu-item menu-item-danger" onclick="handleSignOut()">
-                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
-                                    <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"
-                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                        stroke-linejoin="round" />
-                                </svg>
-                                Sign Out
-                            </a>
+                            <!-- unchanged menu content -->
                         </div>
                     </div>
+
+                    <!-- Mobile-only: opens the friends sidebar as a slide-in panel -->
+                    <button class="mobile-friends-btn" id="mobile-friends-btn" onclick="toggleMobileFriends()"
+                        title="Friends">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+                            <path
+                                d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75M9 11a4 4 0 100-8 4 4 0 000 8z"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </button>
                 </div>
             </header>
 
@@ -213,7 +165,7 @@
                                     </div>
                                     <div class="card-content">
                                         <h4>UNO</h4>
-                                        <p>Card Game / 2-4 Players</p>
+                                        <p>Card Game</p>
                                     </div>
                                 </button>
 
@@ -230,7 +182,7 @@
                                     </div>
                                     <div class="card-content">
                                         <h4>Mortal Arena</h4>
-                                        <p>Fighting / 3 Characters</p>
+                                        <p>Fighting </p>
                                     </div>
                                 </button>
 
@@ -247,7 +199,7 @@
                                     </div>
                                     <div class="card-content">
                                         <h4>Neon Racers</h4>
-                                        <p>Racing / Multiplayer</p>
+                                        <p>Racing</p>
                                     </div>
                                 </button>
                                 <button class="scroll-arrow"><svg viewBox="0 0 24 24" width="20" height="20"
@@ -255,35 +207,6 @@
                                         <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2.5"
                                             stroke-linecap="round" stroke-linejoin="round" />
                                     </svg></button>
-                            </div>
-                        </section>
-
-                        <section class="section">
-                            <div class="section-header">
-                                <h3>Recent Activity</h3>
-                                <a href="#" class="see-more">See More</a>
-                            </div>
-                            <div class="activity-card">
-                                <div class="activity-thumb survive-grad">
-                                    <svg viewBox="0 0 24 24" width="22" height="22" fill="none">
-                                        <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="2"
-                                            stroke-linejoin="round" />
-                                    </svg>
-                                </div>
-                                <div class="activity-info">
-                                    <h4>Survive The Bots</h4>
-                                    <p>Action / Survival</p>
-                                </div>
-                                <div class="activity-meta"><span class="time-played"><svg viewBox="0 0 24 24" width="14"
-                                            height="14" fill="none">
-                                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
-                                            <path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2"
-                                                stroke-linecap="round" />
-                                        </svg><span id="last-time">0 min</span></span></div>
-                                <a href="../games/survive/" class="mini-play"><svg viewBox="0 0 24 24" width="14"
-                                        height="14" fill="currentColor">
-                                        <path d="M8 5v14l11-7z" />
-                                    </svg></a>
                             </div>
                         </section>
                     </div>
@@ -385,166 +308,799 @@
                     </div>
                 </div>
 
-                <div class="controller-bar">
-                    <div class="bar-info">
-                        <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-                            <rect x="5" y="2" width="14" height="20" rx="2" stroke="currentColor" stroke-width="2" />
-                            <path d="M12 18h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
-                        </svg>
-                        <div>
-                            <p class="bar-label">Phone Controller</p>
-                            <p class="bar-link">fun-match.pages.dev/controller.html</p>
+                <div>
+                    <section class="section">
+                        <div class="section-header">
+                            <h3>Recent Activity</h3>
+                            <a href="#" class="see-more">See More</a>
                         </div>
-                    </div>
-                    <button class="copy-link-btn" onclick="copyLink()">
-                        <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
-                            <rect x="9" y="9" width="13" height="13" rx="2" stroke="currentColor" stroke-width="2" />
-                            <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" stroke="currentColor"
-                                stroke-width="2" />
-                        </svg>
-                        Copy Link
-                    </button>
+                        <div class="games-row">
+                            <a href="../games/survive/" class="game-card-mini active-card"
+                                style="text-decoration:none; color:inherit;">
+                                <div class="card-bg survive-grad">
+                                    <div class="card-overlay"></div>
+                                    <span class="card-play">
+                                        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                                            <path d="M8 5v14l11-7z" />
+                                        </svg>
+                                    </span>
+                                    <span class="live-dot"></span>
+                                </div>
+                                <div class="card-content">
+                                    <h4>Survive The Bots</h4>
+                                    <p>Action / Survival &middot; <span id="last-time">0 min</span> played</p>
+                                </div>
+                            </a>
+                            <button class="scroll-arrow"><svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+                                    <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2.5"
+                                        stroke-linecap="round" stroke-linejoin="round" />
+                                </svg></button>
+                        </div>
+                    </section>
+
+                    <section class="section">
+                        <div class="section-header">
+                            <h3>Featured Games</h3>
+                            <a href="#" class="see-more">See More</a>
+                        </div>
+                        <div class="games-row featured-games-row" id="featured-games-row">
+                            <div class="game-card-mini">
+                                <div class="card-bg survive-grad">
+                                    <div class="card-overlay"></div><span class="card-play"><svg viewBox="0 0 24 24"
+                                            width="20" height="20" fill="currentColor">
+                                            <path d="M8 5v14l11-7z" />
+                                        </svg></span>
+                                </div>
+                                <div class="card-content">
+                                    <h4>Game 1</h4>
+                                    <p>Game</p>
+                                </div>
+                            </div>
+                            <div class="game-card-mini">
+                                <div class="card-bg draw-grad">
+                                    <div class="card-overlay"></div><span class="card-play"><svg viewBox="0 0 24 24"
+                                            width="20" height="20" fill="currentColor">
+                                            <path d="M8 5v14l11-7z" />
+                                        </svg></span>
+                                </div>
+                                <div class="card-content">
+                                    <h4>Game 2</h4>
+                                    <p>Game</p>
+                                </div>
+                            </div>
+                            <div class="game-card-mini">
+                                <div class="card-bg race-grad">
+                                    <div class="card-overlay"></div><span class="card-play"><svg viewBox="0 0 24 24"
+                                            width="20" height="20" fill="currentColor">
+                                            <path d="M8 5v14l11-7z" />
+                                        </svg></span>
+                                </div>
+                                <div class="card-content">
+                                    <h4>Game 3</h4>
+                                    <p>Game</p>
+                                </div>
+                            </div>
+                            <div class="game-card-mini">
+                                <div class="card-bg quiz-grad">
+                                    <div class="card-overlay"></div><span class="card-play"><svg viewBox="0 0 24 24"
+                                            width="20" height="20" fill="currentColor">
+                                            <path d="M8 5v14l11-7z" />
+                                        </svg></span>
+                                </div>
+                                <div class="card-content">
+                                    <h4>Game 4</h4>
+                                    <p>Game</p>
+                                </div>
+                            </div>
+                            <div class="game-card-mini">
+                                <div class="card-bg gold-grad">
+                                    <div class="card-overlay"></div><span class="card-play"><svg viewBox="0 0 24 24"
+                                            width="20" height="20" fill="currentColor">
+                                            <path d="M8 5v14l11-7z" />
+                                        </svg></span>
+                                </div>
+                                <div class="card-content">
+                                    <h4>Game 5</h4>
+                                    <p>Game</p>
+                                </div>
+                            </div>
+                            <div class="game-card-mini">
+                                <div class="card-bg blue-grad">
+                                    <div class="card-overlay"></div><span class="card-play"><svg viewBox="0 0 24 24"
+                                            width="20" height="20" fill="currentColor">
+                                            <path d="M8 5v14l11-7z" />
+                                        </svg></span>
+                                </div>
+                                <div class="card-content">
+                                    <h4>Game 6</h4>
+                                    <p>Game</p>
+                                </div>
+                            </div>
+                            <div class="game-card-mini">
+                                <div class="card-bg survive-grad">
+                                    <div class="card-overlay"></div><span class="card-play"><svg viewBox="0 0 24 24"
+                                            width="20" height="20" fill="currentColor">
+                                            <path d="M8 5v14l11-7z" />
+                                        </svg></span>
+                                </div>
+                                <div class="card-content">
+                                    <h4>Game 7</h4>
+                                    <p>Game</p>
+                                </div>
+                            </div>
+                            <div class="game-card-mini">
+                                <div class="card-bg draw-grad">
+                                    <div class="card-overlay"></div><span class="card-play"><svg viewBox="0 0 24 24"
+                                            width="20" height="20" fill="currentColor">
+                                            <path d="M8 5v14l11-7z" />
+                                        </svg></span>
+                                </div>
+                                <div class="card-content">
+                                    <h4>Game 8</h4>
+                                    <p>Game</p>
+                                </div>
+                            </div>
+                            <div class="game-card-mini">
+                                <div class="card-bg race-grad">
+                                    <div class="card-overlay"></div><span class="card-play"><svg viewBox="0 0 24 24"
+                                            width="20" height="20" fill="currentColor">
+                                            <path d="M8 5v14l11-7z" />
+                                        </svg></span>
+                                </div>
+                                <div class="card-content">
+                                    <h4>Game 9</h4>
+                                    <p>Game</p>
+                                </div>
+                            </div>
+                            <div class="game-card-mini">
+                                <div class="card-bg quiz-grad">
+                                    <div class="card-overlay"></div><span class="card-play"><svg viewBox="0 0 24 24"
+                                            width="20" height="20" fill="currentColor">
+                                            <path d="M8 5v14l11-7z" />
+                                        </svg></span>
+                                </div>
+                                <div class="card-content">
+                                    <h4>Game 10</h4>
+                                    <p>Game</p>
+                                </div>
+                            </div>
+                            <button class="scroll-arrow featured-scroll-arrow" onclick="scrollFeaturedGames()"><svg
+                                    viewBox="0 0 24 24" width="20" height="20" fill="none">
+                                    <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2.5"
+                                        stroke-linecap="round" stroke-linejoin="round" />
+                                </svg></button>
+                        </div>
+                    </section>
                 </div>
             </div>
 
             <!-- ════════ PROFILE PANEL ════════ -->
             <div class="profile-panel hidden" id="profile-panel">
-                <div class="profile-back" onclick="closeProfile()">
-                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
-                        <path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                            stroke-linejoin="round" />
-                    </svg>
-                    <span>Back to Hub</span>
+
+                <div class="profile-topbar">
+                    <div class="profile-connected">
+                        <span class="connected-dot"></span>
+                        Connected
+                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none">
+                            <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71" stroke="currentColor"
+                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </div>
+
+                    <h2 class="profile-topbar-title">Account Info</h2>
+
+                    <div class="profile-topbar-actions">
+                        <button class="profile-icon-btn" title="Settings">
+                            <svg viewBox="0 0 24 24" width="17" height="17" fill="none">
+                                <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" />
+                                <path
+                                    d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"
+                                    stroke="currentColor" stroke-width="1.6" />
+                            </svg>
+                        </button>
+                        <div class="profile-coins-pill">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
+                                <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2" />
+                                <path d="M12 7v10M9 9.5h4.5a1.5 1.5 0 010 3H10a1.5 1.5 0 000 3h5" stroke="currentColor"
+                                    stroke-width="1.6" stroke-linecap="round" />
+                            </svg>
+                            <span>1,240</span>
+                        </div>
+                    </div>
                 </div>
 
-                <div class="profile-layout">
-                    <!-- LEFT SIDE: Profile Info -->
-                    <div class="profile-left">
-                        <!-- User Card -->
-                        <div class="profile-user-card">
-                            <div class="profile-avatar-large" id="profile-avatar-large">
-                                <svg class="default-avatar-icon" viewBox="0 0 24 24" width="40" height="40" fill="none">
-                                    <path d="M4 4L12 12L4 20M12 4L20 12L12 20" stroke="currentColor" stroke-width="2.5"
-                                        stroke-linecap="round" stroke-linejoin="round" />
-                                </svg>
-                            </div>
-                            <div class="profile-user-info">
-                                <h2 class="profile-display-name" id="profile-display-name">Player</h2>
-                                <p class="profile-email-display" id="profile-email-display">player@email.com</p>
-                                <div class="profile-badges">
-                                    <span class="profile-badge badge-level" id="profile-level">Level 1</span>
-                                    <span class="profile-badge badge-xp" id="profile-xp">0 XP</span>
-                                </div>
-                            </div>
-                            <button class="profile-edit-btn" onclick="toggleEditForm()">
-                                <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
-                                    <path d="M17 3a2.85 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z" stroke="currentColor"
-                                        stroke-width="2" stroke-linejoin="round" />
-                                </svg>
-                                Edit
-                            </button>
-                        </div>
+                <div class="profile-grid">
 
-                        <!-- Quick Stats -->
-                        <div class="profile-quick-stats">
-                            <div class="quick-stat">
-                                <p class="quick-stat-value" id="stat-total-games">0</p>
-                                <p class="quick-stat-label">Games</p>
+                    <div class="profile-col-left">
+                        <div class="profile-card">
+                            <div class="profile-card-header">
+                                <h3>Highlighted Games</h3>
+                                <a href="#" class="see-more">View More</a>
                             </div>
-                            <div class="quick-stat-divider"></div>
-                            <div class="quick-stat">
-                                <p class="quick-stat-value" id="stat-total-wins">0</p>
-                                <p class="quick-stat-label">Wins</p>
-                            </div>
-                            <div class="quick-stat-divider"></div>
-                            <div class="quick-stat">
-                                <p class="quick-stat-value" id="stat-playtime">0h</p>
-                                <p class="quick-stat-label">Play Time</p>
-                            </div>
-                            <div class="quick-stat-divider"></div>
-                            <div class="quick-stat">
-                                <p class="quick-stat-value" id="stat-level">1</p>
-                                <p class="quick-stat-label">Level</p>
+                            <div class="highlighted-games-grid">
+                                <div class="highlighted-game-item">
+                                    <div class="highlighted-game-thumb survive-grad"></div>
+                                    <p>UNO</p>
+                                </div>
+                                <div class="highlighted-game-item">
+                                    <div class="highlighted-game-thumb draw-grad"></div>
+                                    <p>Mortal Arena</p>
+                                </div>
+                                <div class="highlighted-game-item">
+                                    <div class="highlighted-game-thumb race-grad"></div>
+                                    <p>Neon Racers</p>
+                                </div>
+                                <div class="highlighted-game-item">
+                                    <div class="highlighted-game-thumb blue-grad"></div>
+                                    <p>Survive The Bots</p>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Edit Form (hidden by default) -->
-                        <div class="profile-edit-form hidden" id="profile-edit-form">
-                            <form id="profile-form" class="profile-form">
-                                <div class="profile-form-group">
-                                    <label>Display Name</label>
-                                    <input type="text" id="edit-display-name" placeholder="Your display name"
-                                        maxlength="20">
+                        <div class="profile-card">
+                            <h3 class="profile-card-title-solo">Stats</h3>
+                            <div class="profile-stat-block">
+                                <div class="profile-stat-row">
+                                    <span class="profile-stat-label">Games Played</span>
+                                    <a href="#" class="see-more small">View List</a>
                                 </div>
-                                <div class="profile-form-group">
-                                    <label>Username</label>
-                                    <div class="username-input-wrapper">
-                                        <span class="username-prefix">@</span>
-                                        <input type="text" id="edit-username" placeholder="username" maxlength="15">
+                                <p class="profile-stat-big">124</p>
+                            </div>
+                            <div class="profile-stat-block">
+                                <span class="profile-stat-label">Total Duration</span>
+                                <p class="profile-stat-big">286 <span class="profile-stat-unit">Hours</span></p>
+                            </div>
+                            <div class="profile-stat-block">
+                                <span class="profile-stat-label">Achievements</span>
+                                <div class="profile-stat-row">
+                                    <p class="profile-stat-big">25</p>
+                                    <div class="profile-achievement-icons">
+                                        <span class="achievement-mini-icon">🏆</span>
+                                        <span class="achievement-mini-icon">⚡</span>
+                                        <span class="achievement-mini-icon">🎯</span>
                                     </div>
-                                </div>
-                                <div class="profile-form-group">
-                                    <label>Email</label>
-                                    <input type="email" id="edit-email" disabled>
-                                </div>
-                                <div class="edit-form-actions">
-                                    <button type="submit" class="profile-save-btn" id="profile-save-btn">
-                                        <span class="btn-text">Save Changes</span>
-                                        <div class="btn-spinner"></div>
-                                    </button>
-                                    <button type="button" class="profile-cancel-btn"
-                                        onclick="toggleEditForm()">Cancel</button>
-                                </div>
-                                <div id="profile-message"></div>
-                            </form>
-                        </div>
-
-                        <!-- Achievements -->
-                        <div class="profile-achievements">
-                            <h3 class="profile-section-title">
-                                <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
-                                    <path
-                                        d="M6 9H4.5a2.5 2.5 0 010-5H6M18 9h1.5a2.5 2.5 0 000-5H18M4 22h16M18 2H6v7a6 6 0 0012 0V2z"
-                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                        stroke-linejoin="round" />
-                                </svg>
-                                Achievements
-                            </h3>
-                            <div class="achievements-grid" id="achievements-list">
-                                <div class="achievement-item locked">
-                                    <div class="achievement-icon">🏆</div>
-                                    <p>First Win</p>
-                                </div>
-                                <div class="achievement-item locked">
-                                    <div class="achievement-icon">⚡</div>
-                                    <p>10 Games</p>
-                                </div>
-                                <div class="achievement-item locked">
-                                    <div class="achievement-icon">🎯</div>
-                                    <p>Sharpshooter</p>
-                                </div>
-                                <div class="achievement-item locked">
-                                    <div class="achievement-icon">🏎️</div>
-                                    <p>Speed Demon</p>
-                                </div>
-                                <div class="achievement-item locked">
-                                    <div class="achievement-icon">🃏</div>
-                                    <p>Card Master</p>
-                                </div>
-                                <div class="achievement-item locked">
-                                    <div class="achievement-icon">👥</div>
-                                    <p>Social</p>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- RIGHT SIDE: Character Display -->
-                    <div class="profile-right">
-                        <div class="character-display">
-                            <canvas id="character-canvas" width="400" height="500"></canvas>
-                            <p class="character-label">Favorite Fighter</p>
+                    <div class="profile-col-center">
+                        <div class="profile-account-card">
+                            <div class="profile-account-portrait" id="profile-account-portrait">
+                                ...
+                            </div>
+                            <div class="profile-account-identity">
+                                <h2 class="profile-account-username">
+                                    <span id="profile-account-name">Player</span>
+                                    <span class="profile-account-level" id="profile-account-level">Lvl 14</span>
+                                </h2>
+                                <p class="profile-account-email" id="profile-account-email">player@email.com</p>
+                            </div>
+                            <p class="profile-account-about-label">About</p>
+                            <p class="profile-account-about">A game addict. Been playing since I was 9, so you could say
+                                it's part of who I am.</p>
+
+                            <div class="profile-account-achievements">
+                                <div class="account-achievements-header">
+                                    <p class="profile-account-about-label">Achievements</p>
+                                    <a href="#" class="see-more small">View All</a>
+                                </div>
+                                <div class="account-achievements-row">
+                                    <div class="account-achievement-badge">
+                                        <div class="account-achievement-icon">🏆</div>
+                                        <p>First Win</p>
+                                    </div>
+                                    <div class="account-achievement-badge">
+                                        <div class="account-achievement-icon">⚡</div>
+                                        <p>10 Games</p>
+                                    </div>
+                                    <div class="account-achievement-badge">
+                                        <div class="account-achievement-icon">🎯</div>
+                                        <p>Sharpshooter</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
+                    </div>
+
+                    <div class="profile-col-right">
+                        <div class="profile-card">
+                            <div class="profile-card-header">
+                                <h3>Friends</h3>
+                                <button class="profile-friends-search-btn">
+                                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none">
+                                        <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2" />
+                                        <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2"
+                                            stroke-linecap="round" />
+                                    </svg>
+                                </button>
+                            </div>
+                            <div class="profile-friends-list">
+                                <div class="profile-friend-row">
+                                    <div class="friend-avatar grad-1"></div>
+                                    <div class="profile-friend-info">
+                                        <p class="profile-friend-name">JohnSnowGOT</p>
+                                        <p class="profile-friend-status status-ingame">In Game</p>
+                                    </div>
+                                    <span class="profile-friend-level">14</span>
+                                </div>
+                                <div class="profile-friend-row">
+                                    <div class="friend-avatar grad-3"></div>
+                                    <div class="profile-friend-info">
+                                        <p class="profile-friend-name">JackTheRipper</p>
+                                        <p class="profile-friend-status status-offline">Offline</p>
+                                    </div>
+                                    <span class="profile-friend-level">07</span>
+                                </div>
+                                <div class="profile-friend-row">
+                                    <div class="friend-avatar grad-4"></div>
+                                    <div class="profile-friend-info">
+                                        <p class="profile-friend-name">DoodleShooter</p>
+                                        <p class="profile-friend-status status-idle">Idle</p>
+                                    </div>
+                                    <span class="profile-friend-level">02</span>
+                                </div>
+                                <div class="profile-friend-row">
+                                    <div class="friend-avatar grad-6"></div>
+                                    <div class="profile-friend-info">
+                                        <p class="profile-friend-name">AstaBagatta</p>
+                                        <p class="profile-friend-status status-ingame">In Game</p>
+                                    </div>
+                                    <span class="profile-friend-level">24</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="profile-card">
+                            <h3 class="profile-card-title-solo">Connected Accounts</h3>
+                            <div class="connected-accounts-list">
+                                <div class="connected-account-row">
+                                    <div class="connected-account-icon google-icon">
+                                        <svg viewBox="0 0 24 24" width="18" height="18">
+                                            <path fill="#4285F4"
+                                                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
+                                            <path fill="#34A853"
+                                                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.99.66-2.26 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.85A10.98 10.98 0 0012 23z" />
+                                            <path fill="#FBBC05"
+                                                d="M5.84 14.1a6.6 6.6 0 010-4.2V7.05H2.18a11 11 0 000 9.9l3.66-2.85z" />
+                                            <path fill="#EA4335"
+                                                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1a10.98 10.98 0 00-9.82 6.05l3.66 2.85C6.71 7.31 9.14 5.38 12 5.38z" />
+                                        </svg>
+                                    </div>
+                                    <div class="connected-account-info">
+                                        <p>Google</p>
+                                        <span class="connected-status connected">Connected</span>
+                                    </div>
+                                    <button class="connected-account-btn linked">Linked</button>
+                                </div>
+
+                                <div class="connected-account-row">
+                                    <div class="connected-account-icon facebook-icon">
+                                        <svg viewBox="0 0 24 24" width="18" height="18" fill="#1877F2">
+                                            <path
+                                                d="M22 12a10 10 0 10-11.56 9.88v-6.99H7.9V12h2.54V9.8c0-2.5 1.49-3.89 3.77-3.89 1.09 0 2.24.2 2.24.2v2.46h-1.26c-1.24 0-1.63.77-1.63 1.56V12h2.78l-.44 2.89h-2.34v6.99A10 10 0 0022 12z" />
+                                        </svg>
+                                    </div>
+                                    <div class="connected-account-info">
+                                        <p>Facebook</p>
+                                        <span class="connected-status not-connected">Not connected</span>
+                                    </div>
+                                    <button class="connected-account-btn">Connect</button>
+                                </div>
+
+                                <div class="connected-account-row">
+                                    <div class="connected-account-icon youtube-icon">
+                                        <svg viewBox="0 0 24 24" width="18" height="18" fill="#FF0000">
+                                            <path
+                                                d="M23.5 6.19a3.02 3.02 0 00-2.12-2.14C19.51 3.5 12 3.5 12 3.5s-7.51 0-9.38.55A3.02 3.02 0 00.5 6.19 31.6 31.6 0 000 12a31.6 31.6 0 00.5 5.81 3.02 3.02 0 002.12 2.14c1.87.55 9.38.55 9.38.55s7.51 0 9.38-.55a3.02 3.02 0 002.12-2.14A31.6 31.6 0 0024 12a31.6 31.6 0 00-.5-5.81zM9.75 15.5v-7l6.5 3.5-6.5 3.5z" />
+                                        </svg>
+                                    </div>
+                                    <div class="connected-account-info">
+                                        <p>YouTube</p>
+                                        <span class="connected-status not-connected">Not connected</span>
+                                    </div>
+                                    <button class="connected-account-btn">Follow</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="profile-recent-section">
+                    <h3>Recently Played</h3>
+                    <div class="profile-recent-grid">
+                        <div class="profile-recent-item">
+                            <span class="recent-num">1</span>
+                            <div class="recent-thumb draw-grad"></div>
+                            <div class="recent-info">
+                                <p>Mortal Arena</p><span>Today at 14:33</span>
+                            </div>
+                        </div>
+                        <div class="profile-recent-item">
+                            <span class="recent-num">2</span>
+                            <div class="recent-thumb survive-grad"></div>
+                            <div class="recent-info">
+                                <p>UNO</p><span>Today at 12:33</span>
+                            </div>
+                        </div>
+                        <div class="profile-recent-item">
+                            <span class="recent-num">3</span>
+                            <div class="recent-thumb race-grad"></div>
+                            <div class="recent-info">
+                                <p>Neon Racers</p><span>Today at 12:15</span>
+                            </div>
+                        </div>
+                        <div class="profile-recent-item">
+                            <span class="recent-num">4</span>
+                            <div class="recent-thumb draw-grad"></div>
+                            <div class="recent-info">
+                                <p>Mortal Arena</p><span>Today at 08:08</span>
+                            </div>
+                        </div>
+                        <div class="profile-recent-item">
+                            <span class="recent-num">5</span>
+                            <div class="recent-thumb survive-grad"></div>
+                            <div class="recent-info">
+                                <p>UNO</p><span>Yesterday at 21:02</span>
+                            </div>
+                        </div>
+                        <div class="profile-recent-item">
+                            <span class="recent-num">6</span>
+                            <div class="recent-thumb blue-grad"></div>
+                            <div class="recent-info">
+                                <p>Survive The Bots</p><span>Yesterday at 21:11</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- ════════ GAMES PAGE ════════ -->
+            <div id="games-page" class="page-view hidden">
+                <div class="page-header">
+                    <h2>All Games</h2>
+                    <p>Browse everything available on Fun Match</p>
+                </div>
+
+                <div class="games-hero-carousel" id="games-hero-carousel">
+                    <div class="games-hero-slide active" data-game="survive">
+                        <div class="games-hero-bg" style="background-image:url('../images/Uno-ThumbCard.jpeg')"></div>
+                        <div class="games-hero-fade"></div>
+                        <div class="games-hero-content">
+                            <div class="hero-tags">
+                                <span class="tag tag-popular">
+                                    <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
+                                        <path
+                                            d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67z" />
+                                    </svg>
+                                    Card Game
+                                </span>
+                            </div>
+                            <h1>UNO</h1>
+                            <p>Classic card chaos — stack it, skip it, and slap down that Draw Four when it counts.</p>
+                            <button class="play-btn" onclick="openGameModal('survive')">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                                    <path d="M8 5v14l11-7z" />
+                                </svg>
+                                Play Now
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="games-hero-slide" data-game="fighter">
+                        <div class="games-hero-bg" style="background-image:url('../images/MortalArena-ThumbCard.jpeg')">
+                        </div>
+                        <div class="games-hero-fade"></div>
+                        <div class="games-hero-content">
+                            <div class="hero-tags">
+                                <span class="tag tag-popular">
+                                    <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
+                                        <path
+                                            d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67z" />
+                                    </svg>
+                                    Fighting
+                                </span>
+                            </div>
+                            <h1>Mortal Arena</h1>
+                            <p>Two warriors enter, one legend rises. Fast rounds, bigger combos, no mercy.</p>
+                            <button class="play-btn" onclick="openGameModal('fighter')">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                                    <path d="M8 5v14l11-7z" />
+                                </svg>
+                                Play Now
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="games-hero-slide" data-game="racer">
+                        <div class="games-hero-bg" style="background-image:url('../images/NeonRacer-ThumbCard.jpeg')">
+                        </div>
+                        <div class="games-hero-fade"></div>
+                        <div class="games-hero-content">
+                            <div class="hero-tags">
+                                <span class="tag tag-popular">
+                                    <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor">
+                                        <path
+                                            d="M13.5.67s.74 2.65.74 4.8c0 2.06-1.35 3.73-3.41 3.73-2.07 0-3.63-1.67-3.63-3.73l.03-.36C5.21 7.51 4 10.62 4 14c0 4.42 3.58 8 8 8s8-3.58 8-8C20 8.61 17.41 3.8 13.5.67z" />
+                                    </svg>
+                                    Racing
+                                </span>
+                            </div>
+                            <h1>Neon Racers</h1>
+                            <p>Redline through a neon-soaked city. Drift, boost, and cross the line first.</p>
+                            <button class="play-btn" onclick="openGameModal('racer')">
+                                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                                    <path d="M8 5v14l11-7z" />
+                                </svg>
+                                Play Now
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="games-hero-dots" id="games-hero-dots">
+                        <button class="games-hero-dot active" onclick="setHeroSlide(0)"></button>
+                        <button class="games-hero-dot" onclick="setHeroSlide(1)"></button>
+                        <button class="games-hero-dot" onclick="setHeroSlide(2)"></button>
+                    </div>
+                </div>
+
+                <div class="games-thumb-row">
+                    <button class="games-thumb-card" style="background-image:url('../images/Uno-ThumbCard.jpeg')"
+                        onclick="openGameModal('survive')">
+                        <span>UNO</span>
+                    </button>
+                    <button class="games-thumb-card"
+                        style="background-image:url('../images/MortalArena-ThumbCard.jpeg')"
+                        onclick="openGameModal('fighter')">
+                        <span>Mortal Arena</span>
+                    </button>
+                    <button class="games-thumb-card" style="background-image:url('../images/NeonRacer-ThumbCard.jpeg')"
+                        onclick="openGameModal('racer')">
+                        <span>Neon Racers</span>
+                    </button>
+                    <div class="games-thumb-card empty"></div>
+                    <div class="games-thumb-card empty"></div>
+                </div>
+            </div>
+
+            <!-- ════════ LEADERBOARD PAGE ════════ -->
+            <div id="leaderboard-page" class="page-view hidden">
+                <div class="page-header">
+                    <h2>Leaderboard</h2>
+                    <p>Top players this season</p>
+                </div>
+
+                <div class="lb-stats-row">
+                    <div class="lb-stat-card">
+                        <div class="lb-stat-icon lb-icon-cyan">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+                                <path
+                                    d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75M9 11a4 4 0 100-8 4 4 0 000 8z"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="lb-stat-num">1,342</p>
+                            <p class="lb-stat-label">Total Registered</p>
+                        </div>
+                    </div>
+
+                    <div class="lb-stat-card">
+                        <div class="lb-stat-icon lb-icon-lime">
+                            <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+                                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="2"
+                                    stroke-linejoin="round" />
+                            </svg>
+                        </div>
+                        <div>
+                            <p class="lb-stat-num">287</p>
+                            <p class="lb-stat-label">Total Participated</p>
+                        </div>
+                    </div>
+
+                    <div class="lb-stat-card lb-timer-card">
+                        <div class="lb-timer-header">Remaining time for completion 🔥</div>
+                        <div class="lb-timer-value">
+                            <span>12<em>DAYS</em></span>
+                            <span class="lb-timer-colon">:</span>
+                            <span>06<em>HRS</em></span>
+                            <span class="lb-timer-colon">:</span>
+                            <span>42<em>MINS</em></span>
+                        </div>
+                        <p class="lb-timer-note">Only the first three positions will be awarded prizes</p>
+                    </div>
+                </div>
+
+                <div class="lb-podium-row">
+                    <div class="lb-podium-card lb-first">
+                        <div class="lb-podium-top">
+                            <div class="lb-podium-avatar grad-4">1</div>
+                            <div class="lb-podium-identity">
+                                <h4>EchoRider</h4>
+                                <p>@echo_rider</p>
+                            </div>
+                            <div class="lb-podium-medal lb-medal-gold">
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+                                    <circle cx="12" cy="8" r="6" fill="currentColor" />
+                                    <path d="M8.5 13L6 21l6-3 6 3-2.5-8" stroke="currentColor" stroke-width="2"
+                                        stroke-linejoin="round" fill="none" />
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="lb-podium-stats">
+                            <div><span>443</span>
+                                <p>WINS</p>
+                            </div>
+                            <div><span>778</span>
+                                <p>MATCHES</p>
+                            </div>
+                            <div><span>8,828</span>
+                                <p>POINTS</p>
+                            </div>
+                        </div>
+                        <div class="lb-podium-badges">
+                            <span class="lb-badge lb-badge-coin">🎁 32,421</span>
+                            <span class="lb-badge lb-badge-gem">💎 17,500</span>
+                        </div>
+                    </div>
+
+                    <div class="lb-podium-card">
+                        <div class="lb-podium-top">
+                            <div class="lb-podium-avatar grad-3">2</div>
+                            <div class="lb-podium-identity">
+                                <h4>ThunderPulse</h4>
+                                <p>@thunder_pulse</p>
+                            </div>
+                        </div>
+                        <div class="lb-podium-stats">
+                            <div><span>440</span>
+                                <p>WINS</p>
+                            </div>
+                            <div><span>887</span>
+                                <p>MATCHES</p>
+                            </div>
+                            <div><span>8,207</span>
+                                <p>POINTS</p>
+                            </div>
+                        </div>
+                        <div class="lb-podium-badges">
+                            <span class="lb-badge lb-badge-coin">🎁 31,001</span>
+                            <span class="lb-badge lb-badge-gem">💎 17,421</span>
+                        </div>
+                    </div>
+
+                    <div class="lb-podium-card">
+                        <div class="lb-podium-top">
+                            <div class="lb-podium-avatar grad-7">3</div>
+                            <div class="lb-podium-identity">
+                                <h4>DriftKing</h4>
+                                <p>@drift_king</p>
+                            </div>
+                        </div>
+                        <div class="lb-podium-stats">
+                            <div><span>412</span>
+                                <p>WINS</p>
+                            </div>
+                            <div><span>756</span>
+                                <p>MATCHES</p>
+                            </div>
+                            <div><span>6,763</span>
+                                <p>POINTS</p>
+                            </div>
+                        </div>
+                        <div class="lb-podium-badges">
+                            <span class="lb-badge lb-badge-coin">🎁 30,987</span>
+                            <span class="lb-badge lb-badge-gem">💎 17,224</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="lb-table-section">
+                    <h3>Global Ranking</h3>
+                    <div class="lb-table-wrap">
+                        <table class="lb-table">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>User Name</th>
+                                    <th>Match Wins</th>
+                                    <th>Spent Time</th>
+                                    <th>Victories</th>
+                                    <th>Best Win (mins)</th>
+                                    <th>Points</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="lb-table-rank lb-rank-1">1</span></td>
+                                    <td class="lb-table-user">
+                                        <div class="lb-mini-avatar grad-4"></div>
+                                        <div>
+                                            <p>EchoRider</p><span>ID 1587667</span>
+                                        </div>
+                                    </td>
+                                    <td>443</td>
+                                    <td>778h</td>
+                                    <td>43</td>
+                                    <td>1:05</td>
+                                    <td>8,828</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="lb-table-rank lb-rank-2">2</span></td>
+                                    <td class="lb-table-user">
+                                        <div class="lb-mini-avatar grad-3"></div>
+                                        <div>
+                                            <p>ThunderPulse</p><span>ID 1587634</span>
+                                        </div>
+                                    </td>
+                                    <td>440</td>
+                                    <td>887h</td>
+                                    <td>43</td>
+                                    <td>1:03</td>
+                                    <td>8,207</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="lb-table-rank lb-rank-3">3</span></td>
+                                    <td class="lb-table-user">
+                                        <div class="lb-mini-avatar grad-7"></div>
+                                        <div>
+                                            <p>DriftKing</p><span>ID 1587699</span>
+                                        </div>
+                                    </td>
+                                    <td>412</td>
+                                    <td>756h</td>
+                                    <td>43</td>
+                                    <td>1:15</td>
+                                    <td>6,763</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="lb-table-rank">4</span></td>
+                                    <td class="lb-table-user">
+                                        <div class="lb-mini-avatar grad-1"></div>
+                                        <div>
+                                            <p>ShadowStrike</p><span>ID 1587701</span>
+                                        </div>
+                                    </td>
+                                    <td>398</td>
+                                    <td>702h</td>
+                                    <td>41</td>
+                                    <td>1:22</td>
+                                    <td>6,712</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="lb-table-rank">5</span></td>
+                                    <td class="lb-table-user">
+                                        <div class="lb-mini-avatar grad-5"></div>
+                                        <div>
+                                            <p>NovaSpark</p><span>ID 1587715</span>
+                                        </div>
+                                    </td>
+                                    <td>381</td>
+                                    <td>690h</td>
+                                    <td>37</td>
+                                    <td>1:11</td>
+                                    <td>6,642</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="lb-table-rank">6</span></td>
+                                    <td class="lb-table-user">
+                                        <div class="lb-mini-avatar grad-6"></div>
+                                        <div>
+                                            <p>SkylineRex</p><span>ID 1587722</span>
+                                        </div>
+                                    </td>
+                                    <td>365</td>
+                                    <td>654h</td>
+                                    <td>32</td>
+                                    <td>1:18</td>
+                                    <td>6,545</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -553,15 +1109,6 @@
 
         <!-- ════════ RIGHT SIDEBAR (Friends) ════════ -->
         <aside class="sidebar-right">
-            <div class="friends-header">
-                <div class="friends-icon">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
-                        <path
-                            d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75M9 11a4 4 0 100-8 4 4 0 000 8z"
-                            stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                    </svg>
-                </div>
-            </div>
             <div class="friends-list">
                 <div class="friend">
                     <div class="friend-avatar grad-1"></div><span class="status-dot online"></span>
@@ -587,6 +1134,8 @@
             </div>
         </aside>
 
+        <div class="mobile-friends-scrim" id="mobile-friends-scrim" onclick="closeMobileFriends()"></div>
+
     </div>
 
     <!-- ════════ GAME LOBBY MODAL ════════ -->
@@ -598,7 +1147,6 @@
                 </svg>
             </button>
 
-            <!-- ═══ STEP 1: Choose Host or Join ═══ -->
             <div class="modal-step active" id="step-choose">
                 <div class="modal-game-header">
                     <div class="modal-game-icon" id="modal-game-icon"></div>
@@ -608,64 +1156,158 @@
                     </div>
                 </div>
 
-                <h3 class="modal-heading">How do you want to play?</h3>
-
-                <div class="choice-grid">
-                    <button class="choice-card" onclick="goToStep('host')">
-                        <div class="choice-icon host-icon">
-                            <svg viewBox="0 0 24 24" width="28" height="28" fill="none">
-                                <path d="M3 9.5L12 3l9 6.5V20a2 2 0 01-2 2h-4v-7h-6v7H5a2 2 0 01-2-2V9.5z"
-                                    stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
-                            </svg>
-                        </div>
-                        <div class="choice-text">
-                            <h4>Host Game</h4>
-                            <p>Create a room and invite friends</p>
-                        </div>
-                        <span class="choice-arrow">
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
-                                <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2.5"
-                                    stroke-linecap="round" stroke-linejoin="round" />
-                            </svg>
-                        </span>
-                    </button>
-
-                    <button class="choice-card" onclick="goToStep('join')">
-                        <div class="choice-icon join-icon">
-                            <svg viewBox="0 0 24 24" width="28" height="28" fill="none">
-                                <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3"
-                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
-                                    stroke-linejoin="round" />
-                            </svg>
-                        </div>
-                        <div class="choice-text">
-                            <h4>Join Game</h4>
-                            <p>Enter a code to join friends</p>
-                        </div>
-                        <span class="choice-arrow">
-                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
-                                <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2.5"
-                                    stroke-linecap="round" stroke-linejoin="round" />
-                            </svg>
-                        </span>
-                    </button>
+                <div class="choose-heading">
+                    <h3 class="modal-heading">How do you want to play?</h3>
+                    <p class="modal-subheading">Pick an option and jump right in</p>
                 </div>
 
-                <div class="quick-play-section">
-                    <div class="divider-line"><span>or</span></div>
-                    <button class="quick-play-btn" onclick="quickPlayBot()">
-                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
-                            <rect x="2" y="6" width="20" height="12" rx="6" stroke="currentColor" stroke-width="2" />
-                            <path d="M7 12h4M9 10v4M15 12h.01M18 11h.01" stroke="currentColor" stroke-width="2"
-                                stroke-linecap="round" />
-                        </svg>
-                        Quick Play vs Bot
-                    </button>
+                <div class="option-cards-row">
+                    <div class="option-card active" data-option="host" onclick="selectPlayOption('host')">
+                        <div class="option-card-bg"></div>
+                        <div class="option-card-fade"></div>
+                        <div class="option-steps-overlay">
+                            <div class="option-step">
+                                <div class="option-step-icon">
+                                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none">
+                                        <path d="M15 7a2 2 0 012 2M12 22a10 10 0 100-20 10 10 0 000 20z"
+                                            stroke="currentColor" stroke-width="2" />
+                                    </svg>
+                                </div>
+                                <span>Set room privacy &amp; password</span>
+                            </div>
+                            <div class="option-step">
+                                <div class="option-step-icon">
+                                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none">
+                                        <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2" />
+                                        <path
+                                            d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"
+                                            stroke="currentColor" stroke-width="1.6" />
+                                    </svg>
+                                </div>
+                                <span>Configure game mode &amp; rules</span>
+                            </div>
+                            <div class="option-step">
+                                <div class="option-step-icon">
+                                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none">
+                                        <circle cx="18" cy="5" r="3" stroke="currentColor" stroke-width="2" />
+                                        <circle cx="6" cy="12" r="3" stroke="currentColor" stroke-width="2" />
+                                        <circle cx="18" cy="19" r="3" stroke="currentColor" stroke-width="2" />
+                                        <path d="M8.59 13.51l6.83 3.98M15.41 6.51L8.59 10.49" stroke="currentColor"
+                                            stroke-width="2" />
+                                    </svg>
+                                </div>
+                                <span>Share room code with friends</span>
+                            </div>
+                            <div class="option-step">
+                                <div class="option-step-icon">
+                                    <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
+                                        <path d="M8 5v14l11-7z" />
+                                    </svg>
+                                </div>
+                                <span>Begin match</span>
+                            </div>
+                        </div>
+                        <div class="option-card-footer">
+                            <div class="option-card-text">
+                                <h4>Host Game</h4>
+                                <p>Create your perfect match</p>
+                            </div>
+                            <button class="option-card-btn"
+                                onclick="event.stopPropagation(); advancePlayOption('host')">
+                                <span>Next</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="option-card" data-option="join" onclick="selectPlayOption('join')">
+                        <div class="option-card-bg"></div>
+                        <div class="option-card-fade"></div>
+                        <div class="option-steps-overlay">
+                            <div class="option-step">
+                                <div class="option-step-icon">
+                                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none">
+                                        <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3"
+                                            stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                            stroke-linejoin="round" />
+                                    </svg>
+                                </div>
+                                <span>Enter a friend's room code</span>
+                            </div>
+                            <div class="option-step">
+                                <div class="option-step-icon">
+                                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none">
+                                        <path d="M15 7a2 2 0 012 2M12 22a10 10 0 100-20 10 10 0 000 20z"
+                                            stroke="currentColor" stroke-width="2" />
+                                    </svg>
+                                </div>
+                                <span>Add a password if it's private</span>
+                            </div>
+                            <div class="option-step">
+                                <div class="option-step-icon">
+                                    <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
+                                        <path d="M8 5v14l11-7z" />
+                                    </svg>
+                                </div>
+                                <span>Jump into the lobby</span>
+                            </div>
+                        </div>
+                        <div class="option-card-footer">
+                            <div class="option-card-text">
+                                <h4>Join Game</h4>
+                                <p>Enter a friend's room code</p>
+                            </div>
+                            <button class="option-card-btn"
+                                onclick="event.stopPropagation(); advancePlayOption('join')">
+                                <span>Next</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="option-card" data-option="bot" onclick="selectPlayOption('bot')">
+                        <div class="option-card-bg"></div>
+                        <div class="option-card-fade"></div>
+                        <div class="option-steps-overlay">
+                            <div class="option-step">
+                                <div class="option-step-icon">
+                                    <svg viewBox="0 0 24 24" width="15" height="15" fill="none">
+                                        <rect x="2" y="6" width="20" height="12" rx="6" stroke="currentColor"
+                                            stroke-width="2" />
+                                        <path d="M7 12h4M9 10v4M15 12h.01M18 11h.01" stroke="currentColor"
+                                            stroke-width="2" stroke-linecap="round" />
+                                    </svg>
+                                </div>
+                                <span>Skip the lobby entirely</span>
+                            </div>
+                            <div class="option-step">
+                                <div class="option-step-icon">
+                                    <svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor">
+                                        <path d="M8 5v14l11-7z" />
+                                    </svg>
+                                </div>
+                                <span>Instant matching with anyone or bot</span>
+                            </div>
+                        </div>
+                        <div class="option-card-footer">
+                            <div class="option-card-text">
+                                <h4>Quick Play</h4>
+                                <p>Instant matching with anyone or bot</p>
+                            </div>
+                            <button class="option-card-btn" onclick="event.stopPropagation(); advancePlayOption('bot')">
+                                <span>Play</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <!-- ═══ STEP 2: Host Configuration ═══ -->
             <div class="modal-step" id="step-host">
+                <button class="modal-back-top" onclick="goToStep('choose')" title="Back to selection">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+                        <path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                            stroke-linejoin="round" />
+                    </svg>
+                </button>
 
                 <div class="host-layout">
                     <!-- LEFT: Configuration Form -->
@@ -774,7 +1416,7 @@
                                 </div>
                             </div>
 
-                            <div class="form-group">
+                            <div class="form-group" id="max-players-group">
                                 <label>
                                     <svg viewBox="0 0 24 24" width="14" height="14" fill="none">
                                         <path
@@ -796,23 +1438,47 @@
                                 <div class="player-dots" id="player-dots"></div>
                             </div>
 
-                            <button type="submit" class="modal-submit">
-                                <span>Create Room</span>
+                            <button type="submit" class="modal-submit" id="create-room-btn">
+                                <span id="create-room-btn-text">Create Room</span>
                                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
                                     <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2.5"
                                         stroke-linecap="round" stroke-linejoin="round" />
                                 </svg>
                             </button>
+
+                            <p class="host-form-error hidden" id="host-form-error"></p>
                         </form>
                     </div>
 
                     <!-- RIGHT: Stacked Preview with QR inside -->
                     <div class="host-right">
                         <div class="stacked-preview">
-                            <div class="stack-card stack-back"></div>
-                            <div class="stack-card stack-front" id="stack-front-card">
-                                <div class="stack-qr-content">
-                                    <div class="stack-qr-code" id="qr-code"></div>
+                            <div class="stack-card stack-back" id="stack-back-card" onclick="toggleCardFlip()"></div>
+                            <div class="stack-front" id="stack-front-card" onclick="toggleCardFlip()">
+                                <div class="card-inner">
+                                    <div class="card-face card-front">
+                                        <div class="card-front-content">
+                                            <svg viewBox="0 0 24 24" width="32" height="32" fill="none">
+                                                <rect x="3" y="3" width="7" height="7" rx="1" stroke="currentColor"
+                                                    stroke-width="2" />
+                                                <rect x="14" y="3" width="7" height="7" rx="1" stroke="currentColor"
+                                                    stroke-width="2" />
+                                                <rect x="3" y="14" width="7" height="7" rx="1" stroke="currentColor"
+                                                    stroke-width="2" />
+                                                <rect x="14" y="14" width="4" height="4" rx="1" stroke="currentColor"
+                                                    stroke-width="2" />
+                                                <path d="M21 14h-3v3" stroke="currentColor" stroke-width="2"
+                                                    stroke-linecap="round" />
+                                                <path d="M18 21v-3h3" stroke="currentColor" stroke-width="2"
+                                                    stroke-linecap="round" />
+                                            </svg>
+                                        </div>
+                                    </div>
+                                    <div class="card-face card-back">
+                                        <div class="stack-qr-content">
+                                            <div class="stack-qr-code" id="qr-code"></div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -822,61 +1488,140 @@
 
             <!-- ═══ STEP 3: Join Game ═══ -->
             <div class="modal-step" id="step-join">
-                <button class="modal-back" onclick="goToStep('choose')">
-                    <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
+                <button class="modal-back-top" onclick="goToStep('choose')" title="Back to selection">
+                    <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
                         <path d="M19 12H5M12 19l-7-7 7-7" stroke="currentColor" stroke-width="2" stroke-linecap="round"
                             stroke-linejoin="round" />
                     </svg>
-                    Back
                 </button>
 
                 <h3 class="modal-heading">
                     <span class="heading-accent">Join</span> a Game
                 </h3>
-                <p class="modal-subheading">Enter the room code from your friend</p>
+                <p class="modal-subheading">Browse open rooms or scan a code</p>
 
-                <form class="join-form" onsubmit="joinRoom(event)">
-                    <div class="code-input-wrapper">
-                        <input type="text" class="code-input" id="join-code" maxlength="6" placeholder="ABCD12" required
-                            autocomplete="off">
-                        <div class="code-hint">6-character code</div>
+                <div class="join-search-row">
+                    <div class="join-search-wrapper">
+                        <svg viewBox="0 0 24 24" width="17" height="17" fill="none">
+                            <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2" />
+                            <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                        </svg>
+                        <input type="text" id="room-search" placeholder="Search rooms..." oninput="filterPublicRooms()">
                     </div>
 
-                    <div class="form-group">
-                        <label>Password (if private)</label>
-                        <input type="password" id="join-password" placeholder="Optional">
+                    <div class="join-filter-wrapper">
+                        <button class="join-filter-btn" id="join-filter-btn" onclick="toggleFilterMenu()"
+                            title="Filter rooms">
+                            <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
+                                <path d="M4 6h16M7 12h10M10 18h4" stroke="currentColor" stroke-width="2"
+                                    stroke-linecap="round" />
+                            </svg>
+                            <span class="join-filter-dot" id="join-filter-dot"></span>
+                        </button>
+                        <div class="join-filter-menu" id="join-filter-menu">
+                            <button class="filter-menu-item active" data-filter="all" onclick="setRoomFilter('all')">All
+                                rooms</button>
+                            <button class="filter-menu-item" data-filter="open" onclick="setRoomFilter('open')">Open
+                                slots</button>
+                            <button class="filter-menu-item" data-filter="time" onclick="setRoomFilter('time')">Time
+                                limit</button>
+                            <button class="filter-menu-item" data-filter="survival"
+                                onclick="setRoomFilter('survival')">Survival</button>
+                        </div>
                     </div>
 
-                    <button type="submit" class="modal-submit">
-                        <span>Join Room</span>
+                    <button class="join-camera-btn" onclick="startQRScan()" title="Scan a room's QR code">
                         <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
-                            <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3" stroke="currentColor"
-                                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"
+                                stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+                            <circle cx="12" cy="13" r="4" stroke="currentColor" stroke-width="2" />
                         </svg>
                     </button>
-                </form>
+                </div>
 
-                <div class="public-rooms-section">
-                    <h4 class="rooms-title">
-                        <svg viewBox="0 0 24 24" width="14" height="14" fill="none">
-                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
-                            <path d="M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20" stroke="currentColor"
-                                stroke-width="2" />
-                        </svg>
-                        Public Rooms
-                    </h4>
+                <div class="public-rooms-section no-border">
+                    <div class="rooms-header-row">
+                        <h4 class="rooms-title" id="rooms-title">
+                            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" id="rooms-title-icon">
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
+                                <path d="M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20" stroke="currentColor"
+                                    stroke-width="2" />
+                            </svg>
+                            <span id="rooms-title-text">Public Rooms</span>
+                        </h4>
+
+                        <div class="join-scope-toggle">
+                            <button class="scope-btn active" data-scope="public"
+                                onclick="setRoomScope('public')">Public</button>
+                            <button class="scope-btn" data-scope="private"
+                                onclick="setRoomScope('private')">Private</button>
+                        </div>
+                    </div>
+
                     <div class="public-rooms-list" id="public-rooms-list">
                         <div class="empty-rooms">
+                            <svg viewBox="0 0 24 24" width="44" height="44" fill="none">
+                                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5" />
+                                <path d="M12 8v4M12 16h.01" stroke="currentColor" stroke-width="1.5"
+                                    stroke-linecap="round" />
+                            </svg>
                             <p>No public rooms available</p>
                             <span>Be the first to host!</span>
                         </div>
                     </div>
+                </div>
+
+                <div class="qr-scanner-overlay hidden" id="qr-scanner-overlay">
+                    <button class="qr-scanner-close" onclick="stopQRScan()">
+                        <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
+                            <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.5"
+                                stroke-linecap="round" />
+                        </svg>
+                    </button>
+                    <video id="qr-video" playsinline muted></video>
+                    <canvas id="qr-canvas" class="hidden"></canvas>
+                    <div class="qr-scan-frame"></div>
+                    <p class="qr-scan-hint">Point your camera at the room's QR code</p>
                 </div>
             </div>
 
         </div>
     </div>
 
+    <!-- ════════ ROOM LOADING OVERLAY ════════ -->
+    <div class="loading-overlay hidden" id="room-loading-overlay">
+        <video class="loading-video-bg" id="loading-video-bg" autoplay muted loop playsinline>
+            <source src="../videos/Portal.mp4" type="video/mp4">
+        </video>
+        <div class="loading-overlay-scrim"></div>
+        <div class="loading-overlay-content" id="loading-overlay-content">
+            <div class="loading-spinner"></div>
+            <h2 class="loading-title" id="loading-title-text">Creating World</h2>
+            <p class="loading-tip" id="loading-tip-text">Shuffling the deck...</p>
+        </div>
+        <div class="loading-flash" id="loading-flash"></div>
+    </div>
+
+    <div class="modal-overlay hidden" id="screen-size-modal">
+        <div class="screen-size-modal-container">
+            <div class="screen-size-icon">
+                <svg viewBox="0 0 24 24" width="28" height="28" fill="none">
+                    <rect x="4" y="2" width="10" height="18" rx="2" stroke="currentColor" stroke-width="2" />
+                    <path d="M9 17h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    <rect x="16" y="7" width="4" height="13" rx="1" stroke="currentColor" stroke-width="2"
+                        opacity="0.4" />
+                </svg>
+            </div>
+            <h3 class="screen-size-title">Screen too small to host</h3>
+            <p class="screen-size-text">Hosting a game needs more room to lay out settings and your QR code properly.
+                Try switching to a tablet, laptop, or desktop to create a room.</p>
+            <button class="screen-size-btn" onclick="closeScreenSizeModal()">
+                I Understand
+            </button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
     <script src="dashboard.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="../global/supabase.js"></script>
@@ -934,6 +1679,29 @@
             initStickman();
         })();
 
+        function setFloatingNavActive(view) {
+            document.querySelectorAll('.floating-nav-btn').forEach(btn =>
+                btn.classList.toggle('active', btn.dataset.view === view)
+            );
+        }
+
+        function goToHub() {
+            showHub();
+            setFloatingNavActive('home');
+        }
+
+        function goToGames() {
+            showHub();
+            setFloatingNavActive('games');
+            document.querySelector('.games-row')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function goToStats() {
+            showHub();
+            setFloatingNavActive('stats');
+            document.querySelector('.stats-section')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
         // ═══════════════ NAVIGATION ═══════════════
         function toggleProfileMenu() {
             document.getElementById('profile-menu').classList.toggle('hidden');
@@ -947,20 +1715,53 @@
 
         async function handleSignOut() { await signOut(); }
 
+        let gamesHeroIndex = 0;
+        let gamesHeroInterval = null;
+
+        function setHeroSlide(i) {
+            const slides = document.querySelectorAll('.games-hero-slide');
+            const dots = document.querySelectorAll('.games-hero-dot');
+            gamesHeroIndex = i;
+            slides.forEach(function (s, idx) { s.classList.toggle('active', idx === i); });
+            dots.forEach(function (d, idx) { d.classList.toggle('active', idx === i); });
+        }
+
+        function startGamesHeroCarousel() {
+            clearInterval(gamesHeroInterval);
+            gamesHeroInterval = setInterval(function () {
+                const slides = document.querySelectorAll('.games-hero-slide');
+                setHeroSlide((gamesHeroIndex + 1) % slides.length);
+            }, 5000);
+        }
+
+        function stopGamesHeroCarousel() {
+            clearInterval(gamesHeroInterval);
+        }
+
+        function showView(view) {
+            document.getElementById('hub-content').style.display = view === 'home' ? '' : 'none';
+            document.getElementById('games-page').classList.toggle('hidden', view !== 'games');
+            document.getElementById('leaderboard-page').classList.toggle('hidden', view !== 'leaderboard');
+            document.getElementById('profile-panel').classList.toggle('hidden', view !== 'profile');
+
+            document.querySelectorAll('.floating-nav-btn').forEach(function (btn) {
+                btn.classList.toggle('active', btn.dataset.view === view);
+            });
+
+            if (view === 'profile') loadProfileHeaderData();
+
+            if (view === 'games') startGamesHeroCarousel();
+            else stopGamesHeroCarousel();
+        }
+
         function showHub() {
-            document.getElementById('hub-content').style.display = '';
-            document.getElementById('profile-panel').classList.add('hidden');
-            // Update active nav
-            document.querySelectorAll('.nav-item').forEach(function (btn) { btn.classList.remove('active'); });
-            document.querySelector('.nav-item[data-tip="Home"]').classList.add('active');
+            showView('home');
         }
 
         // ═══════════════ PROFILE ═══════════════
         function editProfile() {
             document.getElementById('profile-menu').classList.add('hidden');
-            document.getElementById('hub-content').style.display = 'none';
-            document.getElementById('profile-panel').classList.remove('hidden');
-            loadProfileData();
+            showView('profile');
         }
 
         function closeProfile() {
@@ -971,60 +1772,37 @@
             editProfile(); // Go to profile which has stats
         }
 
-        async function loadProfileData() {
+        async function loadProfileHeaderData() {
             var user = await getCurrentUser();
             var profile = await getUserProfile();
             if (!user) return;
+
+            var nameEl = document.getElementById('profile-account-name');
+            var emailEl = document.getElementById('profile-account-email');
+            var levelEl = document.getElementById('profile-account-level');
+            var portraitEl = document.getElementById('profile-account-portrait');
+
+            var displayName = profile && profile.display_name ? profile.display_name : user.email.split('@')[0];
+            if (nameEl) nameEl.textContent = displayName;
+            if (emailEl) emailEl.textContent = user.email;
+            if (levelEl) levelEl.textContent = 'Lvl ' + (profile && profile.level ? profile.level : 1);
 
             var avatarUrl = null;
             if (user.user_metadata && user.user_metadata.avatar_url) avatarUrl = user.user_metadata.avatar_url;
             else if (user.user_metadata && user.user_metadata.picture) avatarUrl = user.user_metadata.picture;
             else if (profile && profile.avatar_url) avatarUrl = profile.avatar_url;
 
-            var largeAvatar = document.getElementById('profile-avatar-large');
-            if (avatarUrl && largeAvatar) largeAvatar.innerHTML = '<img src="' + avatarUrl + '" alt="Avatar">';
-
-            var displayName = profile && profile.display_name ? profile.display_name : user.email.split('@')[0];
-            document.getElementById('profile-display-name').textContent = displayName;
-            document.getElementById('profile-email-display').textContent = user.email;
-            document.getElementById('edit-display-name').value = displayName;
-            document.getElementById('edit-username').value = profile && profile.username ? profile.username : '';
-            document.getElementById('edit-email').value = user.email;
-
-            if (profile) {
-                document.getElementById('profile-level').textContent = 'Level ' + (profile.level || 1);
-                document.getElementById('profile-xp').textContent = (profile.xp || 0) + ' XP';
-                document.getElementById('stat-total-games').textContent = profile.total_games || 0;
-                document.getElementById('stat-total-wins').textContent = profile.total_wins || 0;
-                document.getElementById('stat-level').textContent = profile.level || 1;
-                document.getElementById('stat-playtime').textContent = ((profile.total_playtime || 0) / 3600).toFixed(1) + 'h';
+            if (avatarUrl && portraitEl) {
+                portraitEl.innerHTML = '<img src="' + avatarUrl + '" alt="Avatar">';
             }
         }
 
-        document.getElementById('profile-form').addEventListener('submit', async function (e) {
-            e.preventDefault();
-            var saveBtn = document.getElementById('profile-save-btn');
-            saveBtn.classList.add('loading');
-
-            var result = await updateProfile({
-                display_name: document.getElementById('edit-display-name').value.trim(),
-                username: document.getElementById('edit-username').value.trim()
-            });
-
-            saveBtn.classList.remove('loading');
-            var msgEl = document.getElementById('profile-message');
-
-            if (result.error) {
-                msgEl.innerHTML = '<div class="error-message">' + result.error + '</div>';
-            } else {
-                msgEl.innerHTML = '<div class="success-message">Profile updated!</div>';
-                var name = document.getElementById('edit-display-name').value.trim();
-                document.getElementById('profile-display-name').textContent = name;
-                document.getElementById('greeting-name').textContent = name.toUpperCase();
-                document.getElementById('menu-name').textContent = name;
-            }
-            setTimeout(function () { msgEl.innerHTML = ''; }, 3000);
-        });
+        function editProfile() {
+            document.getElementById('profile-menu').classList.add('hidden');
+            document.getElementById('hub-content').style.display = 'none';
+            document.getElementById('profile-panel').classList.remove('hidden');
+            loadProfileHeaderData();
+        }
 
         function copyLink() {
             navigator.clipboard.writeText('https://fun-match.pages.dev/controller.html').then(function () {
@@ -1260,10 +2038,10 @@
         }
 
         // Toggle edit form
-        function toggleEditForm() {
-            var form = document.getElementById('profile-edit-form');
-            form.classList.toggle('hidden');
-        }
+        // function toggleEditForm() {
+        //     var form = document.getElementById('profile-edit-form');
+        //     form.classList.toggle('hidden');
+        // }
 
         // ═══════════════ GAME MODAL SYSTEM ═══════════════
         let currentGame = null;
@@ -1274,21 +2052,33 @@
                 sub: 'Fighting / 3 Characters',
                 icon: '⚔️',
                 gradient: 'linear-gradient(135deg, #f2c14e, #ff3860)',
-                path: '../games/fighter/'
+                thumb: '../images/MortalArena-ThumbCard.jpeg',
+                path: '../games/fighter/',
+                minPlayers: 2,
+                maxPlayers: 2,
+                fixedPlayers: true
             },
             racer: {
                 title: 'Neon Racers',
                 sub: 'Racing / Multiplayer',
                 icon: '🏎️',
                 gradient: 'linear-gradient(135deg, #aaff00, #00c853)',
-                path: '../games/racer/'
+                thumb: '../images/NeonRacer-ThumbCard.jpeg',
+                path: '../games/racer/',
+                minPlayers: 2,
+                maxPlayers: 5,
+                fixedPlayers: false
             },
             survive: {
                 title: 'UNO',
                 sub: 'Card Game / 2-4 Players',
                 icon: '🃏',
                 gradient: 'linear-gradient(135deg, #00e0ff, #0099ff)',
-                path: '../games/survive/'
+                thumb: '../images/Uno-ThumbCard.jpeg',
+                path: '../games/survive/',
+                minPlayers: 2,
+                maxPlayers: 4,
+                fixedPlayers: false
             }
         };
 
@@ -1316,10 +2106,32 @@
 
             setPrivacy('public');
             currentRoomCode = generateRoomCode();
+            selectPlayOption('host');
+            setOptionCardBackgrounds(cfg.thumb);
+            setStackBackImage(cfg.thumb);
+            setupPlayerLimits(gameKey);
+
+            const card = document.getElementById('stack-front-card');
+            if (card) card.classList.remove('flipped');
 
             document.getElementById('game-modal').classList.remove('hidden');
             goToStep('choose');
-            updatePlayerDots(2);
+        }
+
+        function setStackBackImage(thumbUrl) {
+            const el = document.getElementById('stack-back-card');
+            if (!el) return;
+            el.style.backgroundImage =
+                'linear-gradient(135deg, rgba(0,224,255,0.4), rgba(5,8,16,0.6)), url("' + thumbUrl + '")';
+        }
+
+        function setPreviewBackground(thumbUrl) {
+            const visual = document.getElementById('preview-visual');
+            if (!visual) return;
+            visual.style.backgroundImage =
+                'linear-gradient(180deg, rgba(5,8,16,0.4) 0%, rgba(5,8,16,0.7) 100%), url("' + thumbUrl + '")';
+            visual.style.backgroundSize = 'cover';
+            visual.style.backgroundPosition = 'center';
         }
 
         function closeGameModal() {
@@ -1328,17 +2140,50 @@
             currentRoomCode = null;
         }
 
+        // ═══════════════ PLAY OPTION SELECTOR (new step-choose) ═══════════════
+
+        let currentPlayOption = 'host';
+
+        function selectPlayOption(option) {
+            currentPlayOption = option;
+            document.querySelectorAll('.option-card').forEach(c =>
+                c.classList.toggle('active', c.dataset.option === option)
+            );
+            document.querySelectorAll('.option-dock-btn').forEach(b =>
+                b.classList.toggle('active', b.dataset.option === option)
+            );
+        }
+
+        function advancePlayOption(option) {
+            if (option === 'host') {
+                if (!checkScreenSizeOk()) {
+                    showScreenSizeWarning();
+                    return;
+                }
+                goToStep('host');
+            }
+            else if (option === 'join') goToStep('join');
+            else quickPlayBot();
+        }
+
+        function setOptionCardBackgrounds(thumbUrl) {
+            document.querySelectorAll('.option-card-bg').forEach(el => {
+                el.style.backgroundImage = 'url("' + thumbUrl + '")';
+            });
+        }
+
         function goToStep(step) {
             document.querySelectorAll('.modal-step').forEach(s => s.classList.remove('active'));
             document.getElementById('step-' + step).classList.add('active');
 
-            // Toggle wide layout for host step
             const container = document.querySelector('.modal-container');
-            if (step === 'host') {
+            container.classList.remove('wide', 'roomy');
+
+            if (step === 'host' || step === 'choose') {
                 container.classList.add('wide');
-                generateQR();
-            } else {
-                container.classList.remove('wide');
+                if (step === 'host') generateQR();
+            } else if (step === 'join') {
+                container.classList.add('roomy');
             }
         }
 
@@ -1349,6 +2194,13 @@
             const url = window.location.origin + '/controller.html?room=' + currentRoomCode;
             // Using a free QR API - no library needed
             qrEl.innerHTML = `<img src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(url)}&bgcolor=ffffff&color=050810&margin=0" alt="QR Code">`;
+        }
+
+        function toggleCardFlip() {
+            const card = document.getElementById('stack-front-card');
+            if (card) {
+                card.classList.toggle('flipped');
+            }
         }
 
         function togglePasswordVisibility() {
@@ -1385,38 +2237,180 @@
             updatePlayerDots(parseInt(val));
         }
 
+        function setupPlayerLimits(gameKey) {
+            const cfg = GAME_CONFIGS[gameKey];
+            const group = document.getElementById('max-players-group');
+            const input = document.getElementById('max-players');
+
+            if (cfg.fixedPlayers) {
+                group.classList.add('hidden');
+                input.min = cfg.maxPlayers;
+                input.max = cfg.maxPlayers;
+                input.value = cfg.maxPlayers;
+            } else {
+                group.classList.remove('hidden');
+                input.min = cfg.minPlayers;
+                input.max = cfg.maxPlayers;
+                input.value = cfg.minPlayers;
+            }
+
+            updatePlayerValue();
+        }
+
         function changePlayers(delta) {
             const input = document.getElementById('max-players');
-            const newVal = Math.max(2, Math.min(8, parseInt(input.value) + delta));
+            const min = parseInt(input.min);
+            const max = parseInt(input.max);
+            const newVal = Math.max(min, Math.min(max, parseInt(input.value) + delta));
             input.value = newVal;
             updatePlayerValue();
         }
 
         function updatePlayerDots(count) {
             const container = document.getElementById('player-dots');
+            const max = parseInt(document.getElementById('max-players').max);
             container.innerHTML = '';
-            for (let i = 0; i < 8; i++) {
+            for (let i = 0; i < max; i++) {
                 const dot = document.createElement('div');
                 dot.className = 'p-dot' + (i < count ? ' filled' : '');
                 container.appendChild(dot);
             }
         }
 
-        function createRoom(e) {
+        const LOADING_TIPS = [
+            'Shuffling the deck...',
+            'Warming up the fighters...',
+            'Polishing the arena floor...',
+            'Syncing your controller...',
+            'Rolling out the track...',
+            'Locking in the room code...'
+        ];
+
+        function showRoomLoading(gameTitle, onDone) {
+            const overlay = document.getElementById('room-loading-overlay');
+            const content = document.getElementById('loading-overlay-content');
+            const video = document.getElementById('loading-video-bg');
+            const flash = document.getElementById('loading-flash');
+            const tipEl = document.getElementById('loading-tip-text');
+            const titleEl = document.getElementById('loading-title-text');
+
+            titleEl.textContent = 'Creating ' + gameTitle + ' World';
+
+            // reset animation state in case this runs more than once
+            content.style.animation = 'none';
+            video.style.animation = 'none';
+            flash.classList.remove('fire');
+            void overlay.offsetWidth; // force reflow so animations restart cleanly
+            content.style.animation = '';
+            video.style.animation = '';
+
+            overlay.classList.remove('hidden');
+
+            let tipIndex = 0;
+            tipEl.textContent = LOADING_TIPS[tipIndex];
+            const tipInterval = setInterval(function () {
+                tipIndex = (tipIndex + 1) % LOADING_TIPS.length;
+                tipEl.style.opacity = 0;
+                setTimeout(function () {
+                    tipEl.textContent = LOADING_TIPS[tipIndex];
+                    tipEl.style.opacity = 1;
+                }, 150);
+            }, 700);
+
+            // Fire the flash right as the shake/zoom animation peaks (~2.1s in)
+            setTimeout(function () {
+                flash.classList.add('fire');
+            }, 2100);
+
+            // Total sequence: 2.2s shake+zoom, wrapped up shortly after the flash
+            setTimeout(function () {
+                clearInterval(tipInterval);
+                onDone();
+            }, 2500);
+        }
+
+        async function createRoom(e) {
             e.preventDefault();
+
+            if (!checkScreenSizeOk()) {
+                showScreenSizeWarning();
+                return;
+            }
+
+            const errorEl = document.getElementById('host-form-error');
+            const submitBtn = document.getElementById('create-room-btn');
+            const submitBtnText = document.getElementById('create-room-btn-text');
+
+            errorEl.classList.add('hidden');
+            errorEl.textContent = '';
+
+            const roomName = document.getElementById('room-name').value.trim();
+            if (!roomName) {
+                errorEl.textContent = 'Please enter a name.';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            const privacy = document.querySelector('.toggle-btn.active').dataset.privacy;
+            const password = document.getElementById('room-password').value;
+
+            if (privacy === 'private' && !password) {
+                errorEl.textContent = 'Private rooms need a password.';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
             const config = {
                 game: currentGame,
-                roomName: document.getElementById('room-name').value.trim(),
-                privacy: document.querySelector('.toggle-btn.active').dataset.privacy,
-                password: document.getElementById('room-password').value,
+                roomName: roomName, // maps to map_name in game_sessions
+                privacy: privacy,
+                password: password, // not yet persisted — see earlier note on schema
                 mode: document.querySelector('.mode-card.active').dataset.mode,
                 maxPlayers: parseInt(document.getElementById('max-players').value),
                 roomCode: currentRoomCode
             };
 
-            // Store config for game to read
+            const user = await getCurrentUser();
+            if (!user) {
+                errorEl.textContent = 'You must be signed in to host a game.';
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtnText.textContent = 'Creating Room...';
+
+            const sessionPayload = {
+                game_type: config.game,
+                room_code: config.roomCode,
+                status: 'waiting',
+                mode: config.mode,
+                max_players: config.maxPlayers,
+                privacy: config.privacy,
+                map_name: config.roomName
+                // winner_id / duration / ended_at: set when the match finishes
+            };
+
+            const result = await saveGameSession(sessionPayload);
+
+            if (result.error) {
+                console.error('Failed to create room:', result.error);
+                submitBtn.disabled = false;
+                submitBtnText.textContent = 'Create Room';
+                errorEl.textContent = "Couldn't create the room. Please try again.";
+                errorEl.classList.remove('hidden');
+                return;
+            }
+
+            config.sessionId = result.data.id;
             sessionStorage.setItem('roomConfig', JSON.stringify(config));
-            window.location.href = GAME_CONFIGS[currentGame].path + '?host=1';
+
+            const gameTitle = GAME_CONFIGS[currentGame].title;
+            const gamePath = GAME_CONFIGS[currentGame].path;
+
+            showRoomLoading(gameTitle, function () {
+                window.location.href = gamePath + '?host=1';
+            });
         }
 
         function joinRoom(e) {
@@ -1441,6 +2435,253 @@
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && !document.getElementById('game-modal').classList.contains('hidden')) {
                 closeGameModal();
+            }
+        });
+
+        let allPublicRooms = [];
+        let currentRoomFilter = 'all';
+
+        function attemptJoinRoom(code) {
+            if (!code) return;
+            sessionStorage.setItem('joinConfig', JSON.stringify({ code: code.toUpperCase() }));
+            window.location.href = GAME_CONFIGS[currentGame].path + '?join=' + code.toUpperCase();
+        }
+
+        function quickJoinRoom(code) {
+            attemptJoinRoom(code);
+        }
+
+        let qrStream = null;
+        let qrScanning = false;
+
+        async function startQRScan() {
+            const overlay = document.getElementById('qr-scanner-overlay');
+            const video = document.getElementById('qr-video');
+
+            try {
+                qrStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+            } catch (err) {
+                alert("Couldn't access the camera. Check your browser permissions and try again.");
+                return;
+            }
+
+            video.srcObject = qrStream;
+            video.setAttribute('playsinline', true);
+            await video.play();
+
+            overlay.classList.remove('hidden');
+            qrScanning = true;
+            requestAnimationFrame(scanQRFrame);
+        }
+
+        function scanQRFrame() {
+            if (!qrScanning) return;
+
+            const video = document.getElementById('qr-video');
+            const canvas = document.getElementById('qr-canvas');
+
+            if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+                const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                const code = jsQR(imageData.data, imageData.width, imageData.height);
+
+                if (code && code.data) {
+                    const match = code.data.match(/room=([A-Za-z0-9]{4,8})/);
+                    const roomCode = match ? match[1] : code.data;
+                    stopQRScan();
+                    attemptJoinRoom(roomCode);
+                    return;
+                }
+            }
+
+            requestAnimationFrame(scanQRFrame);
+        }
+
+        function stopQRScan() {
+            qrScanning = false;
+            document.getElementById('qr-scanner-overlay').classList.add('hidden');
+            if (qrStream) {
+                qrStream.getTracks().forEach(track => track.stop());
+                qrStream = null;
+            }
+        }
+
+        function toggleFilterMenu() {
+            const menu = document.getElementById('join-filter-menu');
+            const btn = document.getElementById('join-filter-btn');
+            menu.classList.toggle('open');
+            btn.classList.toggle('active', menu.classList.contains('open'));
+        }
+
+        document.addEventListener('click', function (e) {
+            const wrapper = document.querySelector('.join-filter-wrapper');
+            const menu = document.getElementById('join-filter-menu');
+            if (wrapper && menu && !wrapper.contains(e.target)) {
+                menu.classList.remove('open');
+                document.getElementById('join-filter-btn').classList.remove('active');
+            }
+        });
+
+        function setRoomFilter(filter) {
+            currentRoomFilter = filter;
+
+            document.querySelectorAll('.filter-menu-item').forEach(c =>
+                c.classList.toggle('active', c.dataset.filter === filter)
+            );
+
+            const dot = document.getElementById('join-filter-dot');
+            dot.classList.toggle('show', filter !== 'all');
+
+            document.getElementById('join-filter-menu').classList.remove('open');
+            document.getElementById('join-filter-btn').classList.remove('active');
+
+            filterPublicRooms();
+        }
+
+        let currentRoomScope = 'public';
+
+        function setRoomScope(scope) {
+            currentRoomScope = scope;
+
+            document.querySelectorAll('.scope-btn').forEach(b =>
+                b.classList.toggle('active', b.dataset.scope === scope)
+            );
+
+            const titleText = document.getElementById('rooms-title-text');
+            const titleIcon = document.getElementById('rooms-title-icon');
+
+            if (scope === 'private') {
+                titleText.textContent = 'Private Rooms';
+                titleIcon.innerHTML = '<path d="M15 7a2 2 0 012 2M12 22a10 10 0 100-20 10 10 0 000 20z" stroke="currentColor" stroke-width="2"/>';
+            } else {
+                titleText.textContent = 'Public Rooms';
+                titleIcon.innerHTML = '<circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20" stroke="currentColor" stroke-width="2"/>';
+            }
+
+            filterPublicRooms();
+        }
+
+        function filterPublicRooms() {
+            const search = document.getElementById('room-search').value.toLowerCase();
+            let filtered = allPublicRooms.filter(r =>
+                r.name.toLowerCase().includes(search) &&
+                (currentRoomScope === 'private' ? !!r.isPrivate : !r.isPrivate)
+            );
+
+            if (currentRoomFilter === 'open') filtered = filtered.filter(r => r.players < r.maxPlayers);
+            else if (currentRoomFilter === 'time') filtered = filtered.filter(r => r.mode === 'time');
+            else if (currentRoomFilter === 'survival') filtered = filtered.filter(r => r.mode === 'survival');
+
+            renderPublicRooms(filtered);
+        }
+
+        function renderPublicRooms(rooms) {
+            const container = document.getElementById('public-rooms-list');
+            if (!rooms || rooms.length === 0) {
+                container.innerHTML =
+                    '<div class="empty-rooms">' +
+                    '<svg viewBox="0 0 24 24" width="28" height="28" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/><path d="M12 8v4M12 16h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>' +
+                    '<p>No public rooms available</p>' +
+                    '<span>Be the first to host!</span>' +
+                    '</div>';
+                return;
+            }
+
+            container.innerHTML = rooms.map((room, i) =>
+                '<div class="public-room-item" style="animation-delay:' + (i * 0.06) + 's" onclick="quickJoinRoom(\'' + room.code + '\')">' +
+                '<div class="room-item-icon ' + (room.mode === 'survival' ? 'mode-survival' : 'mode-time') + '">' +
+                (room.mode === 'survival'
+                    ? '<svg viewBox="0 0 24 24" width="18" height="18" fill="none"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>'
+                    : '<svg viewBox="0 0 24 24" width="18" height="18" fill="none"><circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/><path d="M12 6v6l4 2" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>') +
+                '</div>' +
+                '<div class="room-item-info"><h5>' + room.name + '</h5><p>' + (room.mode === 'survival' ? 'Survival' : 'Time Limit') + ' &middot; Hosted by ' + room.host + '</p></div>' +
+                '<div class="room-item-players">' + room.players + '/' + room.maxPlayers + '</div>' +
+                '</div>'
+            ).join('');
+        }
+
+        function quickJoinRoom(code) {
+            document.getElementById('join-code-panel').classList.add('open');
+            document.getElementById('join-code-toggle-btn').classList.add('active');
+            document.getElementById('join-code').value = code;
+            joinRoom({ preventDefault: () => { } });
+        }
+
+        function toggleMobileFriends() {
+            const sidebar = document.querySelector('.sidebar-right');
+            const scrim = document.getElementById('mobile-friends-scrim');
+            if (!sidebar || !scrim) return;
+
+            if (sidebar.classList.contains('open')) {
+                closeMobileFriends();
+            } else {
+                openMobileFriends();
+            }
+        }
+
+        function openMobileFriends() {
+            const sidebar = document.querySelector('.sidebar-right');
+            const scrim = document.getElementById('mobile-friends-scrim');
+            if (!sidebar || !scrim) return;
+
+            sidebar.classList.add('visible'); // display: flex, still off-screen (translateX 100%)
+            // Force a reflow so the browser registers the "visible" state
+            // before we add "open", otherwise the slide-in transition gets skipped
+            void sidebar.offsetWidth;
+            sidebar.classList.add('open');
+            scrim.classList.add('open');
+        }
+
+        function closeMobileFriends() {
+            const sidebar = document.querySelector('.sidebar-right');
+            const scrim = document.getElementById('mobile-friends-scrim');
+            if (!sidebar || !scrim) return;
+
+            sidebar.classList.remove('open'); // starts sliding back out
+            scrim.classList.remove('open');
+
+            // Wait for the slide-out transition to finish, then fully hide it
+            // so it stops taking up any space/layer again
+            setTimeout(function () {
+                if (!sidebar.classList.contains('open')) {
+                    sidebar.classList.remove('visible');
+                }
+            }, 350); // matches the 0.35s transition duration
+        }
+
+        window.addEventListener('resize', function () {
+            if (window.innerWidth > 1200) {
+                const sidebar = document.querySelector('.sidebar-right');
+                const scrim = document.getElementById('mobile-friends-scrim');
+                sidebar.classList.remove('open', 'visible');
+                scrim.classList.remove('open');
+            }
+        });
+
+        const MIN_HOST_SCREEN_WIDTH = 768;
+
+        function checkScreenSizeOk() {
+            return window.innerWidth >= MIN_HOST_SCREEN_WIDTH;
+        }
+
+        function showScreenSizeWarning() {
+            document.getElementById('screen-size-modal').classList.remove('hidden');
+        }
+
+        function closeScreenSizeModal() {
+            document.getElementById('screen-size-modal').classList.add('hidden');
+        }
+
+        document.getElementById('screen-size-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'screen-size-modal') closeScreenSizeModal();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !document.getElementById('screen-size-modal').classList.contains('hidden')) {
+                closeScreenSizeModal();
             }
         });
     </script>

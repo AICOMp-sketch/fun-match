@@ -18,7 +18,7 @@ function initSupabase() {
 
     return supabaseClient;
 }
-s
+
 // ═══════════════ AUTH FUNCTIONS ═══════════════
 
 // Sign up with email
