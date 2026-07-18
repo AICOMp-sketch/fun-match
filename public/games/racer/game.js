@@ -600,7 +600,7 @@ socket.on("connect", () => {
     try {
       const config = JSON.parse(configStr);
       roomCode = config.roomCode;
-    } catch(e) {}
+    } catch (e) { }
   }
   socket.emit("create-room", { roomCode });
 });
@@ -608,6 +608,7 @@ socket.on("connect", () => {
 socket.on("room-created", (data) => {
   console.log("🏠 Room:", data.roomCode);
   document.getElementById("room-code").textContent = data.roomCode;
+  renderLobbyQR(data.roomCode);
 });
 
 socket.on("player-joined", (player) => {
@@ -624,7 +625,6 @@ socket.on("player-joined", (player) => {
   const car = new Car(player.id, player.name.toUpperCase(), colorIndex, false);
   cars[player.id] = car;
 
-  // First player joining IS the player (sets local player)
   if (!LOCAL_PLAYER_ID) {
     LOCAL_PLAYER_ID = player.id;
     console.log("🎯 Set LOCAL_PLAYER_ID =", LOCAL_PLAYER_ID);
@@ -633,14 +633,19 @@ socket.on("player-joined", (player) => {
   const slot = document.getElementById(`slot-${colorIndex + 1}`);
   if (slot) {
     slot.classList.add('filled');
-    slot.querySelector('p').textContent = player.name;
+    slot.querySelector('.player-name').textContent = player.name.toUpperCase();
     slot.querySelector('.status').textContent = 'Ready';
+    setSlotAvatar(slot, player.avatarUrl); // no-op until server sends avatarUrl
   }
 
-  // Enable start button when at least 1 player joined
   document.getElementById('start-race-btn').disabled = false;
 });
 
+function setSlotAvatar(slotEl, avatarUrl) {
+  if (!slotEl || !avatarUrl) return;
+  const img = slotEl.querySelector('.bubble-avatar-img');
+  if (img) img.src = avatarUrl;
+}
 // ════════ PHONE/PLAYER CONTROLS ════════
 socket.on("player-moved", (data) => {
   const car = cars[data.playerId];
@@ -694,29 +699,68 @@ socket.on("player-left", (data) => {
 document.getElementById('bot-race-btn').addEventListener('click', () => {
   console.log('🤖 BOT RACE clicked');
 
-  // Clear all cars
   Object.keys(cars).forEach(id => delete cars[id]);
-
   GAME.isBotMode = true;
 
-  // Create local player car
   const localCar = new Car('local-player', 'YOU', 0, false);
   cars['local-player'] = localCar;
   LOCAL_PLAYER_ID = 'local-player';
 
-  // Create 3 bots
   for (let i = 1; i <= 3; i++) {
     cars[`bot-${i}`] = new Car(`bot-${i}`, `BOT ${i}`, i, true);
   }
 
-  document.querySelectorAll('.racer-slot').forEach((slot, i) => {
+  document.querySelectorAll('.player-bubble').forEach((slot, i) => {
     slot.classList.add('filled');
-    slot.querySelector('p').textContent = i === 0 ? 'YOU' : `Bot ${i}`;
+    if (i > 0) slot.classList.add('cpu');
+    slot.querySelector('.player-name').textContent = i === 0 ? 'YOU' : `BOT ${i}`;
     slot.querySelector('.status').textContent = 'Ready';
   });
 
   setTimeout(startCountdown, 800);
 });
+
+function toggleRoomInfo() {
+  const popover = document.getElementById('room-info-popover');
+  if (!popover) return;
+  const willShow = popover.classList.contains('hidden');
+  popover.classList.toggle('hidden');
+  if (willShow) populateRoomInfo();
+}
+
+function populateRoomInfo() {
+  const configStr = sessionStorage.getItem('roomConfig');
+  if (!configStr) return;
+  let config;
+  try { config = JSON.parse(configStr); } catch (e) { return; }
+
+  document.getElementById('info-room-name').textContent = config.roomName || '—';
+  document.getElementById('info-privacy').textContent = config.privacy === 'private' ? 'Private 🔒' : 'Public 🌐';
+  document.getElementById('info-mode').textContent = config.mode === 'survival' ? 'Survival' : 'Time Limit';
+  document.getElementById('info-room-code').textContent = config.roomCode || '—';
+
+  const maxPlayersRow = document.getElementById('info-max-players-row');
+  maxPlayersRow.classList.remove('hidden');
+  document.getElementById('info-max-players').textContent = config.maxPlayers || '—';
+}
+
+document.addEventListener('click', function (e) {
+  const popover = document.getElementById('room-info-popover');
+  const btn = document.getElementById('room-info-btn');
+  if (!popover || popover.classList.contains('hidden')) return;
+  if (!popover.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
+    popover.classList.add('hidden');
+  }
+});
+
+function renderLobbyQR(roomCode) {
+  const qrEl = document.getElementById('lobby-qr-code');
+  if (!qrEl || !roomCode) return;
+  const joinUrl = window.location.origin + '/controller.html?room=' + roomCode;
+  qrEl.innerHTML = '<img src="https://api.qrserver.com/v1/create-qr-code/?size=400x400&data='
+    + encodeURIComponent(joinUrl)
+    + '&bgcolor=ffffff&color=050810&margin=0" alt="Scan to join room ' + roomCode + '">';
+}
 
 // ════════ START MULTIPLAYER RACE ════════
 document.getElementById('start-race-btn').addEventListener('click', () => {
@@ -806,7 +850,7 @@ function gameLoop() {
 
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   ctx.save();
-  
+
   ctx.scale(camera.zoom, camera.zoom);
   ctx.translate(-camera.x, -camera.y);
 

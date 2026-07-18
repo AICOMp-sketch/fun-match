@@ -947,6 +947,7 @@ socket.on("room-created", async (data) => {
   currentRoomCode = data.roomCode;
   document.getElementById("room-code").textContent = data.roomCode;
 
+  console.log('📝 Attempting to create game session...');
   const result = await createGameSession({
     gameType: 'fighter',
     roomCode: data.roomCode,
@@ -955,11 +956,13 @@ socket.on("room-created", async (data) => {
     maxPlayers: pendingRoomConfig ? pendingRoomConfig.maxPlayers : 2
   });
 
+  console.log('📝 createGameSession result:', result);
+
   if (result.data) {
     currentSessionId = result.data.id;
-    console.log('📝 Session created:', currentSessionId);
+    console.log('✅ Session created with id:', currentSessionId);
   } else {
-    console.error('Could not create game session:', result.error);
+    console.error('❌ Could not create game session:', result.error);
   }
 });
 
@@ -973,13 +976,23 @@ async function exitLobbyAndCleanup() {
   const confirmLeave = confirm('Leave this room? The room will be deleted for everyone.');
   if (!confirmLeave) return;
 
+  console.log('🗑️ Exit clicked. currentSessionId is:', currentSessionId);
+
   if (btn) btn.disabled = true;
 
   if (currentSessionId) {
     const result = await deleteGameSession(currentSessionId);
-    if (result.error) console.error('Session cleanup error:', result.error);
+    console.log('🗑️ deleteGameSession result:', result);
+    if (result.error) {
+      console.error('❌ Session cleanup error:', result.error);
+    } else {
+      console.log('✅ Session deleted successfully');
+    }
+  } else {
+    console.warn('⚠️ No currentSessionId set — nothing to delete. Session was likely never created.');
   }
 
+  if (btn) btn.disabled = false;
   // window.location.href = '../../';
 }
 
