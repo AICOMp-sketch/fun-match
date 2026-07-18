@@ -23,27 +23,43 @@
         <p id="error-msg"></p>
     </div>
 
+    <!-- Landscape lock overlay -->
+    <div id="rotate-overlay" class="rotate-overlay">
+        <div class="rotate-icon">⤵</div>
+        <p>Rotate your device to landscape to play</p>
+    </div>
+
     <!-- UNO Controller -->
     <div id="uno-controller" class="controller hidden">
-        <div class="uno-header">
-            <h2 id="uno-welcome">UNO</h2>
-            <p id="uno-status">Waiting for game to start...</p>
-        </div>
+        <div class="uno-layout">
 
-        <div class="uno-top-card-display">
-            <p class="uno-label">TOP CARD</p>
-            <div id="uno-top-card" class="uno-mini-card">
-                <span>-</span>
+            <div class="uno-left-col">
+                <div class="uno-header">
+                    <h2 id="uno-welcome">UNO</h2>
+                    <p id="uno-status">Waiting for game to start...</p>
+                </div>
+
+                <div class="uno-top-card-display">
+                    <p class="uno-label">TOP CARD</p>
+                    <div id="uno-top-card" class="uno-mini-card">
+                        <span>-</span>
+                    </div>
+                    <p class="uno-color-label">Color: <span id="uno-current-color">-</span></p>
+                </div>
+
+                <!-- Draw pile — swipe up (or tap) to draw -->
+                <div class="uno-draw-pile" id="uno-draw-pile">
+                    <div class="uno-draw-card-back"></div>
+                    <div class="uno-draw-card-back stacked"></div>
+                    <p class="uno-draw-hint">SWIPE ↑<br>TO DRAW</p>
+                </div>
             </div>
-            <p class="uno-color-label">Color: <span id="uno-current-color">-</span></p>
-        </div>
 
-        <div class="uno-hand" id="uno-hand">
-            <p class="no-cards">Waiting for cards...</p>
-        </div>
+            <!-- Fanned hand -->
+            <div class="uno-fan" id="uno-hand">
+                <p class="no-cards">Waiting for cards...</p>
+            </div>
 
-        <div class="uno-actions">
-            <button id="uno-draw-btn" class="uno-action-btn" disabled>DRAW CARD</button>
         </div>
 
         <div id="uno-color-picker" class="uno-color-picker hidden">
@@ -64,31 +80,32 @@
         <h2 id="fighter-welcome">FIGHT!</h2>
 
         <div class="fighter-layout">
-            <div class="movement-pad">
-                <button class="ctrl-btn fight-dpad up" data-dir="up">▲</button>
-                <button class="ctrl-btn fight-dpad left" data-dir="left">◄</button>
-                <button class="ctrl-btn fight-dpad right" data-dir="right">►</button>
-                <button class="ctrl-btn fight-dpad down" data-dir="down">▼</button>
+
+            <!-- Draggable joystick / D-pad -->
+            <div class="dpad-ring" id="dpad-ring">
+                <div class="dpad-arrow arrow-up">▲</div>
+                <div class="dpad-arrow arrow-left">◄</div>
+                <div class="dpad-arrow arrow-right">►</div>
+                <div class="dpad-arrow arrow-down">▼</div>
+                <div class="dpad-knob" id="dpad-knob"></div>
             </div>
 
-            <div class="action-pad">
-                <button class="ctrl-btn action-btn punch" data-dir="punch">
-                    <span class="action-letter">P</span>
-                    <span class="action-label">PUNCH</span>
+            <!-- Action buttons -->
+            <div class="action-cluster">
+                <button class="action-circle a1" data-dir="punch">
+                    <span>A1</span>
                 </button>
-                <button class="ctrl-btn action-btn kick" data-dir="kick">
-                    <span class="action-letter">K</span>
-                    <span class="action-label">KICK</span>
+                <button class="action-circle a2" data-dir="kick">
+                    <span>A2</span>
                 </button>
-                <button class="ctrl-btn action-btn special" data-dir="special">
-                    <span class="action-letter">SP</span>
-                    <span class="action-label">SPECIAL</span>
+                <button class="action-circle a3" data-dir="special">
+                    <span>A3</span>
                 </button>
-                <button class="ctrl-btn action-btn block" data-dir="block">
-                    <span class="action-letter">BL</span>
-                    <span class="action-label">BLOCK</span>
+                <button class="action-circle jmp" data-dir="jump">
+                    <span>JMP</span>
                 </button>
             </div>
+
         </div>
     </div>
 
@@ -97,26 +114,72 @@
         <h2 id="racer-welcome">RACE!</h2>
 
         <div class="racer-layout">
-            <div class="steering">
-                <button class="ctrl-btn steer-btn left-steer" data-dir="left">◄</button>
-                <button class="ctrl-btn steer-btn right-steer" data-dir="right">►</button>
+
+            <!-- Speed / Gear HUD -->
+            <div class="racer-hud">
+                <div class="hud-speed">
+                    <span id="racer-speed">0</span>
+                    <p>MPH</p>
+                </div>
+                <div class="hud-arc-wrap">
+                    <svg class="hud-arc" viewBox="0 0 200 100">
+                        <path d="M10,95 A90,90 0 0,1 190,95" fill="none" stroke="rgba(255,255,255,0.08)"
+                            stroke-width="10" stroke-linecap="round" />
+                        <path id="hud-arc-fill" d="M10,95 A90,90 0 0,1 190,95" fill="none" stroke="#00e0ff"
+                            stroke-width="10" stroke-linecap="round" stroke-dasharray="283" stroke-dashoffset="283" />
+                    </svg>
+                    <span class="hud-arc-label" id="racer-gear-mid">1</span>
+                </div>
+                <div class="hud-gear">
+                    <p>GEAR</p>
+                    <span id="racer-gear">1</span>
+                </div>
             </div>
 
-            <div class="pedals">
-                <button class="ctrl-btn pedal gas-btn" data-dir="punch">
-                    <span class="pedal-icon">▲</span>
-                    <span class="pedal-label">GAS</span>
-                </button>
-                <button class="ctrl-btn pedal brake-btn" data-dir="kick">
-                    <span class="pedal-icon">▼</span>
-                    <span class="pedal-label">BRAKE</span>
-                </button>
+            <div class="racer-main-row">
+
+                <!-- Rotating steering wheel -->
+                <div class="wheel-zone" id="wheel-zone">
+                    <svg class="wheel-svg" id="wheel-svg" viewBox="0 0 200 200">
+                        <circle cx="100" cy="100" r="88" fill="none" stroke="#00e0ff" stroke-width="10" />
+                        <circle cx="100" cy="100" r="40" fill="none" stroke="#00e0ff" stroke-width="6" />
+                        <line x1="100" y1="60" x2="100" y2="12" stroke="#00e0ff" stroke-width="8"
+                            stroke-linecap="round" />
+                        <line x1="65" y1="120" x2="30" y2="150" stroke="#00e0ff" stroke-width="8"
+                            stroke-linecap="round" />
+                        <line x1="135" y1="120" x2="170" y2="150" stroke="#00e0ff" stroke-width="8"
+                            stroke-linecap="round" />
+                    </svg>
+                </div>
+
+                <!-- Throttle / Brake vertical sliders -->
+                <div class="pedal-bars">
+                    <div class="pedal-bar throttle-bar" id="throttle-bar" data-role="throttle">
+                        <span class="pedal-bar-label vertical">THROTLE</span>
+                        <div class="pedal-bar-track">
+                            <div class="pedal-bar-fill" id="throttle-fill"></div>
+                        </div>
+                    </div>
+
+                    <div class="pedal-bar brake-bar" id="brake-bar" data-role="brake">
+                        <span class="pedal-bar-label vertical">BRAKE</span>
+                        <div class="pedal-bar-track">
+                            <div class="pedal-bar-fill" id="brake-fill"></div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
-            <button class="ctrl-btn boost-btn" data-dir="special">
-                <span class="boost-icon">⚡</span>
-                <span class="boost-label">BOOST</span>
+            <div class="pedal-captions">
+                <span>THROTTLE</span>
+                <span>BRAKE</span>
+            </div>
+
+            <button class="boost-circle" id="boost-btn">
+                <span>⚡</span>
             </button>
+
         </div>
     </div>
 

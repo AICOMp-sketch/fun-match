@@ -1,57 +1,140 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <script src="../../global/loader.js"></script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>UNO - Fun Match</title>
   <link rel="stylesheet" href="game.css">
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Press+Start+2P&display=swap"
+    rel="stylesheet">
 </head>
+
 <body>
 
   <!-- ════════ WAITING SCREEN ════════ -->
   <div id="waiting-screen" class="screen active">
-    <a href="../../" class="back-btn">← Back to Hub</a>
 
-    <div class="waiting-content">
-      <h1 class="game-title">U<span class="c1">N</span><span class="c2">O</span></h1>
-      <p class="game-subtitle">The classic card game - now digital!</p>
+    <video class="lobby-video-bg" autoplay muted loop playsinline>
+      <source src="../../videos/GameLobby-Intro.mp4" type="video/mp4">
+    </video>
+    <div class="lobby-scrim"></div>
 
-      <div class="room-display">
-        <p class="room-label">ROOM CODE</p>
-        <h2 class="room-code-big" id="room-code">. . . .</h2>
-        <p class="room-hint">Join on phone: <span>fun-match.pages.dev/controller.html</span></p>
+    <div class="lobby-topbar">
+      <div class="lobby-room-pill">
+        <span class="lobby-room-label">ROOM</span>
+        <span class="lobby-room-code" id="room-code">····</span>
+        <button class="room-info-btn" id="room-info-btn" title="Room details" onclick="toggleRoomInfo()">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
+            <path d="M12 16v-4M12 8h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+        </button>
       </div>
 
-      <div class="players-grid" id="players-grid">
-        <div class="player-slot empty" id="slot-1">
-          <div class="slot-avatar">?</div>
-          <p>Waiting...</p>
+      <div class="room-info-popover hidden" id="room-info-popover">
+        <div class="room-info-header">
+          <h4>Room Details</h4>
+          <button class="room-info-close" onclick="toggleRoomInfo()">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none">
+              <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
+            </svg>
+          </button>
         </div>
-        <div class="player-slot empty" id="slot-2">
-          <div class="slot-avatar">?</div>
-          <p>Waiting...</p>
+        <div class="room-info-row">
+          <span class="room-info-label">Arena / Room Name</span>
+          <span class="room-info-value" id="info-room-name">—</span>
         </div>
-        <div class="player-slot empty" id="slot-3">
-          <div class="slot-avatar">?</div>
-          <p>Waiting...</p>
+        <div class="room-info-row">
+          <span class="room-info-label">Privacy</span>
+          <span class="room-info-value" id="info-privacy">—</span>
         </div>
-        <div class="player-slot empty" id="slot-4">
-          <div class="slot-avatar">?</div>
-          <p>Waiting...</p>
+        <div class="room-info-row">
+          <span class="room-info-label">Game Mode</span>
+          <span class="room-info-value" id="info-mode">—</span>
         </div>
-      </div>
-
-      <div class="action-buttons">
-        <button id="bot-mode-btn" class="action-btn primary">
-          PLAY VS 3 BOTS
-        </button>
-        <button id="start-game-btn" class="action-btn secondary" disabled>
-          START GAME
-        </button>
+        <div class="room-info-row" id="info-max-players-row">
+          <span class="room-info-label">Max Players</span>
+          <span class="room-info-value" id="info-max-players">—</span>
+        </div>
+        <div class="room-info-row">
+          <span class="room-info-label">Room Code</span>
+          <span class="room-info-value room-info-code" id="info-room-code">—</span>
+        </div>
       </div>
     </div>
+
+    <div class="lobby-marquee">
+      <h1 class="lobby-title">U<span class="c1">N</span><span class="c2">O</span></h1>
+      <p class="lobby-subtitle">The classic card game — now digital!</p>
+    </div>
+
+    <!-- 4-seat player table -->
+    <div class="uno-seats-row" id="players-grid">
+      <div class="player-bubble" id="slot-1">
+        <p class="player-name">PLAYER 1</p>
+        <div class="bubble-avatar">
+          <img class="bubble-avatar-img" src="" alt="">
+          <svg class="bubble-avatar-placeholder" viewBox="0 0 24 24" width="26" height="26" fill="none">
+            <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2" />
+            <path d="M4 20c0-4 3.5-6 8-6s8 2 8 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          <span class="bubble-ring"></span>
+        </div>
+        <div class="bubble-tail"></div>
+        <span class="status">Waiting...</span>
+      </div>
+
+      <div class="player-bubble" id="slot-2">
+        <p class="player-name">PLAYER 2</p>
+        <div class="bubble-avatar">
+          <img class="bubble-avatar-img" src="" alt="">
+          <svg class="bubble-avatar-placeholder" viewBox="0 0 24 24" width="26" height="26" fill="none">
+            <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2" />
+            <path d="M4 20c0-4 3.5-6 8-6s8 2 8 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          <span class="bubble-ring"></span>
+        </div>
+        <div class="bubble-tail"></div>
+        <span class="status">Waiting...</span>
+      </div>
+
+      <div class="player-bubble" id="slot-3">
+        <p class="player-name">PLAYER 3</p>
+        <div class="bubble-avatar">
+          <img class="bubble-avatar-img" src="" alt="">
+          <svg class="bubble-avatar-placeholder" viewBox="0 0 24 24" width="26" height="26" fill="none">
+            <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2" />
+            <path d="M4 20c0-4 3.5-6 8-6s8 2 8 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          <span class="bubble-ring"></span>
+        </div>
+        <div class="bubble-tail"></div>
+        <span class="status">Waiting...</span>
+      </div>
+
+      <div class="player-bubble" id="slot-4">
+        <p class="player-name">PLAYER 4</p>
+        <div class="bubble-avatar">
+          <img class="bubble-avatar-img" src="" alt="">
+          <svg class="bubble-avatar-placeholder" viewBox="0 0 24 24" width="26" height="26" fill="none">
+            <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2" />
+            <path d="M4 20c0-4 3.5-6 8-6s8 2 8 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+          </svg>
+          <span class="bubble-ring"></span>
+        </div>
+        <div class="bubble-tail"></div>
+        <span class="status">Waiting...</span>
+      </div>
+    </div>
+
+    <!-- QR panel -->
+    <div class="lobby-qr-panel">
+      <div class="lobby-qr-code" id="lobby-qr-code"></div>
+      <p class="lobby-qr-label">Scan to Play</p>
+    </div>
+
   </div>
 
   <!-- ════════ GAME SCREEN ════════ -->
@@ -163,4 +246,5 @@
   <script src="sounds.js"></script>
   <script src="game.js"></script>
 </body>
+
 </html>

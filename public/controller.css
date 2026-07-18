@@ -7,7 +7,10 @@
 }
 
 body {
-    background: #050810;
+    background:
+        radial-gradient(ellipse at top left, rgba(0, 153, 255, 0.12) 0%, transparent 50%),
+        radial-gradient(ellipse at bottom right, rgba(124, 58, 237, 0.1) 0%, transparent 50%),
+        #050810;
     color: white;
     font-family: 'Inter', sans-serif;
     min-height: 100vh;
@@ -16,6 +19,7 @@ body {
     align-items: center;
     padding: 20px;
     touch-action: manipulation;
+    overflow: hidden;
 }
 
 .hidden {
@@ -122,7 +126,7 @@ input {
     transform: scale(0.95);
 }
 
-/* Survive D-pad */
+/* Survive D-pad (legacy, kept in case still referenced elsewhere) */
 .dpad {
     display: grid;
     grid-template-areas:
@@ -229,7 +233,7 @@ input {
     color: #050810;
 }
 
-/* Racer Controller */
+/* Racer Controller (deduped — single copy) */
 .racer-layout {
     display: flex;
     flex-direction: column;
@@ -330,113 +334,79 @@ input {
     color: #050810;
 }
 
-/* Racer Controller */
-.racer-layout {
-    display: flex;
+/* ══════════════ LANDSCAPE LOCK ══════════════ */
+.rotate-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 5000;
+    background: #050810;
     flex-direction: column;
-    gap: 20px;
-    width: 100%;
-    max-width: 500px;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    text-align: center;
+    padding: 20px;
 }
 
-.steering {
-    display: flex;
-    justify-content: space-between;
-    gap: 15px;
-}
-
-.steer-btn {
-    flex: 1;
-    height: 120px;
+.rotate-icon {
     font-size: 3rem;
-    border-radius: 16px;
+    animation: rotateHint 1.6s ease-in-out infinite;
 }
 
-.left-steer:active {
-    background: linear-gradient(135deg, #00e0ff, #0099ff);
-    color: #050810;
+@keyframes rotateHint {
+
+    0%,
+    100% {
+        transform: rotate(0deg);
+    }
+
+    50% {
+        transform: rotate(90deg);
+    }
 }
 
-.right-steer:active {
-    background: linear-gradient(135deg, #aaff00, #00ff88);
-    color: #050810;
+.rotate-overlay p {
+    color: #94a3b8;
+    font-weight: 600;
+    max-width: 260px;
 }
 
-.pedals {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
+@media (orientation: portrait) and (max-width: 900px) {
+    .rotate-overlay {
+        display: flex;
+    }
+
+    #join-screen,
+    #game-select,
+    .controller {
+        display: none !important;
+    }
 }
 
-.pedal {
-    height: 110px;
-    border-radius: 16px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-}
-
-.pedal-icon {
-    font-size: 2rem;
-}
-
-.pedal-label {
-    font-size: 0.85rem;
-    font-weight: 700;
-    letter-spacing: 1px;
-}
-
-.gas-btn:active {
-    background: linear-gradient(135deg, #aaff00, #00ff88);
-    color: #050810;
-}
-
-.brake-btn:active {
-    background: linear-gradient(135deg, #ff7b00, #ff3860);
-    color: white;
-}
-
-.boost-btn {
-    height: 90px;
-    border-radius: 16px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    background: rgba(255, 170, 0, 0.1);
-    border-color: rgba(255, 170, 0, 0.3);
-}
-
-.boost-icon {
-    font-size: 2rem;
-    color: #ffaa00;
-}
-
-.boost-label {
-    font-size: 0.85rem;
-    font-weight: 700;
-    letter-spacing: 2px;
-    color: #ffaa00;
-}
-
-.boost-btn:active {
-    background: linear-gradient(135deg, #ffaa00, #ff7b00);
-}
-
-.boost-btn:active .boost-icon,
-.boost-btn:active .boost-label {
-    color: #050810;
-}
-
-/* ══════ UNO Controller ══════ */
+/* ══════════════ UNO CONTROLLER — LANDSCAPE FAN LAYOUT ══════════════ */
 #uno-controller {
-    padding: 15px;
-    gap: 12px;
-    max-width: 100%;
     width: 100%;
+    height: 100vh;
+    padding: 10px 16px;
+    gap: 8px;
+}
+
+.uno-layout {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex: 1;
+    width: 100%;
+}
+
+.uno-left-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+    width: 130px;
 }
 
 .uno-header {
@@ -444,39 +414,39 @@ input {
 }
 
 .uno-header h2 {
-    font-size: 2rem;
+    font-size: 1.4rem;
     background: linear-gradient(135deg, #ff3860, #ffaa00);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
     font-weight: 900;
-    letter-spacing: 4px;
+    letter-spacing: 3px;
 }
 
 #uno-status {
     color: #94a3b8;
-    font-size: 0.85rem;
-    margin-top: 5px;
+    font-size: 0.7rem;
+    margin-top: 4px;
 }
 
 .uno-top-card-display {
     background: rgba(0, 0, 0, 0.4);
     border-radius: 12px;
-    padding: 12px;
+    padding: 8px;
     text-align: center;
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .uno-label {
-    font-size: 0.7rem;
+    font-size: 0.6rem;
     color: #94a3b8;
     letter-spacing: 2px;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 }
 
 .uno-mini-card {
-    width: 60px;
-    height: 85px;
+    width: 50px;
+    height: 70px;
     margin: 0 auto;
     border-radius: 8px;
     border: 3px solid white;
@@ -484,7 +454,7 @@ input {
     align-items: center;
     justify-content: center;
     font-weight: 800;
-    font-size: 1.5rem;
+    font-size: 1.2rem;
     color: white;
     text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.4);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
@@ -512,7 +482,7 @@ input {
 
 .uno-color-label {
     margin-top: 8px;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     color: #94a3b8;
 }
 
@@ -521,6 +491,187 @@ input {
     text-transform: uppercase;
 }
 
+/* Draw pile */
+.uno-draw-pile {
+    position: relative;
+    width: 60px;
+    height: 84px;
+    margin-top: 6px;
+    touch-action: none;
+    cursor: pointer;
+}
+
+.uno-draw-card-back {
+    position: absolute;
+    inset: 0;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #7c3aed, #ff3860);
+    border: 3px solid white;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.5);
+    transition: transform 0.15s ease;
+}
+
+.uno-draw-card-back.stacked {
+    transform: translate(3px, 3px);
+    z-index: -1;
+    opacity: 0.7;
+}
+
+.uno-draw-pile.pulled .uno-draw-card-back:not(.stacked) {
+    transform: translateY(-14px) scale(1.05);
+}
+
+.uno-draw-pile.drawing .uno-draw-card-back:not(.stacked) {
+    animation: drawFlyUp 0.5s ease-in forwards;
+}
+
+@keyframes drawFlyUp {
+    to {
+        transform: translateY(-260px) scale(0.7);
+        opacity: 0;
+    }
+}
+
+.uno-draw-hint {
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.55rem;
+    color: #94a3b8;
+    letter-spacing: 1px;
+    white-space: nowrap;
+    text-align: center;
+}
+
+/* Fanned hand */
+.uno-fan {
+    position: relative;
+    flex: 1;
+    height: 150px;
+    display: flex;
+    justify-content: center;
+}
+
+.uno-fan .no-cards {
+    align-self: center;
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.uno-fan-card {
+    position: absolute;
+    left: 50%;
+    bottom: 0;
+    width: 68px;
+    height: 96px;
+    border-radius: 8px;
+    border: 3px solid white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1.3rem;
+    color: white;
+    text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.4);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.45);
+    transform-origin: bottom center;
+    transition: box-shadow 0.2s ease, filter 0.2s ease;
+    cursor: pointer;
+    touch-action: none;
+    will-change: transform;
+}
+
+.uno-fan-card.raised {
+    box-shadow: 0 0 22px rgba(170, 255, 0, 0.7);
+    z-index: 999 !important;
+}
+
+.uno-fan-card.playable::after {
+    content: '';
+    position: absolute;
+    inset: -4px;
+    border-radius: 12px;
+    border: 2px dashed rgba(170, 255, 0, 0.6);
+    animation: glowPulse 1.5s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes glowPulse {
+
+    0%,
+    100% {
+        opacity: 0.5;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
+.uno-fan-card.not-playable {
+    filter: brightness(0.6) saturate(0.7);
+}
+
+.uno-fan-card.flying-play {
+    transition: transform 0.35s ease-in, opacity 0.35s ease-in;
+    transform: translate(-50%, -220px) scale(0.7) rotate(0deg) !important;
+    opacity: 0;
+}
+
+.uno-fan-card.shake {
+    animation: cardShake 0.3s ease;
+}
+
+@keyframes cardShake {
+
+    0%,
+    100% {
+        margin-left: 0;
+    }
+
+    25% {
+        margin-left: -6px;
+    }
+
+    75% {
+        margin-left: 6px;
+    }
+}
+
+.uno-fan-card.red {
+    background: #ff3860;
+}
+
+.uno-fan-card.blue {
+    background: #00e0ff;
+}
+
+.uno-fan-card.green {
+    background: #aaff00;
+}
+
+.uno-fan-card.yellow {
+    background: #ffaa00;
+}
+
+.uno-fan-card.wild {
+    background: linear-gradient(135deg, #ff3860 0%, #ffaa00 33%, #aaff00 66%, #00e0ff 100%);
+}
+
+@media (max-height: 420px) {
+    .uno-fan-card {
+        width: 58px;
+        height: 82px;
+        font-size: 1.1rem;
+    }
+
+    .uno-fan {
+        height: 130px;
+    }
+}
+
+/* Legacy UNO action button / grid hand — kept in case referenced elsewhere, unused by new fan UI */
 .uno-hand {
     background: rgba(255, 255, 255, 0.03);
     border: 2px dashed rgba(255, 255, 255, 0.1);
@@ -532,76 +683,6 @@ input {
     gap: 6px;
     justify-content: center;
     align-items: center;
-}
-
-.uno-hand .no-cards {
-    color: #64748b;
-    font-size: 0.9rem;
-}
-
-.uno-card {
-    width: 55px;
-    height: 78px;
-    border-radius: 8px;
-    border: 3px solid white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 800;
-    font-size: 1.3rem;
-    color: white;
-    text-shadow: 2px 2px 0 rgba(0, 0, 0, 0.4);
-    cursor: pointer;
-    transition: all 0.2s;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
-    user-select: none;
-}
-
-.uno-card.playable {
-    border-color: #aaff00;
-    box-shadow: 0 0 15px rgba(170, 255, 0, 0.6);
-    animation: glowPulse 1.5s ease-in-out infinite;
-}
-
-@keyframes glowPulse {
-
-    0%,
-    100% {
-        box-shadow: 0 0 15px rgba(170, 255, 0, 0.6);
-    }
-
-    50% {
-        box-shadow: 0 0 25px rgba(170, 255, 0, 1);
-    }
-}
-
-.uno-card.playable:active {
-    transform: scale(0.9) translateY(-10px);
-}
-
-.uno-card.not-playable {
-    opacity: 0.4;
-    cursor: not-allowed;
-}
-
-.uno-card.red {
-    background: #ff3860;
-}
-
-.uno-card.blue {
-    background: #00e0ff;
-}
-
-.uno-card.green {
-    background: #aaff00;
-}
-
-.uno-card.yellow {
-    background: #ffaa00;
-}
-
-.uno-card.wild {
-    background: linear-gradient(135deg, #ff3860 0%, #ffaa00 33%, #aaff00 66%, #00e0ff 100%);
 }
 
 .uno-actions {
@@ -633,6 +714,7 @@ input {
     transform: scale(0.97);
 }
 
+/* Color picker overlay for wild cards */
 .uno-color-picker {
     position: fixed;
     top: 0;
@@ -695,4 +777,553 @@ input {
     font-weight: 700;
     font-size: 0.9rem;
     min-height: 22px;
+}
+
+/* ══════════════ FIGHTER CONTROLLER — GRID BG + JOYSTICK + ACTION CLUSTER ══════════════ */
+#fighter-controller {
+    width: 100%;
+    height: 100vh;
+    justify-content: center;
+    position: relative;
+}
+
+#fighter-controller::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(0, 224, 255, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 224, 255, 0.06) 1px, transparent 1px);
+    background-size: 28px 28px;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.fighter-layout {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 700px;
+    gap: 40px;
+}
+
+/* ── D-pad / Joystick ── */
+.dpad-ring {
+    position: relative;
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #6b7280, #3f4654 70%);
+    border: 3px solid #1a1e26;
+    box-shadow:
+        0 0 0 4px rgba(0, 224, 255, 0.5),
+        0 0 24px rgba(0, 224, 255, 0.35),
+        inset 0 4px 10px rgba(0, 0, 0, 0.4);
+    flex-shrink: 0;
+    touch-action: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.dpad-arrow {
+    position: absolute;
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 1.4rem;
+    pointer-events: none;
+    transition: color 0.1s ease, transform 0.1s ease;
+}
+
+.arrow-up {
+    top: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.arrow-down {
+    bottom: 16px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.arrow-left {
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.arrow-right {
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+.dpad-ring.dir-up .arrow-up,
+.dpad-ring.dir-down .arrow-down,
+.dpad-ring.dir-left .arrow-left,
+.dpad-ring.dir-right .arrow-right {
+    color: #00e0ff;
+    transform-origin: center;
+}
+
+.dpad-ring.dir-up .arrow-up {
+    transform: translateX(-50%) scale(1.25);
+}
+
+.dpad-ring.dir-down .arrow-down {
+    transform: translateX(-50%) scale(1.25);
+}
+
+.dpad-ring.dir-left .arrow-left {
+    transform: translateY(-50%) scale(1.25);
+}
+
+.dpad-ring.dir-right .arrow-right {
+    transform: translateY(-50%) scale(1.25);
+}
+
+.dpad-knob {
+    position: relative;
+    width: 92px;
+    height: 92px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #9aa3b0, #5c6472 75%);
+    border: 3px solid #1a1e26;
+    box-shadow:
+        0 6px 14px rgba(0, 0, 0, 0.5),
+        inset 0 -6px 10px rgba(0, 0, 0, 0.25),
+        inset 0 4px 8px rgba(255, 255, 255, 0.15);
+    transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+    /* spring-back */
+    touch-action: none;
+}
+
+.dpad-ring.dragging .dpad-knob {
+    transition: none;
+    /* instant tracking while finger is down */
+    box-shadow:
+        0 3px 8px rgba(0, 0, 0, 0.5),
+        inset 0 -4px 8px rgba(0, 0, 0, 0.3),
+        inset 0 3px 6px rgba(255, 255, 255, 0.12);
+}
+
+/* ── Action button cluster ── */
+.action-cluster {
+    position: relative;
+    width: 240px;
+    height: 240px;
+    flex-shrink: 0;
+}
+
+.action-circle {
+    position: absolute;
+    width: 92px;
+    height: 92px;
+    border-radius: 50%;
+    border: 3px solid #0d0f14;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Inter', sans-serif;
+    font-weight: 900;
+    font-size: 1.05rem;
+    color: #0d0f14;
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: transform 0.08s ease, box-shadow 0.08s ease, filter 0.08s ease;
+}
+
+.action-circle span {
+    text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.a1 {
+    top: 0;
+    right: 74px;
+    background: radial-gradient(circle at 35% 30%, #ff6b6b, #d61f3c 75%);
+    box-shadow: 0 0 0 4px rgba(0, 224, 255, 0.45), 0 6px 14px rgba(214, 31, 60, 0.45);
+}
+
+.a2 {
+    top: 74px;
+    left: 0;
+    background: radial-gradient(circle at 35% 30%, #c8ff5c, #7bc400 75%);
+    box-shadow: 0 0 0 4px rgba(0, 224, 255, 0.45), 0 6px 14px rgba(123, 196, 0, 0.45);
+}
+
+.a3 {
+    top: 74px;
+    right: 0;
+    background: radial-gradient(circle at 35% 30%, #ffb85c, #e07800 75%);
+    box-shadow: 0 0 0 4px rgba(0, 224, 255, 0.45), 0 6px 14px rgba(224, 120, 0, 0.45);
+}
+
+.jmp {
+    top: 148px;
+    left: 74px;
+    background: radial-gradient(circle at 35% 30%, #ffe066, #e0a800 75%);
+    box-shadow: 0 0 0 4px rgba(0, 224, 255, 0.45), 0 6px 14px rgba(224, 168, 0, 0.45);
+}
+
+/* Pressed state — button visibly lowers/darkens, like the reference art */
+.action-circle.pressed,
+.action-circle:active {
+    transform: scale(0.88) translateY(3px);
+    filter: brightness(0.8);
+    box-shadow: 0 0 0 4px rgba(0, 224, 255, 0.7), 0 2px 6px rgba(0, 0, 0, 0.4);
+}
+
+@media (max-width: 700px) {
+    .fighter-layout {
+        gap: 16px;
+    }
+
+    .dpad-ring {
+        width: 160px;
+        height: 160px;
+    }
+
+    .dpad-knob {
+        width: 74px;
+        height: 74px;
+    }
+
+    .action-cluster {
+        width: 190px;
+        height: 190px;
+    }
+
+    .action-circle {
+        width: 74px;
+        height: 74px;
+        font-size: 0.9rem;
+    }
+
+    .a1 {
+        right: 58px;
+    }
+
+    .a2 {
+        top: 58px;
+    }
+
+    .a3 {
+        top: 58px;
+        right: 0;
+    }
+
+    .jmp {
+        top: 116px;
+        left: 58px;
+    }
+}
+
+@media (max-height: 420px) {
+    .dpad-ring {
+        width: 150px;
+        height: 150px;
+    }
+
+    .dpad-knob {
+        width: 68px;
+        height: 68px;
+    }
+
+    .action-cluster {
+        width: 180px;
+        height: 180px;
+    }
+
+    .action-circle {
+        width: 70px;
+        height: 70px;
+    }
+
+    .a1 {
+        right: 55px;
+    }
+
+    .a2 {
+        top: 55px;
+    }
+
+    .a3 {
+        top: 55px;
+        right: 0;
+    }
+
+    .jmp {
+        top: 110px;
+        left: 55px;
+    }
+}
+
+/* ══════════════ RACER CONTROLLER — GRID BG + WHEEL + THROTTLE/BRAKE BARS ══════════════ */
+#racer-controller {
+    width: 100%;
+    height: 100vh;
+    position: relative;
+    justify-content: flex-start;
+    gap: 10px;
+    padding-top: 10px;
+}
+
+#racer-controller::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(0, 224, 255, 0.06) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 224, 255, 0.06) 1px, transparent 1px);
+    background-size: 28px 28px;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.racer-layout {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 780px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+}
+
+/* HUD */
+.racer-hud {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    background: rgba(15, 23, 42, 0.55);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 10px 22px;
+    backdrop-filter: blur(6px);
+}
+
+.hud-speed {
+    text-align: center;
+}
+
+.hud-speed span {
+    display: block;
+    font-size: 2rem;
+    font-weight: 900;
+    color: white;
+    line-height: 1;
+}
+
+.hud-speed p {
+    font-size: 0.65rem;
+    color: #94a3b8;
+    letter-spacing: 1px;
+}
+
+.hud-arc-wrap {
+    position: relative;
+    width: 140px;
+    height: 70px;
+}
+
+.hud-arc {
+    width: 100%;
+    height: 100%;
+}
+
+#hud-arc-fill {
+    transition: stroke-dashoffset 0.15s ease;
+    filter: drop-shadow(0 0 6px rgba(0, 224, 255, 0.7));
+}
+
+.hud-arc-label {
+    position: absolute;
+    bottom: 6px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1rem;
+    font-weight: 800;
+    color: white;
+}
+
+.hud-gear {
+    text-align: center;
+}
+
+.hud-gear p {
+    font-size: 0.6rem;
+    color: #94a3b8;
+    letter-spacing: 1px;
+}
+
+.hud-gear span {
+    display: block;
+    font-size: 1.7rem;
+    font-weight: 900;
+    color: white;
+}
+
+/* Main row: wheel + bars */
+.racer-main-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 34px;
+    flex: 1;
+}
+
+.wheel-zone {
+    width: 190px;
+    height: 190px;
+    touch-action: none;
+    cursor: grab;
+}
+
+.wheel-svg {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 0 10px rgba(0, 224, 255, 0.5));
+    transition: transform 0.12s ease-out;
+    transform-origin: center;
+}
+
+.wheel-zone.dragging .wheel-svg {
+    transition: none;
+}
+
+/* Throttle / Brake vertical sliders */
+.pedal-bars {
+    display: flex;
+    gap: 18px;
+}
+
+.pedal-bar {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    touch-action: none;
+}
+
+.pedal-bar-label.vertical {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    font-size: 0.6rem;
+    letter-spacing: 2px;
+    color: #94a3b8;
+    font-weight: 700;
+}
+
+.pedal-bar-track {
+    position: relative;
+    width: 46px;
+    height: 190px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 2px solid rgba(255, 255, 255, 0.12);
+    overflow: hidden;
+}
+
+.pedal-bar-fill {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 0%;
+    transition: height 0.08s ease-out;
+}
+
+.throttle-bar .pedal-bar-fill {
+    background: linear-gradient(180deg, #00e0ff, #0099ff);
+    box-shadow: 0 0 14px rgba(0, 224, 255, 0.6);
+}
+
+.brake-bar .pedal-bar-fill {
+    background: linear-gradient(180deg, #ff6b6b, #ff3860);
+    box-shadow: 0 0 14px rgba(255, 56, 96, 0.6);
+}
+
+.pedal-bar.active .pedal-bar-track {
+    border-color: rgba(0, 224, 255, 0.5);
+}
+
+.pedal-captions {
+    display: flex;
+    justify-content: center;
+    gap: 84px;
+    margin-top: -4px;
+}
+
+.pedal-captions span {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #cbd5e1;
+    letter-spacing: 1px;
+}
+
+/* Boost button */
+.boost-circle {
+    width: 66px;
+    height: 66px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #ffe066, #e0a800 75%);
+    border: 3px solid #0d0f14;
+    box-shadow: 0 0 0 4px rgba(255, 170, 0, 0.4), 0 6px 14px rgba(224, 168, 0, 0.4);
+    font-size: 1.4rem;
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: transform 0.08s ease, filter 0.08s ease;
+    margin-top: 4px;
+}
+
+.boost-circle:active,
+.boost-circle.pressed {
+    transform: scale(0.88) translateY(3px);
+    filter: brightness(0.8);
+}
+
+@media (max-width: 700px) {
+    .racer-main-row {
+        gap: 18px;
+    }
+
+    .wheel-zone {
+        width: 150px;
+        height: 150px;
+    }
+
+    .pedal-bar-track {
+        width: 38px;
+        height: 150px;
+    }
+
+    .pedal-captions {
+        gap: 60px;
+    }
+
+    .racer-hud {
+        padding: 8px 14px;
+        gap: 12px;
+    }
+
+    .hud-arc-wrap {
+        width: 110px;
+        height: 55px;
+    }
+}
+
+@media (max-height: 420px) {
+    .wheel-zone {
+        width: 140px;
+        height: 140px;
+    }
+
+    .pedal-bar-track {
+        width: 36px;
+        height: 140px;
+    }
 }

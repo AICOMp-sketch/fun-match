@@ -64,6 +64,12 @@
           <span class="room-info-value room-info-code" id="info-room-code">—</span>
         </div>
       </div>
+
+      <button class="lobby-close-btn" id="lobby-close-btn" title="Leave room" onclick="exitLobbyAndCleanup()">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
+          <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
+        </svg>
+      </button>
     </div>
 
     <div class="lobby-marquee">
@@ -260,6 +266,8 @@
   </div>
 
   <script src="https://fun-match-production.up.railway.app/socket.io/socket.io.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="../../global/supabase.js"></script>
   <script src="sounds.js"></script>
   <script src="game.js"></script>
 </body>

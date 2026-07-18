@@ -411,13 +411,14 @@ socket.on("connect", () => {
     try {
       const config = JSON.parse(configStr);
       roomCode = config.roomCode;
-    } catch(e) {}
+    } catch (e) { }
   }
   socket.emit("create-room", { roomCode });
 });
 
 socket.on("room-created", (data) => {
   document.getElementById("room-code").textContent = data.roomCode;
+  renderLobbyQR(data.roomCode);
 });
 
 socket.on("player-joined", (player) => {
@@ -437,14 +438,21 @@ socket.on("player-joined", (player) => {
   const slot = document.getElementById(`slot-${GAME.players.length}`);
   if (slot) {
     slot.classList.add('filled');
-    slot.querySelector('.slot-avatar').textContent = player.name[0].toUpperCase();
-    slot.querySelector('p').textContent = player.name;
+    slot.querySelector('.player-name').textContent = player.name.toUpperCase();
+    slot.querySelector('.status').textContent = 'Ready!';
+    setSlotAvatar(slot, player.avatarUrl); // no-op until server sends avatarUrl
   }
 
   if (GAME.players.length >= 2) {
     document.getElementById('start-game-btn').disabled = false;
   }
 });
+
+function setSlotAvatar(slotEl, avatarUrl) {
+  if (!slotEl || !avatarUrl) return;
+  const img = slotEl.querySelector('.bubble-avatar-img');
+  if (img) img.src = avatarUrl;
+}
 
 // Phone plays a card
 socket.on("uno-play", (data) => {
@@ -460,7 +468,7 @@ socket.on("uno-play", (data) => {
 socket.on("uno-draw", (data) => {
   const player = GAME.players.find(p => p.id === data.playerId);
   if (!player || player.id !== getCurrentPlayer().id) return;
-  
+
   drawCards(data.playerId, 1);
   Sounds.drawCard();
 
@@ -488,23 +496,21 @@ document.getElementById('bot-mode-btn').addEventListener('click', () => {
   GAME.isBotMode = true;
   GAME.players = [];
 
-  // Add local player
   const localPlayer = { id: 'local-player', name: 'YOU', isBot: false };
   GAME.players.push(localPlayer);
   LOCAL_PLAYER_ID = 'local-player';
 
-  // Add 3 bots
   const botNames = ['ALEX', 'JAMIE', 'CASEY'];
   botNames.forEach((name, i) => {
     GAME.players.push({ id: `bot-${i}`, name, isBot: true });
   });
 
-  // Fill UI slots
-  document.querySelectorAll('.player-slot').forEach((slot, i) => {
+  document.querySelectorAll('.player-bubble').forEach((slot, i) => {
     if (GAME.players[i]) {
       slot.classList.add('filled');
-      slot.querySelector('.slot-avatar').textContent = GAME.players[i].name[0];
-      slot.querySelector('p').textContent = GAME.players[i].name;
+      if (GAME.players[i].isBot) slot.classList.add('cpu');
+      slot.querySelector('.player-name').textContent = GAME.players[i].name;
+      slot.querySelector('.status').textContent = GAME.players[i].isBot ? 'CPU' : 'You!';
     }
   });
 
@@ -669,3 +675,45 @@ updateDisplay = function () {
   originalUpdateDisplay();
   if (GAME.isBotMode) showLocalPlayerCards();
 };
+
+function toggleRoomInfo() {
+  const popover = document.getElementById('room-info-popover');
+  if (!popover) return;
+  const willShow = popover.classList.contains('hidden');
+  popover.classList.toggle('hidden');
+  if (willShow) populateRoomInfo();
+}
+
+function populateRoomInfo() {
+  const configStr = sessionStorage.getItem('roomConfig');
+  if (!configStr) return;
+  let config;
+  try { config = JSON.parse(configStr); } catch (e) { return; }
+
+  document.getElementById('info-room-name').textContent = config.roomName || '—';
+  document.getElementById('info-privacy').textContent = config.privacy === 'private' ? 'Private 🔒' : 'Public 🌐';
+  document.getElementById('info-mode').textContent = config.mode === 'survival' ? 'Survival' : 'Time Limit';
+  document.getElementById('info-room-code').textContent = config.roomCode || '—';
+
+  const maxPlayersRow = document.getElementById('info-max-players-row');
+  maxPlayersRow.classList.remove('hidden');
+  document.getElementById('info-max-players').textContent = config.maxPlayers || '—';
+}
+
+document.addEventListener('click', function (e) {
+  const popover = document.getElementById('room-info-popover');
+  const btn = document.getElementById('room-info-btn');
+  if (!popover || popover.classList.contains('hidden')) return;
+  if (!popover.contains(e.target) && e.target !== btn && !btn.contains(e.target)) {
+    popover.classList.add('hidden');
+  }
+});
+
+function renderLobbyQR(roomCode) {
+  const qrEl = document.getElementById('lobby-qr-code');
+  if (!qrEl || !roomCode) return;
+  const joinUrl = window.location.origin + '/controller.html?room=' + roomCode;
+  qrEl.innerHTML = '<img src="https://api.qrserver.com/v1/create-qr-code/?size=400x400&data='
+    + encodeURIComponent(joinUrl)
+    + '&bgcolor=ffffff&color=0a0e27&margin=0" alt="Scan to join room ' + roomCode + '">';
+}

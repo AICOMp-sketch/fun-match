@@ -29,6 +29,18 @@
                         stroke-linecap="round" />
                 </svg>
             </button>
+
+            <!-- NEW: Controllers -->
+            <button class="floating-nav-btn" data-view="controllers" onclick="showView('controllers')"
+                title="Controllers">
+                <svg viewBox="0 0 24 24" width="19" height="19" fill="none">
+                    <rect x="2" y="8" width="20" height="10" rx="5" stroke="currentColor" stroke-width="2" />
+                    <path d="M7 12h3M8.5 10.5v3" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                    <circle cx="15.5" cy="11.5" r="1" fill="currentColor" />
+                    <circle cx="17.5" cy="13.5" r="1" fill="currentColor" />
+                </svg>
+            </button>
+
             <button class="floating-nav-btn" data-view="leaderboard" onclick="showView('leaderboard')"
                 title="Leaderboard">
                 <svg viewBox="0 0 24 24" width="19" height="19" fill="none">
@@ -1105,6 +1117,85 @@
                 </div>
             </div>
 
+            <!-- ════════ CONTROLLERS PAGE ════════ -->
+            <div id="controllers-page" class="page-view hidden">
+                <div class="page-header">
+                    <h2>Controllers</h2>
+                    <p>Pick a controller type to preview on your phone</p>
+                </div>
+
+                <div class="controllers-grid">
+
+                    <div class="controller-card">
+                        <div class="controller-card-visual uno-controller-grad">
+                            <svg viewBox="0 0 24 24" width="46" height="46" fill="none">
+                                <rect x="3" y="4" width="14" height="18" rx="2" transform="rotate(-8 10 13)"
+                                    stroke="currentColor" stroke-width="1.6" />
+                                <rect x="7" y="2" width="14" height="18" rx="2" transform="rotate(8 14 11)"
+                                    stroke="currentColor" stroke-width="1.6" fill="rgba(0,0,0,0.15)" />
+                            </svg>
+                        </div>
+                        <div class="controller-card-body">
+                            <h4>UNO Controller</h4>
+                            <p>Fanned hand of cards — tap to preview, swipe up to play or draw.</p>
+                            <button class="controller-preview-btn" onclick="previewController('survive')">
+                                Preview
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none">
+                                    <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2.5"
+                                        stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="controller-card">
+                        <div class="controller-card-visual fighter-controller-grad">
+                            <svg viewBox="0 0 24 24" width="46" height="46" fill="none">
+                                <circle cx="8" cy="12" r="6" stroke="currentColor" stroke-width="1.6" />
+                                <circle cx="8" cy="12" r="2.2" stroke="currentColor" stroke-width="1.6" />
+                                <circle cx="17" cy="9" r="1.6" fill="currentColor" />
+                                <circle cx="20" cy="12" r="1.6" fill="currentColor" />
+                                <circle cx="17" cy="15" r="1.6" fill="currentColor" />
+                            </svg>
+                        </div>
+                        <div class="controller-card-body">
+                            <h4>Fighter Controller</h4>
+                            <p>Draggable joystick with spring-back, plus A1 / A2 / A3 / JMP action buttons.</p>
+                            <button class="controller-preview-btn" onclick="previewController('fighter')">
+                                Preview
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none">
+                                    <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2.5"
+                                        stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="controller-card">
+                        <div class="controller-card-visual racer-controller-grad">
+                            <svg viewBox="0 0 24 24" width="46" height="46" fill="none">
+                                <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="1.6" />
+                                <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.6" />
+                                <path d="M12 4v5M7 16l-3 3M17 16l3 3" stroke="currentColor" stroke-width="1.6"
+                                    stroke-linecap="round" />
+                            </svg>
+                        </div>
+                        <div class="controller-card-body">
+                            <h4>Racer Controller</h4>
+                            <p>Rotating steering wheel with throttle and brake sliders that work together.</p>
+                            <button class="controller-preview-btn" onclick="previewController('racer')">
+                                Preview
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none">
+                                    <path d="M5 12h14M12 5l7 7-7 7" stroke="currentColor" stroke-width="2.5"
+                                        stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
         </main>
 
         <!-- ════════ RIGHT SIDEBAR (Friends) ════════ -->
@@ -1621,6 +1712,60 @@
         </div>
     </div>
 
+    <!-- ════════ CONTROLLER PREVIEW MODAL ════════ -->
+    <div class="modal-overlay hidden" id="controller-preview-modal">
+        <div class="controller-preview-container">
+            <div class="controller-preview-header">
+                <h3 id="controller-preview-title">Controller Preview</h3>
+                <button class="modal-close" onclick="closeControllerPreview()">
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+                        <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.5"
+                            stroke-linecap="round" />
+                    </svg>
+                </button>
+            </div>
+            <div class="controller-preview-frame-wrap">
+                <iframe id="controller-preview-frame" class="controller-preview-frame" src=""
+                    title="Controller preview"></iframe>
+            </div>
+        </div>
+    </div>
+
+    <div class="quickplay-search-overlay hidden" id="quickplay-search-overlay">
+        <div class="quickplay-search-pill">
+            <div class="quickplay-search-spinner"></div>
+            <div class="quickplay-search-text">
+                <p class="quickplay-search-title">Finding a match...</p>
+                <p class="quickplay-search-sub">Searching public <span id="quickplay-search-game">rooms</span></p>
+            </div>
+            <div class="quickplay-search-timer" id="quickplay-search-timer">00:00</div>
+            <button class="quickplay-search-cancel" onclick="cancelQuickPlaySearch()" title="Cancel search">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
+                    <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
+                </svg>
+            </button>
+        </div>
+    </div>
+
+    <div class="no-match-toast" id="no-match-toast">
+        <div class="no-match-icon">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+                <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2" />
+                <path d="M21 21l-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                <path d="M8 8l6 6M14 8l-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+            </svg>
+        </div>
+        <div class="no-match-text">
+            <p class="no-match-title">No match found</p>
+            <p class="no-match-sub">All public rooms are full or offline right now — try again in a bit.</p>
+        </div>
+        <button class="no-match-close" onclick="hideNoMatchToast()">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none">
+                <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
+            </svg>
+        </button>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
     <script src="dashboard.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1741,6 +1886,7 @@
         function showView(view) {
             document.getElementById('hub-content').style.display = view === 'home' ? '' : 'none';
             document.getElementById('games-page').classList.toggle('hidden', view !== 'games');
+            document.getElementById('controllers-page').classList.toggle('hidden', view !== 'controllers'); // ← new
             document.getElementById('leaderboard-page').classList.toggle('hidden', view !== 'leaderboard');
             document.getElementById('profile-panel').classList.toggle('hidden', view !== 'profile');
 
@@ -2154,6 +2300,193 @@
             );
         }
 
+        const GAME_TYPE_DB_MAP = { fighter: 'fighter', racer: 'racer', survive: 'uno' };
+        let quickPlaySearchInterval = null;
+        let quickPlaySearchTimerInterval = null;
+        let quickPlaySearchTimeoutId = null;
+        let quickPlaySearchSeconds = 0;
+        let quickPlaySearchActive = false;
+
+        function startQuickPlaySearch() {
+            const gameKey = currentGame;
+            const cfg = GAME_CONFIGS[gameKey];
+            if (!gameKey || !cfg) return;
+
+            closeGameModal();
+
+            quickPlaySearchActive = true;
+            quickPlaySearchSeconds = 0;
+
+            const overlay = document.getElementById('quickplay-search-overlay');
+            const gameLabel = document.getElementById('quickplay-search-game');
+            const timerEl = document.getElementById('quickplay-search-timer');
+
+            gameLabel.textContent = cfg.title + ' rooms';
+            timerEl.textContent = '00:00';
+            overlay.classList.remove('hidden');
+            requestAnimationFrame(function () { overlay.classList.add('show'); });
+
+            quickPlaySearchTimerInterval = setInterval(function () {
+                quickPlaySearchSeconds++;
+                const m = String(Math.floor(quickPlaySearchSeconds / 60)).padStart(2, '0');
+                const s = String(quickPlaySearchSeconds % 60).padStart(2, '0');
+                timerEl.textContent = m + ':' + s;
+            }, 1000);
+
+            searchForQuickPlayRoom(gameKey);
+            quickPlaySearchInterval = setInterval(function () {
+                searchForQuickPlayRoom(gameKey);
+            }, 2500);
+
+            let noMatchToastTimeout = null;
+
+            function showNoMatchToast() {
+                const toast = document.getElementById('no-match-toast');
+                clearTimeout(noMatchToastTimeout);
+                toast.classList.add('show');
+                noMatchToastTimeout = setTimeout(hideNoMatchToast, 6000);
+            }
+
+            function hideNoMatchToast() {
+                const toast = document.getElementById('no-match-toast');
+                toast.classList.remove('show');
+                clearTimeout(noMatchToastTimeout);
+            }
+
+            quickPlaySearchTimeoutId = setTimeout(function () {
+                if (quickPlaySearchActive) {
+                    finishQuickPlaySearch();
+                    showNoMatchToast();
+                }
+            }, 20000);
+        }
+
+        const CONTROLLER_PREVIEW_TITLES = {
+            survive: 'UNO Controller Preview',
+            fighter: 'Fighter Controller Preview',
+            racer: 'Racer Controller Preview'
+        };
+
+        function previewController(gameKey) {
+            const modal = document.getElementById('controller-preview-modal');
+            const frame = document.getElementById('controller-preview-frame');
+            const title = document.getElementById('controller-preview-title');
+
+            title.textContent = CONTROLLER_PREVIEW_TITLES[gameKey] || 'Controller Preview';
+            frame.src = '../controller.html?preview=' + gameKey;
+            modal.classList.remove('hidden');
+        }
+
+        function closeControllerPreview() {
+            const modal = document.getElementById('controller-preview-modal');
+            const frame = document.getElementById('controller-preview-frame');
+            modal.classList.add('hidden');
+            frame.src = ''; // stop the iframe / disconnect its socket once closed
+        }
+
+        document.getElementById('controller-preview-modal').addEventListener('click', (e) => {
+            if (e.target.id === 'controller-preview-modal') closeControllerPreview();
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && !document.getElementById('controller-preview-modal').classList.contains('hidden')) {
+                closeControllerPreview();
+            }
+        });
+
+        let quickPlayRequestId = null;
+        let quickPlayRequestChannel = null;
+        let quickPlayRequestTimeoutId = null;
+
+        async function searchForQuickPlayRoom(gameKey) {
+            if (!quickPlaySearchActive) return;
+
+            const dbType = GAME_TYPE_DB_MAP[gameKey];
+
+            const { data, error } = await supabase
+                .from('game_sessions')
+                .select('id, room_code, current_players, max_players')
+                .eq('game_type', dbType)
+                .eq('status', 'waiting')
+                .eq('privacy', 'public')
+                .order('created_at', { ascending: true });
+
+            if (error) { console.error('Quick play search error:', error); return; }
+            if (!quickPlaySearchActive) return;
+
+            const openRoom = (data || []).find(function (room) {
+                return (room.current_players || 0) < room.max_players;
+            });
+
+            if (openRoom) {
+                clearInterval(quickPlaySearchInterval); // stop scanning while we wait on this room
+                await requestToJoinRoom(gameKey, openRoom);
+            }
+        }
+
+        async function requestToJoinRoom(gameKey, room) {
+            const profile = await getUserProfile();
+            const user = await getCurrentUser();
+            const displayName = profile && profile.display_name ? profile.display_name : (user ? user.email.split('@')[0] : 'Player');
+
+            updateQuickPlaySearchText('Asking the host...', 'Waiting for them to accept your request');
+
+            const result = await createJoinRequest(room.id, displayName);
+            if (result.error || !result.data) {
+                quickPlaySearchInterval = setInterval(function () { searchForQuickPlayRoom(gameKey); }, 2500);
+                return;
+            }
+
+            quickPlayRequestId = result.data.id;
+            quickPlayRequestChannel = subscribeToJoinRequestStatus(result.data.id, function (updatedRow) {
+                handleJoinRequestUpdate(gameKey, room, updatedRow);
+            });
+
+            quickPlayRequestTimeoutId = setTimeout(function () {
+                handleJoinRequestUpdate(gameKey, room, { status: 'declined' });
+            }, 15000);
+        }
+
+        function handleJoinRequestUpdate(gameKey, room, updatedRow) {
+            if (!quickPlaySearchActive) return;
+
+            clearTimeout(quickPlayRequestTimeoutId);
+            if (quickPlayRequestChannel) supabase.removeChannel(quickPlayRequestChannel);
+
+            if (updatedRow.status === 'accepted') {
+                finishQuickPlaySearch();
+                sessionStorage.setItem('joinConfig', JSON.stringify({ code: room.room_code }));
+                window.location.href = GAME_CONFIGS[gameKey].path + '?join=' + room.room_code;
+                return;
+            }
+
+            // Declined or timed out — resume searching for a different room
+            updateQuickPlaySearchText('Finding a match...', 'Searching public ' + GAME_CONFIGS[gameKey].title + ' rooms');
+            quickPlaySearchInterval = setInterval(function () { searchForQuickPlayRoom(gameKey); }, 2500);
+        }
+
+        function updateQuickPlaySearchText(title, sub) {
+            document.querySelector('.quickplay-search-title').textContent = title;
+            document.querySelector('.quickplay-search-sub').textContent = sub;
+        }
+
+        function finishQuickPlaySearch() {
+            quickPlaySearchActive = false;
+            clearInterval(quickPlaySearchInterval);
+            clearInterval(quickPlaySearchTimerInterval);
+            clearTimeout(quickPlaySearchTimeoutId);
+            clearTimeout(quickPlayRequestTimeoutId);
+            if (quickPlayRequestChannel) supabase.removeChannel(quickPlayRequestChannel);
+
+            const overlay = document.getElementById('quickplay-search-overlay');
+            overlay.classList.remove('show');
+            setTimeout(function () { overlay.classList.add('hidden'); }, 350);
+        }
+
+        function cancelQuickPlaySearch() {
+            finishQuickPlaySearch();
+        }
+
         function advancePlayOption(option) {
             if (option === 'host') {
                 if (!checkScreenSizeOk()) {
@@ -2163,7 +2496,7 @@
                 goToStep('host');
             }
             else if (option === 'join') goToStep('join');
-            else quickPlayBot();
+            else startQuickPlaySearch();
         }
 
         function setOptionCardBackgrounds(thumbUrl) {
@@ -2362,9 +2695,9 @@
 
             const config = {
                 game: currentGame,
-                roomName: roomName, // maps to map_name in game_sessions
+                roomName: roomName,
                 privacy: privacy,
-                password: password, // not yet persisted — see earlier note on schema
+                password: password,
                 mode: document.querySelector('.mode-card.active').dataset.mode,
                 maxPlayers: parseInt(document.getElementById('max-players').value),
                 roomCode: currentRoomCode
@@ -2381,14 +2714,13 @@
             submitBtnText.textContent = 'Creating Room...';
 
             const sessionPayload = {
-                game_type: config.game,
+                game_type: GAME_TYPE_DB_MAP[config.game] || config.game, // ← translate 'survive' → 'uno'
                 room_code: config.roomCode,
                 status: 'waiting',
                 mode: config.mode,
                 max_players: config.maxPlayers,
                 privacy: config.privacy,
                 map_name: config.roomName
-                // winner_id / duration / ended_at: set when the match finishes
             };
 
             const result = await saveGameSession(sessionPayload);

@@ -453,4 +453,172 @@ async function signInWithFacebook() {
     }
 }
 
+// ═══════════════ QUICK PLAY JOIN REQUESTS ═══════════════
+
+// Requester side: create a pending join request for a specific session
+async function createJoinRequest(sessionId, requesterName) {
+    const client = initSupabase();
+    const user = await getCurrentUser();
+    if (!client || !user) return { error: 'Not logged in' };
+
+    try {
+        const { data, error } = await client
+            .from('join_requests')
+            .insert({
+                session_id: sessionId,
+                requester_id: user.id,
+                requester_name: requesterName,
+                status: 'pending'
+            })
+            .select()
+            .single();
+
+        if (error) {
+            console.error('Join request error:', error.message);
+            return { error: error.message };
+        }
+
+        return { data };
+    } catch (err) {
+        return { error: 'Join request failed' };
+    }
+}
+
+// Requester side: watch a single request row for accept/decline
+function subscribeToJoinRequestStatus(requestId, onUpdate) {
+    const client = initSupabase();
+    if (!client) return null;
+
+    return client
+        .channel('join-request-' + requestId)
+        .on('postgres_changes', {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'join_requests',
+            filter: 'id=eq.' + requestId
+        }, function (payload) {
+            onUpdate(payload.new);
+        })
+        .subscribe();
+}
+
+// Host side: watch for new incoming requests on their own session
+function subscribeToIncomingJoinRequests(sessionId, onNewRequest) {
+    const client = initSupabase();
+    if (!client) return null;
+
+    return client
+        .channel('host-requests-' + sessionId)
+        .on('postgres_changes', {
+            event: 'INSERT',
+            schema: 'public',
+            table: 'join_requests',
+            filter: 'session_id=eq.' + sessionId
+        }, function (payload) {
+            onNewRequest(payload.new);
+        })
+        .subscribe();
+}
+
+// Host side: respond to a request, and bump current_players on accept
+async function respondToJoinRequest(requestId, sessionId, accepted, newPlayerCount) {
+    const client = initSupabase();
+    if (!client) return { error: 'Not initialized' };
+
+    try {
+        const { error: updateError } = await client
+            .from('join_requests')
+            .update({ status: accepted ? 'accepted' : 'declined' })
+            .eq('id', requestId);
+
+        if (updateError) return { error: updateError.message };
+
+        if (accepted) {
+            const { error: countError } = await client
+                .from('game_sessions')
+                .update({ current_players: newPlayerCount })
+                .eq('id', sessionId);
+
+            if (countError) return { error: countError.message };
+        }
+
+        return { success: true };
+    } catch (err) {
+        return { error: 'Failed to respond to request' };
+    }
+}
+
+async function createGameSession(session) {
+    const client = initSupabase();
+    const user = await getCurrentUser();
+    if (!client || !user) return { error: 'Not logged in' };
+
+    try {
+        const { data, error } = await client
+            .from('game_sessions')
+            .insert({
+                game_type: session.gameType,
+                room_code: session.roomCode,
+                privacy: session.privacy || 'public',
+                mode: session.mode || 'time_limit',
+                max_players: session.maxPlayers || 2,
+                status: 'waiting',
+                current_players: 1,
+                host_id: user.id
+            })
+            .select()
+            .single();
+
+        if (error) {
+            console.error('Create session error:', error.message);
+            return { error: error.message };
+        }
+        return { data };
+    } catch (err) {
+        return { error: 'Failed to create session' };
+    }
+}
+
+async function updateGameSessionStatus(sessionId, updates) {
+    const client = initSupabase();
+    if (!client || !sessionId) return { error: 'Missing client or session id' };
+
+    try {
+        const { data, error } = await client
+            .from('game_sessions')
+            .update(updates)
+            .eq('id', sessionId)
+            .select()
+            .single();
+
+        if (error) return { error: error.message };
+        return { data };
+    } catch (err) {
+        return { error: 'Update failed' };
+    }
+}
+
+async function deleteGameSession(sessionId) {
+    const client = initSupabase();
+    if (!client || !sessionId) return { error: 'Missing client or session id' };
+
+    try {
+        const { error } = await client
+            .from('game_sessions')
+            .delete()
+            .eq('id', sessionId);
+
+        if (error) return { error: error.message };
+        return { success: true };
+    } catch (err) {
+        return { error: 'Delete failed' };
+    }
+}
+
+// Cleanup helper for either side
+function unsubscribeChannel(channel) {
+    const client = initSupabase();
+    if (client && channel) client.removeChannel(channel);
+}
+
 console.log('🔐 Supabase module loaded!');

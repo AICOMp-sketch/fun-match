@@ -621,25 +621,6 @@ function frame(now) {
   resolveHit(player2, player1);
 }
 
-// ════════ SOCKET EVENTS ════════
-socket.on("connect", () => {
-  console.log("✅ Connected!");
-  let roomCode = null;
-  const configStr = sessionStorage.getItem('roomConfig');
-  if (configStr) {
-    try {
-      const config = JSON.parse(configStr);
-      roomCode = config.roomCode;
-    } catch (e) { }
-  }
-  socket.emit("create-room", { roomCode });
-});
-
-socket.on("room-created", (data) => {
-  console.log("🏠 Room:", data.roomCode);
-  document.getElementById("room-code").textContent = data.roomCode;
-});
-
 function renderLobbyQR(roomCode) {
   const qrEl = document.getElementById('lobby-qr-code');
   if (!qrEl || !roomCode) return;
@@ -713,16 +694,21 @@ socket.on("player-moved", (data) => {
 });
 
 // ════════ BOT MODE ════════
-document.getElementById('bot-mode-btn').addEventListener('click', () => {
+function activateBotMode() {
   GAME.isBotMode = true;
 
   document.getElementById('slot-1').classList.add('filled');
   document.getElementById('slot-1').querySelector('.status').textContent = 'You!';
-  document.getElementById('slot-2').classList.add('filled', 'cpu'); // ← added 'cpu' class
+  document.getElementById('slot-2').classList.add('filled', 'cpu');
   document.getElementById('slot-2').querySelector('.status').textContent = 'CPU';
 
   setTimeout(showCharacterSelect, 800);
-});
+}
+
+const botModeBtn = document.getElementById('bot-mode-btn');
+if (botModeBtn) {
+  botModeBtn.addEventListener('click', activateBotMode);
+}
 
 function showCharacterSelect() {
   document.getElementById('waiting-screen').classList.remove('active');
@@ -938,6 +924,64 @@ document.addEventListener('click', function (e) {
     popover.classList.add('hidden');
   }
 });
+
+let currentRoomCode = null;
+let currentSessionId = null;
+let pendingRoomConfig = null;
+
+socket.on("connect", () => {
+  console.log("✅ Connected!");
+  let roomCode = null;
+  const configStr = sessionStorage.getItem('roomConfig');
+  if (configStr) {
+    try {
+      pendingRoomConfig = JSON.parse(configStr);
+      roomCode = pendingRoomConfig.roomCode;
+    } catch (e) { }
+  }
+  socket.emit("create-room", { roomCode });
+});
+
+socket.on("room-created", async (data) => {
+  console.log("🏠 Room:", data.roomCode);
+  currentRoomCode = data.roomCode;
+  document.getElementById("room-code").textContent = data.roomCode;
+
+  const result = await createGameSession({
+    gameType: 'fighter',
+    roomCode: data.roomCode,
+    privacy: pendingRoomConfig ? pendingRoomConfig.privacy : 'public',
+    mode: pendingRoomConfig ? pendingRoomConfig.mode : 'time_limit',
+    maxPlayers: pendingRoomConfig ? pendingRoomConfig.maxPlayers : 2
+  });
+
+  if (result.data) {
+    currentSessionId = result.data.id;
+    console.log('📝 Session created:', currentSessionId);
+  } else {
+    console.error('Could not create game session:', result.error);
+  }
+});
+
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get('bot') === '1') {
+  activateBotMode();
+}
+
+async function exitLobbyAndCleanup() {
+  const btn = document.getElementById('lobby-close-btn');
+  const confirmLeave = confirm('Leave this room? The room will be deleted for everyone.');
+  if (!confirmLeave) return;
+
+  if (btn) btn.disabled = true;
+
+  if (currentSessionId) {
+    const result = await deleteGameSession(currentSessionId);
+    if (result.error) console.error('Session cleanup error:', result.error);
+  }
+
+  // window.location.href = '../../';
+}
 
 // ════════ START ════════
 requestAnimationFrame(frame);
