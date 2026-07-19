@@ -980,19 +980,24 @@ async function exitLobbyAndCleanup() {
 
   if (btn) btn.disabled = true;
 
-  if (currentSessionId) {
-    const result = await deleteGameSession(currentSessionId);
-    console.log('🗑️ deleteGameSession result:', result);
-    if (result.error) {
-      console.error('❌ Session cleanup error:', result.error);
+  try {
+    if (currentSessionId) {
+      const result = await deleteGameSession(currentSessionId);
+      console.log('🗑️ deleteGameSession result:', result);
+      if (result.error) {
+        console.error('❌ Session cleanup error:', result.error);
+      } else {
+        console.log('✅ Session deleted successfully');
+      }
     } else {
-      console.log('✅ Session deleted successfully');
+      console.warn('⚠️ No currentSessionId set — nothing to delete. Session was likely never created.');
     }
-  } else {
-    console.warn('⚠️ No currentSessionId set — nothing to delete. Session was likely never created.');
+  } catch (err) {
+    console.error('❌ Unexpected error during exit cleanup:', err);
+  } finally {
+    if (btn) btn.disabled = false;
   }
 
-  if (btn) btn.disabled = false;
   // window.location.href = '../../';
 }
 

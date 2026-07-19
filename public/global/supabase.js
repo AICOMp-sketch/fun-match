@@ -598,9 +598,10 @@ async function updateGameSessionStatus(sessionId, updates) {
     }
 }
 
+// Delete a game session (used when a host abandons/exits the lobby)
 async function deleteGameSession(sessionId) {
     const client = initSupabase();
-    if (!client || !sessionId) return { error: 'Missing client or session id' };
+    if (!client) return { error: 'Not initialized' };
 
     try {
         const { error } = await client
@@ -608,7 +609,11 @@ async function deleteGameSession(sessionId) {
             .delete()
             .eq('id', sessionId);
 
-        if (error) return { error: error.message };
+        if (error) {
+            console.error('Delete session error:', error.message);
+            return { error: error.message };
+        }
+
         return { success: true };
     } catch (err) {
         return { error: 'Delete failed' };
