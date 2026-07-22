@@ -205,12 +205,19 @@ async function updateProfile(updates) {
 // Save game session
 async function saveGameSession(gameData) {
     const client = initSupabase();
+    const user = await getCurrentUser();
     if (!client) return { error: 'Not initialized' };
+    if (!user) return { error: 'User not authenticated' };
 
     try {
+        const payload = {
+            ...gameData,
+            host_id: user.id
+        };
+
         const { data, error } = await client
             .from('game_sessions')
-            .insert(gameData)
+            .insert(payload)
             .select()
             .single();
 
@@ -564,37 +571,6 @@ async function respondToJoinRequest(requestId, sessionId, accepted, newPlayerCou
         return { success: true };
     } catch (err) {
         return { error: 'Failed to respond to request' };
-    }
-}
-
-async function createGameSession(session) {
-    const client = initSupabase();
-    const user = await getCurrentUser();
-    if (!client || !user) return { error: 'Not logged in' };
-
-    try {
-        const { data, error } = await client
-            .from('game_sessions')
-            .insert({
-                game_type: session.gameType,
-                room_code: session.roomCode,
-                privacy: session.privacy || 'public',
-                mode: session.mode || 'time_limit',
-                max_players: session.maxPlayers || 2,
-                status: 'waiting',
-                current_players: 1,
-                host_id: user.id
-            })
-            .select()
-            .single();
-
-        if (error) {
-            console.error('Create session error:', error.message);
-            return { error: error.message };
-        }
-        return { data };
-    } catch (err) {
-        return { error: 'Failed to create session' };
     }
 }
 

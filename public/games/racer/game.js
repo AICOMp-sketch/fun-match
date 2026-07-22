@@ -725,9 +725,6 @@ socket.on("player-joined", (player) => {
     return;
   }
 
-  const availableSeatsForPhones = GAME.maxPlayers - 1; // seat 1 is the host
-  if (Object.keys(cars).filter(id => !cars[id].isBot).length >= availableSeatsForPhones) return;
-
   const colorIndex = Object.keys(cars).length; // Host is 0, first joiner is 1, etc.
   const car = new Car(player.id, player.name.toUpperCase(), colorIndex, false);
   cars[player.id] = car;
@@ -741,8 +738,13 @@ socket.on("player-joined", (player) => {
     setSlotAvatar(slot, player.avatarUrl);
   }
 
-  const startBtn = document.getElementById('start-race-btn');
-  if (startBtn) startBtn.disabled = false;
+  const playerCount = Object.keys(cars).filter(id => !cars[id].isBot).length;
+  if (playerCount >= GAME.maxPlayers) {
+    console.log('🏁 Racer lobby full, starting race automatically!');
+    setTimeout(startCountdown, 1500);
+  } else if (playerCount > 1) {
+    document.getElementById('start-race-btn').disabled = false;
+  }
 });
 
 function setSlotAvatar(slotElOrId, avatarUrl) {
@@ -784,7 +786,7 @@ socket.on("player-moved", (data) => {
     case "right":
       car.input.right = true;
       car.inputTimers.right = HOLD_FRAMES;
-      break; i
+      break;
 
     case "special":
       if (car.boostFuel >= 30 && !car.boosting) {

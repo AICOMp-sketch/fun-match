@@ -525,32 +525,8 @@ socket.on("room-created", (data) => {
   }
 });
 
-socket.on("player-requesting-join", async (requestData) => {
-  const { requesterId, playerName, avatarUrl } = requestData;
-  console.log(`🙋 Join request from ${playerName}`);
-
-  const accepted = await showJoinRequest(playerName);
-
-  socket.emit("respond-to-join-request", {
-    requesterId,
-    roomCode: pendingRoomConfig.roomCode,
-    accepted,
-    playerInfo: {
-      name: playerName,
-      avatarUrl: avatarUrl
-    }
-  });
-});
-
 socket.on("player-joined", (player) => {
   if (GAME.isBotMode) return;
-
-  const availableSeatsForPhones = GAME.maxPlayers - 1; // seat 1 is the host
-  if (GAME.players.filter(p => !p.isBot).length >= availableSeatsForPhones) {
-    // This should ideally be handled server-side, but as a fallback...
-    console.warn("Room is full, ignoring player-joined event.");
-    return;
-  }
 
   const playerObj = { id: player.id, name: player.name.toUpperCase(), isBot: false };
   GAME.players.push(playerObj);
@@ -564,9 +540,12 @@ socket.on("player-joined", (player) => {
     setSlotAvatar(slot, player.avatarUrl);
   }
 
-  const startBtn = document.getElementById('start-game-btn');
-  if (startBtn && GAME.players.filter(p => !p.isBot).length >= 1) {
-    startBtn.disabled = false;
+  const playerCount = GAME.players.filter(p => !p.isBot).length;
+  if (playerCount >= GAME.maxPlayers) {
+    console.log('🏁 UNO lobby full, starting game automatically!');
+    setTimeout(startGame, 1500);
+  } else if (playerCount > 1) {
+    document.getElementById('start-game-btn').disabled = false;
   }
 });
 
@@ -646,7 +625,7 @@ document.getElementById('bot-mode-btn').addEventListener('click', () => {
 
 // ════════ START MULTIPLAYER GAME ════════
 document.getElementById('start-game-btn').addEventListener('click', () => {
-  if (GAME.players.length < 1) { // Host + 1 player = 2 total
+  if (GAME.players.length < 2) { // Host + 1 player = 2 total
     alert('Need at least 2 players!');
     return;
   }

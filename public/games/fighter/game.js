@@ -641,18 +641,13 @@ socket.on("player-joined", (player) => {
   console.log("👤 Player joined:", player.name, player.id);
   if (GAME.isBotMode) return;
 
-  if (!multiplayerPlayer1) {
-    multiplayerPlayer1 = { id: player.id, name: player.name };
-    document.getElementById('slot-1').classList.add('filled');
-    document.getElementById('slot-1').querySelector('.player-name').textContent = player.name.toUpperCase();
-    document.getElementById('slot-1').querySelector('.status').textContent = 'Ready!';
-    setSlotAvatar('slot-1', player.avatarUrl); // ← NEW (no-op if server doesn't send it yet)
-  } else if (!multiplayerPlayer2) {
-    multiplayerPlayer2 = { id: player.id, name: player.name };
+  // This event is for the opponent, as the host is already Player 1.
+  if (multiplayerPlayer1 && !multiplayerPlayer2) {
+    multiplayerPlayer2 = { id: player.id, name: player.name, avatarUrl: player.avatarUrl };
     document.getElementById('slot-2').classList.add('filled');
     document.getElementById('slot-2').querySelector('.player-name').textContent = player.name.toUpperCase();
     document.getElementById('slot-2').querySelector('.status').textContent = 'Ready!';
-    setSlotAvatar('slot-2', player.avatarUrl); // ← NEW
+    setSlotAvatar('slot-2', player.avatarUrl);
 
     setTimeout(showCharacterSelect, 1500);
   }
@@ -958,25 +953,28 @@ socket.on("room-created", (data) => {
   // The host is always player 1. Set their info now that we have a socket ID.
   multiplayerPlayer1 = { id: socket.id, name: hostDisplayName, avatarUrl: hostAvatarUrl };
 
-  // Listen for join requests via Supabase
   if (currentSessionId) {
     console.log(`👂 Listening for join requests on session: ${currentSessionId}`);
     subscribeToIncomingJoinRequests(currentSessionId, async (request) => {
       console.log(`🙋 DB Join request from ${request.requester_name}`);
 
+      const currentPlayers = (multiplayerPlayer1 ? 1 : 0) + (multiplayerPlayer2 ? 1 : 0);
+
       // Prevent accepting if the room is full
-      if (multiplayerPlayer2) {
-        await respondToJoinRequest(request.id, currentSessionId, false, 2);
+      if (multiplayerPlayer2) { // Simplified check since P1 is host
+        await respondToJoinRequest(request.id, currentSessionId, false, currentPlayers);
         return;
       }
 
       const accepted = await showJoinRequest(request.requester_name);
-      const newPlayerCount = accepted ? 2 : 1;
+      const newPlayerCount = accepted ? currentPlayers + 1 : currentPlayers;
 
       const response = await respondToJoinRequest(request.id, currentSessionId, accepted, newPlayerCount);
       if (response.error) console.error("❌ Failed to respond to join request:", response.error);
       else console.log(`✅ Responded to ${request.requester_name}: ${accepted ? 'Accepted' : 'Refused'}`);
     });
+  } else {
+    console.warn("⚠️ No currentSessionId found. Realtime join requests will not work.");
   }
 });
 
@@ -1099,6 +1097,7 @@ async function loadHostIdentityIntoSlot1() {
     ? profile.display_name
     : (user.email ? user.email.split('@')[0] : 'PLAYER 1');
 
+  let avatarUrl = null;
   if (profile && profile.avatar_url) {
     avatarUrl = profile.avatar_url;
   } else if (user.user_metadata && user.user_metadata.avatar_url) {
@@ -1118,10 +1117,10 @@ async function loadHostIdentityIntoSlot1() {
   setSlotAvatar('slot-1', avatarUrl);
 }
 
-setSlotAvatar('slot-1', null);
-setSlotAvatar('slot-2', null);
-loadHostIdentityIntoSlot1();
-
 // ════════ START ════════
 requestAnimationFrame(frame);
 console.log('⚔️ Mortal Arena loaded!');
+
+setSlotAvatar('slot-1', null);
+setSlotAvatar('slot-2', null);
+loadHostIdentityIntoSlot1();
