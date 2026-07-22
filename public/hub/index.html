@@ -1766,6 +1766,63 @@
         </button>
     </div>
 
+    <!-- ════════ DM PANEL ════════ -->
+    <div class="dm-panel-scrim hidden" id="dm-panel-scrim" onclick="closeDMPanel()"></div>
+
+    <div class="dm-panel" id="dm-panel">
+
+        <!-- Left column — intentionally empty for now -->
+        <div class="dm-panel-empty" id="dm-panel-empty"></div>
+
+        <!-- Right column — the actual chat UI -->
+        <div class="dm-panel-chat">
+
+            <button class="dm-close-btn" onclick="closeDMPanel()">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none">
+                    <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" />
+                </svg>
+            </button>
+
+            <div class="dm-chat-header">
+                <div class="dm-chat-avatar" id="dm-chat-avatar">
+                    <svg class="dm-avatar-placeholder" viewBox="0 0 24 24" width="30" height="30" fill="none">
+                        <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2" />
+                        <path d="M4 20c0-4 3.5-6 8-6s8 2 8 6" stroke="currentColor" stroke-width="2"
+                            stroke-linecap="round" />
+                    </svg>
+                    <img class="dm-avatar-img" src="" alt="">
+                </div>
+
+                <div class="dm-chat-name-row">
+                    <h3 class="dm-chat-username" id="dm-chat-username">Username</h3>
+                    <span class="dm-chat-level" id="dm-chat-level">Lvl 1</span>
+                </div>
+                <p class="dm-chat-email" id="dm-chat-email">email@example.com</p>
+            </div>
+
+            <div class="dm-chat-divider">
+                <span class="dm-dot"></span>
+                <span class="dm-dot"></span>
+                <span class="dm-dot"></span>
+                <span class="dm-dot"></span>
+            </div>
+
+            <div class="dm-chat-body" id="dm-chat-body">
+                <div class="dm-chat-empty-state" id="dm-chat-empty-state">
+                    <p class="dm-say-hi">Say Hi To <span id="dm-say-hi-name">Username</span> 👋</p>
+                    <p class="dm-expiry-note">Conversation will only last up to 7 days</p>
+                </div>
+                <div class="dm-chat-messages" id="dm-chat-messages"></div>
+            </div>
+
+            <div class="dm-chat-input-row">
+                <input type="text" id="dm-message-input" placeholder="Type your message...">
+            </div>
+
+        </div>
+
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
     <script src="dashboard.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -3015,6 +3072,54 @@
             if (e.key === 'Escape' && !document.getElementById('screen-size-modal').classList.contains('hidden')) {
                 closeScreenSizeModal();
             }
+        });
+
+        function openDMPanel(friend) {
+            document.getElementById('dm-chat-username').textContent = friend.name || 'Username';
+            document.getElementById('dm-chat-level').textContent = 'Lvl ' + (friend.level || 1);
+            document.getElementById('dm-chat-email').textContent = friend.email || '';
+            document.getElementById('dm-say-hi-name').textContent = friend.name || 'Username';
+
+            const avatarImg = document.getElementById('dm-chat-avatar').querySelector('.dm-avatar-img');
+            const avatarPlaceholder = document.getElementById('dm-chat-avatar').querySelector('.dm-avatar-placeholder');
+            if (friend.avatarUrl) {
+                avatarImg.src = friend.avatarUrl;
+                avatarImg.style.display = 'block';
+                avatarPlaceholder.style.display = 'none';
+            } else {
+                avatarImg.style.display = 'none';
+                avatarPlaceholder.style.display = 'block';
+            }
+
+            const scrim = document.getElementById('dm-panel-scrim');
+            const panel = document.getElementById('dm-panel');
+            scrim.classList.remove('hidden');
+            requestAnimationFrame(() => {
+                scrim.classList.add('show');
+                panel.classList.add('open');
+            });
+        }
+
+        function closeDMPanel() {
+            const scrim = document.getElementById('dm-panel-scrim');
+            const panel = document.getElementById('dm-panel');
+            panel.classList.remove('open');
+            scrim.classList.remove('show');
+            setTimeout(() => scrim.classList.add('hidden'), 400);
+        }
+
+        // Wire up friend avatars in the right sidebar to open the panel
+        document.querySelectorAll('.sidebar-right .friend').forEach((friendEl) => {
+            friendEl.style.cursor = 'pointer';
+            friendEl.addEventListener('click', () => {
+                // Placeholder data — swap for real friend data once that's wired to Supabase
+                openDMPanel({
+                    name: 'Player Name',
+                    level: 12,
+                    email: 'player@email.com',
+                    avatarUrl: null
+                });
+            });
         });
     </script>
 </body>

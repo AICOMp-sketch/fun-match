@@ -62,7 +62,18 @@ async function signInWithEmail(email, password) {
         }
 
         console.log('✅ Sign in successful!');
-        return { data };
+
+        // Handle redirect after successful sign-in
+        const params = new URLSearchParams(window.location.search);
+        const redirectUrl = params.get('redirect');
+
+        if (redirectUrl) {
+            window.location.href = redirectUrl;
+        } else {
+            window.location.href = '/hub/';
+        }
+
+        return { data }; // Return data, though redirect will likely happen first
     } catch (err) {
         console.error('Sign in failed:', err);
         return { error: 'Something went wrong. Please try again.' };
@@ -74,11 +85,15 @@ async function signInWithGoogle() {
     const client = initSupabase();
     if (!client) return { error: 'Supabase not initialized' };
 
+    // Check for a redirect URL in the query params, falling back to the hub.
+    const params = new URLSearchParams(window.location.search);
+    const redirectTo = params.get('redirect') || ('http://192.168.0.100:3000/hub/');
+
     try {
         const { data, error } = await client.auth.signInWithOAuth({
             provider: 'google',
             options: {
-                redirectTo: window.location.origin + '/hub/'
+                redirectTo: redirectTo
             }
         });
 
@@ -434,11 +449,15 @@ async function signInWithFacebook() {
     var client = initSupabase();
     if (!client) return { error: 'Supabase not initialized' };
 
+    // Check for a redirect URL in the query params, falling back to the hub.
+    const params = new URLSearchParams(window.location.search);
+    const redirectTo = params.get('redirect') || ('http://192.168.0.100:3000/hub/');
+
     try {
         var result = await client.auth.signInWithOAuth({
             provider: 'facebook',
             options: {
-                redirectTo: window.location.origin + '/hub/'
+                redirectTo: redirectTo
             }
         });
 
@@ -601,20 +620,22 @@ async function updateGameSessionStatus(sessionId, updates) {
 // Delete a game session (used when a host abandons/exits the lobby)
 async function deleteGameSession(sessionId) {
     const client = initSupabase();
-    if (!client) return { error: 'Not initialized' };
+    if (!client || !sessionId) return { error: 'Missing client or session id' };
 
     try {
-        const { error } = await client
+        const { data, error } = await client
             .from('game_sessions')
             .delete()
-            .eq('id', sessionId);
+            .eq('id', sessionId)
+            .select();
 
-        if (error) {
-            console.error('Delete session error:', error.message);
-            return { error: error.message };
+        if (error) return { error: error.message };
+
+        if (!data || data.length === 0) {
+            return { error: 'Delete matched 0 rows — likely blocked by RLS policy' };
         }
 
-        return { success: true };
+        return { success: true, data };
     } catch (err) {
         return { error: 'Delete failed' };
     }

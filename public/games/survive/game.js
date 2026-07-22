@@ -1,4 +1,4 @@
-const socket = io("https://fun-match-production.up.railway.app");
+const socket = io("https://fun-match.onrender.com");
 
 // ════════ GAME STATE ════════
 const GAME = {
@@ -16,6 +16,81 @@ const GAME = {
 };
 
 let LOCAL_PLAYER_ID = null;
+let pendingRoomConfig = null;
+let currentSessionId = null;
+
+function createBubbleMarkup(slotIndex) {
+  return `
+        <div class="player-bubble" id="slot-${slotIndex}">
+            <p class="player-name">PLAYER ${slotIndex}</p>
+            <div class="bubble-avatar">
+                <img class="bubble-avatar-img" src="" alt="">
+                <svg class="bubble-avatar-placeholder" viewBox="0 0 24 24" width="26" height="26" fill="none">
+                    <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2" />
+                    <path d="M4 20c0-4 3.5-6 8-6s8 2 8 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                </svg>
+                <span class="bubble-ring"></span>
+            </div>
+            <div class="bubble-tail"></div>
+            <span class="status">Waiting...</span>
+        </div>
+    `;
+}
+
+function renderSeatBubbles(maxPlayers) {
+  const grid = document.getElementById('players-grid');
+  if (!grid) return;
+  let html = '';
+  for (let i = 1; i <= maxPlayers; i++) {
+    html += createBubbleMarkup(i);
+  }
+  grid.innerHTML = html;
+}
+
+async function loadHostIdentityIntoSlot1() {
+  const user = await getCurrentUser();
+  if (!user) return;
+
+  const profile = await getUserProfile();
+  const displayName = (profile && profile.display_name)
+    ? profile.display_name
+    : (user.email ? user.email.split('@')[0] : 'PLAYER 1');
+
+  let avatarUrl = null;
+  if (profile && profile.avatar_url) {
+    avatarUrl = profile.avatar_url;
+  } else if (user.user_metadata && user.user_metadata.avatar_url) {
+    avatarUrl = user.user_metadata.avatar_url;
+  } else if (user.user_metadata && user.user_metadata.picture) {
+    avatarUrl = user.user_metadata.picture;
+  }
+
+  const slot = document.getElementById('slot-1');
+  if (!slot) return;
+
+  slot.classList.add('filled');
+  slot.querySelector('.player-name').textContent = displayName.toUpperCase();
+
+  const img = slot.querySelector('.bubble-avatar-img');
+  const url = avatarUrl || '../../images/default-avatar.png';
+  img.src = url;
+  img.onerror = () => { img.style.display = 'none'; };
+  img.onload = () => { img.style.display = 'block'; };
+}
+
+(function initLobbySeats() {
+  const configStr = sessionStorage.getItem('roomConfig');
+  let maxPlayers = 4;
+  if (configStr) {
+    try {
+      pendingRoomConfig = JSON.parse(configStr);
+      if (pendingRoomConfig.maxPlayers) maxPlayers = pendingRoomConfig.maxPlayers;
+    } catch (e) { }
+  }
+  GAME.maxPlayers = maxPlayers;
+  renderSeatBubbles(maxPlayers);
+  loadHostIdentityIntoSlot1();
+})();
 
 // ════════ CARD DEFINITIONS ════════
 const COLORS = ['red', 'blue', 'green', 'yellow'];
@@ -404,13 +479,20 @@ function showAnnouncement(text) {
 
 // ════════ SOCKET EVENTS ════════
 socket.on("connect", () => {
-  console.log("✅ Connected to server!");
+  console.log("✅ Connected!");
   let roomCode = null;
   const configStr = sessionStorage.getItem('roomConfig');
   if (configStr) {
     try {
-      const config = JSON.parse(configStr);
-      roomCode = config.roomCode;
+      pendingRoomConfig = JSON.parse(configStr);
+      roomCode = pendingRoomConfig.roomCode;
+
+      // The hub already created this session before redirecting here —
+      // reuse that id instead of creating a second one.
+      if (pendingRoomConfig.sessionId) {
+        currentSessionId = pendingRoomConfig.sessionId;
+        console.log('✅ Reusing existing session id from hub:', currentSessionId);
+      }
     } catch (e) { }
   }
   socket.emit("create-room", { roomCode });
@@ -419,39 +501,80 @@ socket.on("connect", () => {
 socket.on("room-created", (data) => {
   document.getElementById("room-code").textContent = data.roomCode;
   renderLobbyQR(data.roomCode);
+
+  // Add host to the players array and set them as the local player
+  const hostName = document.getElementById('slot-1').querySelector('.player-name').textContent;
+  const hostPlayer = { id: socket.id, name: hostName || 'HOST', isBot: false, isHost: true };
+  GAME.players.push(hostPlayer);
+  LOCAL_PLAYER_ID = socket.id;
+
+  if (currentSessionId) {
+    console.log(`👂 Listening for join requests on session: ${currentSessionId}`);
+    subscribeToIncomingJoinRequests(currentSessionId, async (request) => {
+      const currentPlayers = GAME.players.filter(p => !p.isBot).length;
+      if (currentPlayers >= GAME.maxPlayers) {
+        await respondToJoinRequest(request.id, currentSessionId, false, currentPlayers);
+        return;
+      }
+      const accepted = await showJoinRequest(request.requester_name);
+      const newPlayerCount = accepted ? currentPlayers + 1 : currentPlayers;
+      const response = await respondToJoinRequest(request.id, currentSessionId, accepted, newPlayerCount);
+      if (response.error) console.error("❌ Failed to respond to join request:", response.error);
+      else console.log(`✅ Responded to ${request.requester_name}: ${accepted ? 'Accepted' : 'Refused'}`);
+    });
+  }
+});
+
+socket.on("player-requesting-join", async (requestData) => {
+  const { requesterId, playerName, avatarUrl } = requestData;
+  console.log(`🙋 Join request from ${playerName}`);
+
+  const accepted = await showJoinRequest(playerName);
+
+  socket.emit("respond-to-join-request", {
+    requesterId,
+    roomCode: pendingRoomConfig.roomCode,
+    accepted,
+    playerInfo: {
+      name: playerName,
+      avatarUrl: avatarUrl
+    }
+  });
 });
 
 socket.on("player-joined", (player) => {
   if (GAME.isBotMode) return;
-  if (GAME.players.length >= 4) return;
 
-  const playerObj = {
-    id: player.id,
-    name: player.name.toUpperCase(),
-    isBot: false
-  };
+  const availableSeatsForPhones = GAME.maxPlayers - 1; // seat 1 is the host
+  if (GAME.players.filter(p => !p.isBot).length >= availableSeatsForPhones) {
+    // This should ideally be handled server-side, but as a fallback...
+    console.warn("Room is full, ignoring player-joined event.");
+    return;
+  }
 
+  const playerObj = { id: player.id, name: player.name.toUpperCase(), isBot: false };
   GAME.players.push(playerObj);
 
-  if (!LOCAL_PLAYER_ID) LOCAL_PLAYER_ID = player.id;
-
-  const slot = document.getElementById(`slot-${GAME.players.length}`);
+  const slotIndex = GAME.players.length; // Host is player 1, first joiner is player 2
+  const slot = document.getElementById(`slot-${slotIndex}`);
   if (slot) {
     slot.classList.add('filled');
     slot.querySelector('.player-name').textContent = player.name.toUpperCase();
     slot.querySelector('.status').textContent = 'Ready!';
-    setSlotAvatar(slot, player.avatarUrl); // no-op until server sends avatarUrl
+    setSlotAvatar(slot, player.avatarUrl);
   }
 
-  if (GAME.players.length >= 2) {
-    document.getElementById('start-game-btn').disabled = false;
+  const startBtn = document.getElementById('start-game-btn');
+  if (startBtn && GAME.players.filter(p => !p.isBot).length >= 1) {
+    startBtn.disabled = false;
   }
 });
 
-function setSlotAvatar(slotEl, avatarUrl) {
+function setSlotAvatar(slotElOrId, avatarUrl) {
+  const slotEl = typeof slotElOrId === 'string' ? document.getElementById(slotElOrId) : slotElOrId;
   if (!slotEl || !avatarUrl) return;
   const img = slotEl.querySelector('.bubble-avatar-img');
-  if (img) img.src = avatarUrl;
+  if (img) { img.src = avatarUrl; img.style.display = 'block'; }
 }
 
 // Phone plays a card
@@ -489,6 +612,10 @@ socket.on("uno-draw", (data) => {
 
 socket.on("player-left", (data) => {
   GAME.players = GAME.players.filter(p => p.id !== data.playerId);
+  // This needs to update the lobby UI if the game hasn't started
+  // For now, this just removes them from the game logic array.
+  // A full implementation would re-render the lobby bubbles.
+  console.log(`Player ${data.playerId} left.`);
 });
 
 // ════════ BOT MODE ════════
@@ -519,7 +646,7 @@ document.getElementById('bot-mode-btn').addEventListener('click', () => {
 
 // ════════ START MULTIPLAYER GAME ════════
 document.getElementById('start-game-btn').addEventListener('click', () => {
-  if (GAME.players.length < 2) {
+  if (GAME.players.length < 1) { // Host + 1 player = 2 total
     alert('Need at least 2 players!');
     return;
   }
@@ -712,8 +839,113 @@ document.addEventListener('click', function (e) {
 function renderLobbyQR(roomCode) {
   const qrEl = document.getElementById('lobby-qr-code');
   if (!qrEl || !roomCode) return;
-  const joinUrl = window.location.origin + '/controller.html?room=' + roomCode;
+
+  // Point to the sign-in page, which will then redirect to the controller with the room code.
+  const controllerUrl = 'http://192.168.0.100:3000/controller.html?room=' + roomCode;
+  const joinUrl = 'http://192.168.0.100:3000/auth/signin.html?redirect=' + encodeURIComponent(controllerUrl);
   qrEl.innerHTML = '<img src="https://api.qrserver.com/v1/create-qr-code/?size=400x400&data='
     + encodeURIComponent(joinUrl)
     + '&bgcolor=ffffff&color=0a0e27&margin=0" alt="Scan to join room ' + roomCode + '">';
+}
+
+function showJoinRequest(playerName) {
+  return new Promise((resolve) => {
+    // NOTE: Assumes the same HTML structure as fighter/survive game is present
+    const overlay = document.getElementById('join-request-overlay');
+    const panel = document.getElementById('join-request-panel');
+    const textEl = document.getElementById('join-request-text');
+    const confirmBtn = document.getElementById('join-request-yes');
+    const cancelBtn = document.getElementById('join-request-no');
+
+    if (!overlay || !panel || !textEl || !confirmBtn || !cancelBtn) {
+      console.error("Join request UI elements not found!");
+      resolve(true); // Default to accept if UI is broken
+      return;
+    }
+
+    textEl.textContent = `'${playerName}' wants to join the game.`;
+
+    overlay.classList.remove('hidden');
+    requestAnimationFrame(() => {
+      overlay.classList.add('show');
+      panel.classList.add('show');
+    });
+
+    function cleanup(result) {
+      overlay.classList.remove('show');
+      panel.classList.remove('show');
+      setTimeout(() => overlay.classList.add('hidden'), 400);
+      confirmBtn.onclick = null;
+      cancelBtn.onclick = null;
+      resolve(result);
+    }
+
+    confirmBtn.onclick = () => cleanup(true);
+    cancelBtn.onclick = () => cleanup(false);
+  });
+}
+
+async function exitLobbyAndCleanup() {
+  const btn = document.getElementById('lobby-close-btn');
+  const confirmLeave = await showExitConfirm();
+  if (!confirmLeave) return;
+
+  console.log('🗑️ Exit clicked. currentSessionId is:', currentSessionId);
+
+  if (btn) btn.disabled = true;
+
+  try {
+    if (currentSessionId) {
+      const result = await deleteGameSession(currentSessionId);
+      console.log('🗑️ deleteGameSession result:', result);
+      if (result.error) {
+        console.error('❌ Session cleanup error:', result.error);
+      } else {
+        console.log('✅ Session deleted successfully');
+      }
+    } else {
+      console.warn('⚠️ No currentSessionId set — nothing to delete. Session was likely never created.');
+    }
+  } catch (err) {
+    console.error('❌ Unexpected error during exit cleanup:', err);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+
+  window.location.href = '../../hub/';
+}
+
+function showExitConfirm() {
+  return new Promise((resolve) => {
+    const overlay = document.getElementById('exit-confirm-overlay');
+    const panel = document.getElementById('exit-confirm-panel');
+    const confirmBtn = document.getElementById('exit-confirm-yes');
+    const cancelBtn = document.getElementById('exit-confirm-no');
+
+    overlay.classList.remove('hidden');
+    requestAnimationFrame(() => {
+      overlay.classList.add('show');
+      panel.classList.add('show');
+    });
+
+    function cleanup(result) {
+      overlay.classList.remove('show');
+      panel.classList.remove('show');
+      setTimeout(() => overlay.classList.add('hidden'), 400);
+      confirmBtn.removeEventListener('click', onConfirm);
+      cancelBtn.removeEventListener('click', onCancel);
+      overlay.removeEventListener('click', onOverlayClick);
+      resolve(result);
+    }
+
+    function onConfirm() { cleanup(true); }
+    function onCancel() { cleanup(false); }
+    function onOverlayClick(e) {
+      if (e.target === overlay) cleanup(false);
+    }
+
+    confirmBtn.addEventListener('click', onConfirm);
+    cancelBtn.addEventListener('click', onCancel);
+    overlay.addEventListener('click', onOverlayClick);
+  });
 }

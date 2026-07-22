@@ -10,7 +10,8 @@ const io = new Server(server, {
     origin: [
       "https://fun-match.pages.dev",
       "http://localhost:3000",
-      "http://127.0.0.1:3000"
+      "http://127.0.0.1:3000",
+      "http://192.168.0.100:3000"
     ],
     methods: ["GET", "POST"]
   }
@@ -53,20 +54,19 @@ io.on("connection", (socket) => {
   });
 
   socket.on("join-room", (data) => {
-    const { roomCode, playerName } = data;
+    // This event is now only called AFTER the host has approved the join via Supabase.
+    const { roomCode, playerName, avatarUrl } = data;
     const room = rooms[roomCode];
 
     if (!room) {
-      socket.emit("join-error", { message: "Room not found!" });
+      socket.emit("join-error", { message: "Room not found on server!" });
       return;
     }
 
     room.players[socket.id] = {
       id: socket.id,
       name: playerName,
-      x: 400,
-      y: 250,
-      color: `hsl(${Math.random() * 360}, 70%, 60%)`
+      avatarUrl: avatarUrl,
     };
 
     socket.join(roomCode);
@@ -75,7 +75,7 @@ io.on("connection", (socket) => {
     socket.emit("join-success", { playerName });
     io.to(room.hostId).emit("player-joined", room.players[socket.id]);
 
-    console.log(`👤 ${playerName} joined room ${roomCode}`);
+    console.log(`✅ 👤 ${playerName} joined room ${roomCode} after approval.`);
   });
 
   socket.on("move", (data) => {
@@ -143,7 +143,10 @@ io.on("connection", (socket) => {
 
       if (room.players[socket.id]) {
         delete room.players[socket.id];
-        io.to(room.hostId).emit("player-left", { playerId: socket.id });
+        // Notify host only if the room still exists
+        if (rooms[roomCode]) {
+          io.to(room.hostId).emit("player-left", { playerId: socket.id });
+        }
       }
 
       if (room.hostId === socket.id) {

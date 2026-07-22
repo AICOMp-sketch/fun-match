@@ -1,4 +1,4 @@
-const socket = previewGameParam() ? { emit: () => { }, on: () => { } } : io("https://fun-match-production.up.railway.app");
+const socket = previewGameParam() ? { emit: () => { }, on: () => { } } : io("https://fun-match.onrender.com");
 
 function previewGameParam() {
     return new URLSearchParams(window.location.search).get("preview");
@@ -10,10 +10,109 @@ const fighterCtrl = document.getElementById("fighter-controller");
 const racerCtrl = document.getElementById("racer-controller");
 const errorMsg = document.getElementById("error-msg");
 
+// ═══════════════ GAME-TYPE MAPPING (DB value → controller key) ═══════════════
+const DB_TYPE_TO_CONTROLLER = { fighter: 'fighter', racer: 'racer', uno: 'survive' };
+
+let detectedGameKey = null;
+let detectedRoomInfo = null;
+let isReady = false;
+
+// ═══════════════ ROOM LOOKUP ═══════════════
+async function fetchRoomInfo(roomCode) {
+    const client = initSupabase();
+    if (!client || !roomCode) return null;
+
+    try {
+        const { data, error } = await client
+            .from('game_sessions')
+            .select('id, game_type, map_name, mode, privacy, max_players, status')
+            .eq('room_code', roomCode.toUpperCase())
+            .single();
+
+        if (error || !data) return null;
+        return data;
+    } catch (err) {
+        return null;
+    }
+}
+
+function showRoomInfoPill(roomInfo, gameKey) {
+    const pill = document.getElementById('room-info-pill');
+    if (!pill) return;
+
+    const gameLabel = gameKey === 'fighter' ? 'Mortal Arena'
+        : gameKey === 'racer' ? 'Neon Racers'
+            : gameKey === 'survive' ? 'UNO' : 'Game';
+
+    document.getElementById('room-info-pill-game').textContent = gameLabel;
+    document.getElementById('room-info-pill-name').textContent = roomInfo.map_name || 'Unnamed Room';
+    document.getElementById('room-info-pill-mode').textContent = roomInfo.mode === 'survival' ? 'Survival' : (roomInfo.mode || 'Time Limit');
+
+    pill.classList.remove('hidden');
+}
+
+function showReadyButton() {
+    const btn = document.getElementById('ready-btn');
+    if (!btn) return;
+    btn.classList.remove('hidden');
+}
+
+// ═══════════════ AUTH GATE + AUTO-DETECT (skipped entirely in preview mode) ═══════════════
+(async function initControllerEntry() {
+    const loadingGate = document.getElementById('controller-loading');
+
+    if (previewGameParam()) {
+        // Pure UI preview from the hub — no auth, no room lookup needed
+        loadingGate?.classList.add('hidden');
+        return;
+    }
+
+    // 1) Require login before anything else
+    const user = await getCurrentUser();
+    if (!user) {
+        const returnTo = encodeURIComponent(window.location.href);
+        window.location.href = 'auth/signin.html?redirect=' + returnTo;
+        return;
+    }
+
+    // 2) If a room code came in via QR/link, look up which game it belongs to
+    const roomCodeFromURL = new URLSearchParams(window.location.search).get('room');
+    if (roomCodeFromURL) {
+        const roomInfo = await fetchRoomInfo(roomCodeFromURL);
+        if (roomInfo) {
+            detectedRoomInfo = roomInfo;
+            detectedGameKey = DB_TYPE_TO_CONTROLLER[roomInfo.game_type] || null;
+        }
+    }
+
+    // 3) Prefill the player's display name if we have one
+    const profile = await getUserProfile();
+    const nameInput = document.getElementById('name-input');
+    if (nameInput && !nameInput.value) {
+        nameInput.value = (profile && profile.display_name) ? profile.display_name : (user.email ? user.email.split('@')[0] : '');
+    }
+
+    loadingGate?.classList.add('hidden');
+})();
+
 const urlParams = new URLSearchParams(window.location.search);
 const roomFromURL = urlParams.get("room");
 if (roomFromURL) {
     document.getElementById("code-input").value = roomFromURL.toUpperCase();
+}
+
+async function getPlayerInfo() {
+    const user = await getCurrentUser();
+    if (!user) return { name: 'GUEST', avatarUrl: null };
+
+    const profile = await getUserProfile();
+    const name = (profile && profile.display_name) ? profile.display_name : (user.email ? user.email.split('@')[0] : 'PLAYER');
+
+    let avatarUrl = (profile && profile.avatar_url) ? profile.avatar_url : null;
+    if (!avatarUrl && user.user_metadata) {
+        avatarUrl = user.user_metadata.avatar_url || user.user_metadata.picture;
+    }
+    return { name, avatarUrl };
 }
 
 const previewGame = urlParams.get("preview");
@@ -48,31 +147,84 @@ if (previewGame) {
     }
 }
 
-document.getElementById("join-btn").addEventListener("click", () => {
-    const name = document.getElementById("name-input").value.trim();
+document.getElementById("join-btn").addEventListener("click", async () => {
+    const nameInput = document.getElementById("name-input").value.trim();
     const code = document.getElementById("code-input").value.trim().toUpperCase();
+    const btn = document.getElementById("join-btn");
 
-    if (!name) {
-        errorMsg.textContent = "Please enter your name!";
-        return;
-    }
     if (code.length !== 4) {
         errorMsg.textContent = "Room code must be 4 letters!";
         return;
     }
 
-    errorMsg.textContent = "";
-    socket.emit("join-room", { roomCode: code, playerName: name });
+    errorMsg.textContent = "Finding room...";
+    btn.disabled = true;
+
+    const roomInfo = await fetchRoomInfo(code);
+    if (!roomInfo || !roomInfo.id) {
+        errorMsg.textContent = "Room not found or has expired.";
+        btn.disabled = false;
+        return;
+    }
+
+    if (roomInfo.status !== 'waiting') {
+        errorMsg.textContent = `Cannot join, room is already ${roomInfo.status}.`;
+        btn.disabled = false;
+        return;
+    }
+
+    const playerInfo = await getPlayerInfo();
+    const playerName = nameInput || playerInfo.name;
+
+    errorMsg.textContent = "Sending join request...";
+
+    const joinRequestResult = await createJoinRequest(roomInfo.id, playerName);
+
+    if (joinRequestResult.error) {
+        errorMsg.textContent = "Failed to send request: " + joinRequestResult.error;
+        btn.disabled = false;
+        return;
+    }
+
+    const requestId = joinRequestResult.data.id;
+    errorMsg.textContent = "⏳ Waiting for host to respond...";
+
+    const subscription = subscribeToJoinRequestStatus(requestId, (update) => {
+        if (update.status === 'accepted') {
+            errorMsg.textContent = "✅ Accepted! Joining game...";
+            unsubscribeChannel(subscription);
+            socket.emit("join-room", { roomCode: code, playerName: playerName, avatarUrl: playerInfo.avatarUrl });
+        } else if (update.status === 'declined') {
+            errorMsg.textContent = "❌ Host denied your request to join.";
+            unsubscribeChannel(subscription);
+            btn.disabled = false;
+        }
+    });
 });
 
 socket.on("join-success", (data) => {
     joinScreen.classList.add("hidden");
-    gameSelect.classList.remove("hidden");
 
-    // Null-safe: these elements may not all exist depending on which controller is active
     document.getElementById("uno-welcome")?.replaceChildren(document.createTextNode(`Hi ${data.playerName}!`));
     document.getElementById("fighter-welcome")?.replaceChildren(document.createTextNode(`${data.playerName.toUpperCase()} FIGHTS!`));
     document.getElementById("racer-welcome")?.replaceChildren(document.createTextNode(`${data.playerName.toUpperCase()} RACES!`));
+
+    if (detectedGameKey === 'survive') {
+        document.getElementById('uno-controller').classList.remove('hidden');
+    } else if (detectedGameKey === 'fighter') {
+        fighterCtrl?.classList.remove('hidden');
+    } else if (detectedGameKey === 'racer') {
+        racerCtrl?.classList.remove('hidden');
+    } else {
+        // Fallback: couldn't determine the game type (e.g. lookup failed) — let them pick manually
+        gameSelect.classList.remove('hidden');
+    }
+
+    if (detectedRoomInfo && detectedGameKey) {
+        showRoomInfoPill(detectedRoomInfo, detectedGameKey);
+    }
+
+    showReadyButton();
 });
 
 socket.on("join-error", (data) => {
@@ -668,6 +820,20 @@ function updateSpeedFromThrottle(throttleLevel) {
     const pct = Math.min(1, racerSpeed / 220);
     arcFill.style.strokeDashoffset = 283 - (283 * pct);
 }
+
+// ═══════════════ READY TOGGLE ═══════════════
+(function setupReadyButton() {
+    const btn = document.getElementById('ready-btn');
+    const text = document.getElementById('ready-btn-text');
+    if (!btn) return;
+
+    btn.addEventListener('click', () => {
+        isReady = !isReady;
+        btn.classList.toggle('ready', isReady);
+        text.textContent = isReady ? 'READY!' : 'NOT READY';
+        socket.emit('player-ready', { ready: isReady });
+    });
+})();
 
 setupPedalBar('throttle-bar', 'throttle-fill', 'punch');
 setupPedalBar('brake-bar', 'brake-fill', 'kick');

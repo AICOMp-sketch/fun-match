@@ -1,4 +1,4 @@
-const socket = io("https://fun-match-production.up.railway.app");
+const socket = io("https://fun-match.onrender.com");
 const canvas = document.getElementById("gameCanvas");
 const c = canvas.getContext("2d");
 const CW = canvas.width;
@@ -625,7 +625,9 @@ function renderLobbyQR(roomCode) {
   const qrEl = document.getElementById('lobby-qr-code');
   if (!qrEl || !roomCode) return;
 
-  const joinUrl = window.location.origin + '/controller.html?room=' + roomCode;
+  // Point to the sign-in page, which will then redirect to the controller with the room code.
+  const controllerUrl = 'http://192.168.0.100:3000/controller.html?room=' + roomCode;
+  const joinUrl = 'http://192.168.0.100:3000/auth/signin.html?redirect=' + encodeURIComponent(controllerUrl);
   qrEl.innerHTML = '<img src="https://api.qrserver.com/v1/create-qr-code/?size=400x400&data='
     + encodeURIComponent(joinUrl)
     + '&bgcolor=ffffff&color=0c0a12&margin=0" alt="Scan to join room ' + roomCode + '">';
@@ -874,9 +876,6 @@ function setSlotAvatar(slotId, avatarUrl) {
   img.onload = () => { img.style.display = 'block'; };
 }
 
-setSlotAvatar('slot-1', null);
-setSlotAvatar('slot-2', null);
-
 function toggleRoomInfo() {
   const popover = document.getElementById('room-info-popover');
   if (!popover) return;
@@ -928,6 +927,7 @@ document.addEventListener('click', function (e) {
 let currentRoomCode = null;
 let currentSessionId = null;
 let pendingRoomConfig = null;
+let roomCreationRequested = false;
 
 socket.on("connect", () => {
   console.log("✅ Connected!");
@@ -937,32 +937,46 @@ socket.on("connect", () => {
     try {
       pendingRoomConfig = JSON.parse(configStr);
       roomCode = pendingRoomConfig.roomCode;
+
+      // The hub already created this session before redirecting here —
+      // reuse that id instead of creating a second one.
+      if (pendingRoomConfig.sessionId) {
+        currentSessionId = pendingRoomConfig.sessionId;
+        console.log('✅ Reusing existing session id from hub:', currentSessionId);
+      }
     } catch (e) { }
   }
   socket.emit("create-room", { roomCode });
 });
 
-socket.on("room-created", async (data) => {
+socket.on("room-created", (data) => {
   console.log("🏠 Room:", data.roomCode);
   currentRoomCode = data.roomCode;
   document.getElementById("room-code").textContent = data.roomCode;
+  renderLobbyQR(data.roomCode);
 
-  console.log('📝 Attempting to create game session...');
-  const result = await createGameSession({
-    gameType: 'fighter',
-    roomCode: data.roomCode,
-    privacy: pendingRoomConfig ? pendingRoomConfig.privacy : 'public',
-    mode: pendingRoomConfig ? pendingRoomConfig.mode : 'time_limit',
-    maxPlayers: pendingRoomConfig ? pendingRoomConfig.maxPlayers : 2
-  });
+  // The host is always player 1. Set their info now that we have a socket ID.
+  multiplayerPlayer1 = { id: socket.id, name: hostDisplayName, avatarUrl: hostAvatarUrl };
 
-  console.log('📝 createGameSession result:', result);
+  // Listen for join requests via Supabase
+  if (currentSessionId) {
+    console.log(`👂 Listening for join requests on session: ${currentSessionId}`);
+    subscribeToIncomingJoinRequests(currentSessionId, async (request) => {
+      console.log(`🙋 DB Join request from ${request.requester_name}`);
 
-  if (result.data) {
-    currentSessionId = result.data.id;
-    console.log('✅ Session created with id:', currentSessionId);
-  } else {
-    console.error('❌ Could not create game session:', result.error);
+      // Prevent accepting if the room is full
+      if (multiplayerPlayer2) {
+        await respondToJoinRequest(request.id, currentSessionId, false, 2);
+        return;
+      }
+
+      const accepted = await showJoinRequest(request.requester_name);
+      const newPlayerCount = accepted ? 2 : 1;
+
+      const response = await respondToJoinRequest(request.id, currentSessionId, accepted, newPlayerCount);
+      if (response.error) console.error("❌ Failed to respond to join request:", response.error);
+      else console.log(`✅ Responded to ${request.requester_name}: ${accepted ? 'Accepted' : 'Refused'}`);
+    });
   }
 });
 
@@ -973,7 +987,7 @@ if (urlParams.get('bot') === '1') {
 
 async function exitLobbyAndCleanup() {
   const btn = document.getElementById('lobby-close-btn');
-  const confirmLeave = confirm('Leave this room? The room will be deleted for everyone.');
+  const confirmLeave = await showExitConfirm();
   if (!confirmLeave) return;
 
   console.log('🗑️ Exit clicked. currentSessionId is:', currentSessionId);
@@ -998,8 +1012,115 @@ async function exitLobbyAndCleanup() {
     if (btn) btn.disabled = false;
   }
 
-  // window.location.href = '../../';
+  window.location.href = '../../hub/';
 }
+
+function showExitConfirm() {
+  return new Promise((resolve) => {
+    const overlay = document.getElementById('exit-confirm-overlay');
+    const panel = document.getElementById('exit-confirm-panel');
+    const confirmBtn = document.getElementById('exit-confirm-yes');
+    const cancelBtn = document.getElementById('exit-confirm-no');
+
+    overlay.classList.remove('hidden');
+    requestAnimationFrame(() => {
+      overlay.classList.add('show');
+      panel.classList.add('show');
+    });
+
+    function cleanup(result) {
+      overlay.classList.remove('show');
+      panel.classList.remove('show');
+      setTimeout(() => overlay.classList.add('hidden'), 400);
+      confirmBtn.removeEventListener('click', onConfirm);
+      cancelBtn.removeEventListener('click', onCancel);
+      overlay.removeEventListener('click', onOverlayClick);
+      resolve(result);
+    }
+
+    function onConfirm() { cleanup(true); }
+    function onCancel() { cleanup(false); }
+    function onOverlayClick(e) {
+      if (e.target === overlay) cleanup(false);
+    }
+
+    confirmBtn.addEventListener('click', onConfirm);
+    cancelBtn.addEventListener('click', onCancel);
+    overlay.addEventListener('click', onOverlayClick);
+  });
+}
+
+function showJoinRequest(playerName) {
+  return new Promise((resolve) => {
+    const overlay = document.getElementById('join-request-overlay');
+    const panel = document.getElementById('join-request-panel');
+    const textEl = document.getElementById('join-request-text');
+    const confirmBtn = document.getElementById('join-request-yes');
+    const cancelBtn = document.getElementById('join-request-no');
+
+    if (!overlay || !panel || !textEl || !confirmBtn || !cancelBtn) {
+      console.error("Join request UI elements not found!");
+      resolve(true); // Default to accept if UI is broken
+      return;
+    }
+
+    textEl.textContent = `'${playerName}' wants to join the fight.`;
+
+    overlay.classList.remove('hidden');
+    requestAnimationFrame(() => {
+      overlay.classList.add('show');
+      panel.classList.add('show');
+    });
+
+    function cleanup(result) {
+      overlay.classList.remove('show');
+      panel.classList.remove('show');
+      setTimeout(() => overlay.classList.add('hidden'), 400);
+      confirmBtn.onclick = null;
+      cancelBtn.onclick = null;
+      resolve(result);
+    }
+
+    confirmBtn.onclick = () => cleanup(true);
+    cancelBtn.onclick = () => cleanup(false);
+  });
+}
+
+let hostDisplayName = 'PLAYER 1';
+let hostAvatarUrl = null;
+
+async function loadHostIdentityIntoSlot1() {
+  const user = await getCurrentUser();
+  if (!user) return;
+
+  const profile = await getUserProfile();
+
+  const displayName = (profile && profile.display_name)
+    ? profile.display_name
+    : (user.email ? user.email.split('@')[0] : 'PLAYER 1');
+
+  if (profile && profile.avatar_url) {
+    avatarUrl = profile.avatar_url;
+  } else if (user.user_metadata && user.user_metadata.avatar_url) {
+    avatarUrl = user.user_metadata.avatar_url;
+  } else if (user.user_metadata && user.user_metadata.picture) {
+    avatarUrl = user.user_metadata.picture;
+  }
+
+  hostDisplayName = displayName;
+  hostAvatarUrl = avatarUrl;
+
+  const slot = document.getElementById('slot-1');
+  if (!slot) return;
+
+  slot.classList.add('filled');
+  slot.querySelector('.player-name').textContent = displayName.toUpperCase();
+  setSlotAvatar('slot-1', avatarUrl);
+}
+
+setSlotAvatar('slot-1', null);
+setSlotAvatar('slot-2', null);
+loadHostIdentityIntoSlot1();
 
 // ════════ START ════════
 requestAnimationFrame(frame);

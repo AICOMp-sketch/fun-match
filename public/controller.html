@@ -2,7 +2,6 @@
 <html lang="en">
 
 <head>
-    <script src="global/loader.js"></script>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Fun Match - Controller</title>
@@ -11,6 +10,30 @@
 </head>
 
 <body>
+
+    <!-- Shown briefly while we verify login + look up the room -->
+    <div id="controller-loading" class="controller-loading">
+        <video class="loading-video" autoplay muted loop playsinline>
+            <source src="videos/Steve-Dancing.webm" type="video/webm">
+        </video>
+        <div class="controller-loading-text-row">
+            <div class="controller-loading-spinner"></div>
+            <p>Connecting, to the lobby...</p>
+        </div>
+    </div>
+
+    <!-- Shown once inside any controller — room info + ready toggle -->
+    <div id="room-info-pill" class="room-info-pill hidden">
+        <span class="room-info-pill-game" id="room-info-pill-game">—</span>
+        <span class="room-info-pill-divider">·</span>
+        <span class="room-info-pill-name" id="room-info-pill-name">—</span>
+        <span class="room-info-pill-divider">·</span>
+        <span class="room-info-pill-mode" id="room-info-pill-mode">—</span>
+    </div>
+
+    <button id="ready-btn" class="ready-btn hidden">
+        <span id="ready-btn-text">NOT READY</span>
+    </button>
 
     <div id="join-screen">
         <h1>FUN MATCH</h1>
@@ -191,7 +214,9 @@
         <button class="select-btn" data-game="racer">Racer Mode</button>
     </div>
 
-    <script src="https://fun-match-production.up.railway.app/socket.io/socket.io.js"></script>
+    <script src="https://fun-match.onrender.com/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="global/supabase.js"></script>
     <script src="controller.js"></script>
 </body>
 

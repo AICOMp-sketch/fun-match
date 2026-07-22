@@ -1,4 +1,4 @@
-const socket = io("https://fun-match-production.up.railway.app");
+const socket = io("https://fun-match.onrender.com");
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
@@ -18,6 +18,83 @@ const GAME = {
 };
 
 const camera = { x: 0, y: 0 };
+let LOCAL_PLAYER_ID = null;
+let pendingRoomConfig = null;
+let currentSessionId = null;
+
+function createRacerBubbleMarkup(slotIndex) {
+  const colorClass = 'color-' + slotIndex;
+  return `
+        <div class="player-bubble" id="slot-${slotIndex}">
+            <p class="player-name">PLAYER ${slotIndex}</p>
+            <div class="bubble-avatar ${colorClass}">
+                <img class="bubble-avatar-img" src="" alt="">
+                <svg class="bubble-avatar-placeholder" viewBox="0 0 24 24" width="26" height="26" fill="none">
+                    <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2" />
+                    <path d="M4 20c0-4 3.5-6 8-6s8 2 8 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                </svg>
+                <span class="bubble-ring"></span>
+            </div>
+            <div class="bubble-tail"></div>
+            <span class="status">Waiting...</span>
+        </div>
+    `;
+}
+
+function renderRacerSeatBubbles(maxPlayers) {
+  const grid = document.getElementById('racers-grid');
+  if (!grid) return;
+  let html = '';
+  for (let i = 1; i <= maxPlayers; i++) {
+    html += createRacerBubbleMarkup(i);
+  }
+  grid.innerHTML = html;
+}
+
+async function loadHostIdentityIntoSlot1() {
+  const user = await getCurrentUser();
+  if (!user) return;
+
+  const profile = await getUserProfile();
+  const displayName = (profile && profile.display_name)
+    ? profile.display_name
+    : (user.email ? user.email.split('@')[0] : 'PLAYER 1');
+
+  let avatarUrl = null;
+  if (profile && profile.avatar_url) {
+    avatarUrl = profile.avatar_url;
+  } else if (user.user_metadata && user.user_metadata.avatar_url) {
+    avatarUrl = user.user_metadata.avatar_url;
+  } else if (user.user_metadata && user.user_metadata.picture) {
+    avatarUrl = user.user_metadata.picture;
+  }
+
+  const slot = document.getElementById('slot-1');
+  if (!slot) return;
+
+  slot.classList.add('filled');
+  slot.querySelector('.player-name').textContent = displayName.toUpperCase();
+
+  const img = slot.querySelector('.bubble-avatar-img');
+  const url = avatarUrl || '../../images/default-avatar.png';
+  img.src = url;
+  img.onerror = () => { img.style.display = 'none'; };
+  img.onload = () => { img.style.display = 'block'; };
+}
+
+(function initLobbySeats() {
+  const configStr = sessionStorage.getItem('roomConfig');
+  let maxPlayers = 4;
+  if (configStr) {
+    try {
+      pendingRoomConfig = JSON.parse(configStr);
+      if (pendingRoomConfig.maxPlayers) maxPlayers = pendingRoomConfig.maxPlayers;
+    } catch (e) { }
+  }
+  GAME.maxPlayers = maxPlayers;
+  renderRacerSeatBubbles(maxPlayers);
+  loadHostIdentityIntoSlot1();
+})();
 
 const TRACK = {
   cx: 1000,
@@ -28,9 +105,8 @@ const TRACK = {
   innerRY: 300
 };
 
-const COLORS = ['#00e0ff', '#ff7b00', '#aaff00', '#ff3860'];
+const COLORS = ['#00e0ff', '#ff7b00', '#aaff00', '#ff3860', '#7c3aed'];
 const cars = {};
-let LOCAL_PLAYER_ID = null;
 
 class Car {
   constructor(id, name, colorIndex, isBot = false) {
@@ -593,13 +669,20 @@ function showFinishScreen() {
 
 // ════════ SOCKET EVENTS ════════
 socket.on("connect", () => {
-  console.log("✅ Connected to server!");
+  console.log("✅ Connected!");
   let roomCode = null;
   const configStr = sessionStorage.getItem('roomConfig');
   if (configStr) {
     try {
-      const config = JSON.parse(configStr);
-      roomCode = config.roomCode;
+      pendingRoomConfig = JSON.parse(configStr);
+      roomCode = pendingRoomConfig.roomCode;
+
+      // The hub already created this session before redirecting here —
+      // reuse that id instead of creating a second one.
+      if (pendingRoomConfig.sessionId) {
+        currentSessionId = pendingRoomConfig.sessionId;
+        console.log('✅ Reusing existing session id from hub:', currentSessionId);
+      }
     } catch (e) { }
   }
   socket.emit("create-room", { roomCode });
@@ -608,7 +691,30 @@ socket.on("connect", () => {
 socket.on("room-created", (data) => {
   console.log("🏠 Room:", data.roomCode);
   document.getElementById("room-code").textContent = data.roomCode;
+
+  // Add host as car 0 and set them as the local player
+  const hostName = document.getElementById('slot-1').querySelector('.player-name').textContent;
+  const hostCar = new Car(socket.id, hostName || 'HOST', 0, false);
+  cars[socket.id] = hostCar;
+  LOCAL_PLAYER_ID = socket.id;
+
   renderLobbyQR(data.roomCode);
+
+  if (currentSessionId) {
+    console.log(`👂 Listening for join requests on session: ${currentSessionId}`);
+    subscribeToIncomingJoinRequests(currentSessionId, async (request) => {
+      const currentPlayers = Object.keys(cars).filter(id => !cars[id].isBot).length;
+      if (currentPlayers >= GAME.maxPlayers) {
+        await respondToJoinRequest(request.id, currentSessionId, false, currentPlayers);
+        return;
+      }
+      const accepted = await showJoinRequest(request.requester_name);
+      const newPlayerCount = accepted ? currentPlayers + 1 : currentPlayers;
+      const response = await respondToJoinRequest(request.id, currentSessionId, accepted, newPlayerCount);
+      if (response.error) console.error("❌ Failed to respond to join request:", response.error);
+      else console.log(`✅ Responded to ${request.requester_name}: ${accepted ? 'Accepted' : 'Refused'}`);
+    });
+  }
 });
 
 socket.on("player-joined", (player) => {
@@ -619,32 +725,31 @@ socket.on("player-joined", (player) => {
     return;
   }
 
-  const colorIndex = Object.keys(cars).length;
-  if (colorIndex >= 4) return;
+  const availableSeatsForPhones = GAME.maxPlayers - 1; // seat 1 is the host
+  if (Object.keys(cars).filter(id => !cars[id].isBot).length >= availableSeatsForPhones) return;
 
+  const colorIndex = Object.keys(cars).length; // Host is 0, first joiner is 1, etc.
   const car = new Car(player.id, player.name.toUpperCase(), colorIndex, false);
   cars[player.id] = car;
 
-  if (!LOCAL_PLAYER_ID) {
-    LOCAL_PLAYER_ID = player.id;
-    console.log("🎯 Set LOCAL_PLAYER_ID =", LOCAL_PLAYER_ID);
-  }
-
-  const slot = document.getElementById(`slot-${colorIndex + 1}`);
+  const slotIndex = colorIndex + 1; // colorIndex 1 -> slot-2
+  const slot = document.getElementById(`slot-${slotIndex}`);
   if (slot) {
     slot.classList.add('filled');
     slot.querySelector('.player-name').textContent = player.name.toUpperCase();
     slot.querySelector('.status').textContent = 'Ready';
-    setSlotAvatar(slot, player.avatarUrl); // no-op until server sends avatarUrl
+    setSlotAvatar(slot, player.avatarUrl);
   }
 
-  document.getElementById('start-race-btn').disabled = false;
+  const startBtn = document.getElementById('start-race-btn');
+  if (startBtn) startBtn.disabled = false;
 });
 
-function setSlotAvatar(slotEl, avatarUrl) {
+function setSlotAvatar(slotElOrId, avatarUrl) {
+  const slotEl = typeof slotElOrId === 'string' ? document.getElementById(slotElOrId) : slotElOrId;
   if (!slotEl || !avatarUrl) return;
   const img = slotEl.querySelector('.bubble-avatar-img');
-  if (img) img.src = avatarUrl;
+  if (img) { img.src = avatarUrl; img.style.display = 'block'; }
 }
 // ════════ PHONE/PLAYER CONTROLS ════════
 socket.on("player-moved", (data) => {
@@ -679,7 +784,7 @@ socket.on("player-moved", (data) => {
     case "right":
       car.input.right = true;
       car.inputTimers.right = HOLD_FRAMES;
-      break;
+      break; i
 
     case "special":
       if (car.boostFuel >= 30 && !car.boosting) {
@@ -689,10 +794,6 @@ socket.on("player-moved", (data) => {
       }
       break;
   }
-});
-
-socket.on("player-left", (data) => {
-  if (cars[data.playerId]) delete cars[data.playerId];
 });
 
 // ════════ BOT RACE BUTTON ════════
@@ -756,10 +857,50 @@ document.addEventListener('click', function (e) {
 function renderLobbyQR(roomCode) {
   const qrEl = document.getElementById('lobby-qr-code');
   if (!qrEl || !roomCode) return;
-  const joinUrl = window.location.origin + '/controller.html?room=' + roomCode;
+
+  // Point to the sign-in page, which will then redirect to the controller with the room code.
+  const controllerUrl = 'http://192.168.0.100:3000/controller.html?room=' + roomCode;
+  const joinUrl = 'http://192.168.0.100:3000/auth/signin.html?redirect=' + encodeURIComponent(controllerUrl);
   qrEl.innerHTML = '<img src="https://api.qrserver.com/v1/create-qr-code/?size=400x400&data='
     + encodeURIComponent(joinUrl)
     + '&bgcolor=ffffff&color=050810&margin=0" alt="Scan to join room ' + roomCode + '">';
+}
+
+function showJoinRequest(playerName) {
+  return new Promise((resolve) => {
+    // NOTE: Assumes the same HTML structure as fighter/survive game is present
+    const overlay = document.getElementById('join-request-overlay');
+    const panel = document.getElementById('join-request-panel');
+    const textEl = document.getElementById('join-request-text');
+    const confirmBtn = document.getElementById('join-request-yes');
+    const cancelBtn = document.getElementById('join-request-no');
+
+    if (!overlay || !panel || !textEl || !confirmBtn || !cancelBtn) {
+      console.error("Join request UI elements not found!");
+      resolve(true); // Default to accept if UI is broken
+      return;
+    }
+
+    textEl.textContent = `'${playerName}' wants to join the race.`;
+
+    overlay.classList.remove('hidden');
+    requestAnimationFrame(() => {
+      overlay.classList.add('show');
+      panel.classList.add('show');
+    });
+
+    function cleanup(result) {
+      overlay.classList.remove('show');
+      panel.classList.remove('show');
+      setTimeout(() => overlay.classList.add('hidden'), 400);
+      confirmBtn.onclick = null;
+      cancelBtn.onclick = null;
+      resolve(result);
+    }
+
+    confirmBtn.onclick = () => cleanup(true);
+    cancelBtn.onclick = () => cleanup(false);
+  });
 }
 
 // ════════ START MULTIPLAYER RACE ════════
@@ -866,6 +1007,122 @@ resizeCanvas();
 window.addEventListener('resize', () => {
   if (GAME.state === 'racing' || GAME.state === 'countdown') resizeCanvas();
 });
+
+const botRaceBtn = document.getElementById('bot-race-btn');
+if (botRaceBtn) {
+  botRaceBtn.addEventListener('click', () => {
+    console.log('🤖 BOT RACE clicked');
+
+    Object.keys(cars).forEach(id => delete cars[id]);
+    GAME.isBotMode = true;
+
+    const localCar = new Car('local-player', 'YOU', 0, false);
+    cars['local-player'] = localCar;
+    LOCAL_PLAYER_ID = 'local-player';
+
+    for (let i = 1; i <= 3; i++) {
+      cars[`bot-${i}`] = new Car(`bot-${i}`, `BOT ${i}`, i, true);
+    }
+
+    document.querySelectorAll('.player-bubble').forEach((slot, i) => {
+      slot.classList.add('filled');
+      if (i > 0) slot.classList.add('cpu');
+      slot.querySelector('.player-name').textContent = i === 0 ? 'YOU' : `BOT ${i}`;
+      slot.querySelector('.status').textContent = 'Ready';
+    });
+
+    setTimeout(startCountdown, 800);
+  });
+}
+
+const startRaceBtn = document.getElementById('start-race-btn');
+if (startRaceBtn) {
+  startRaceBtn.addEventListener('click', () => {
+    console.log('▶️ START RACE clicked. Cars:', Object.keys(cars).length);
+
+    if (Object.keys(cars).length === 0) {
+      alert('Need at least 1 player to start!');
+      return;
+    }
+
+    const playerCount = Object.keys(cars).length;
+    if (playerCount < GAME.maxPlayers) {
+      for (let i = playerCount; i < GAME.maxPlayers; i++) {
+        const botId = `bot-fill-${i}`;
+        cars[botId] = new Car(botId, `BOT ${i}`, i, true);
+      }
+      console.log('🤖 Added bots to fill slots');
+    }
+
+    startCountdown();
+  });
+}
+
+async function exitLobbyAndCleanup() {
+  const btn = document.getElementById('lobby-close-btn');
+  const confirmLeave = await showExitConfirm();
+  if (!confirmLeave) return;
+
+  console.log('🗑️ Exit clicked. currentSessionId is:', currentSessionId);
+
+  if (btn) btn.disabled = true;
+
+  try {
+    if (currentSessionId) {
+      const result = await deleteGameSession(currentSessionId);
+      console.log('🗑️ deleteGameSession result:', result);
+      if (result.error) {
+        console.error('❌ Session cleanup error:', result.error);
+      } else {
+        console.log('✅ Session deleted successfully');
+      }
+    } else {
+      console.warn('⚠️ No currentSessionId set — nothing to delete. Session was likely never created.');
+    }
+  } catch (err) {
+    console.error('❌ Unexpected error during exit cleanup:', err);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+
+  window.location.href = '../../hub/';
+}
+
+function showExitConfirm() {
+  return new Promise((resolve) => {
+    const overlay = document.getElementById('exit-confirm-overlay');
+    const panel = document.getElementById('exit-confirm-panel');
+    const confirmBtn = document.getElementById('exit-confirm-yes');
+    const cancelBtn = document.getElementById('exit-confirm-no');
+
+    overlay.classList.remove('hidden');
+    requestAnimationFrame(() => {
+      overlay.classList.add('show');
+      panel.classList.add('show');
+    });
+
+    function cleanup(result) {
+      overlay.classList.remove('show');
+      panel.classList.remove('show');
+      setTimeout(() => overlay.classList.add('hidden'), 400);
+      confirmBtn.removeEventListener('click', onConfirm);
+      cancelBtn.removeEventListener('click', onCancel);
+      overlay.removeEventListener('click', onOverlayClick);
+      resolve(result);
+    }
+
+    function onConfirm() { cleanup(true); }
+    function onCancel() { cleanup(false); }
+    function onOverlayClick(e) {
+      if (e.target === overlay) cleanup(false);
+    }
+
+    confirmBtn.addEventListener('click', onConfirm);
+    cancelBtn.addEventListener('click', onCancel);
+    overlay.addEventListener('click', onOverlayClick);
+  });
+}
+
 
 requestAnimationFrame(gameLoop);
 console.log('🎮 Racing game loaded');

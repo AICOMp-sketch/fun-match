@@ -922,7 +922,7 @@ kbd {
 
 .lobby-room-code {
   font-family: 'Press Start 2P', monospace;
-  font-size: 1.3rem;
+  font-size: 13px;
   letter-spacing: 6px;
   color: #f2c14e;
   text-shadow: 0 0 15px rgba(242, 193, 78, 0.6);
@@ -1548,5 +1548,123 @@ kbd {
     right: auto;
     left: 0;
     width: 220px;
+  }
+}
+
+.exit-confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  background: rgba(5, 4, 8, 0.7);
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.exit-confirm-overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.exit-confirm-overlay.hidden {
+  display: none;
+}
+
+.exit-confirm-panel {
+  position: fixed;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -120%);
+  width: 100%;
+  max-width: 420px;
+  margin-top: 24px;
+  background: rgba(12, 10, 18, 0.97);
+  border: 2px solid rgba(255, 56, 96, 0.4);
+  border-radius: 18px;
+  padding: 28px 26px 24px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6), 0 0 40px rgba(255, 56, 96, 0.15);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.exit-confirm-panel.show {
+  transform: translate(-50%, 0);
+}
+
+.exit-confirm-icon {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto 16px;
+  border-radius: 16px;
+  background: rgba(255, 56, 96, 0.1);
+  border: 1.5px solid rgba(255, 56, 96, 0.35);
+  color: #ff3860;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.exit-confirm-title {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 1rem;
+  color: #f2c14e;
+  letter-spacing: 2px;
+  margin-bottom: 12px;
+  text-shadow: 2px 2px 0 #4a1414;
+}
+
+.exit-confirm-text {
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  color: #94a3b8;
+  line-height: 1.5;
+  margin-bottom: 22px;
+}
+
+.exit-confirm-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.exit-confirm-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 10px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  transition: all 0.25s;
+}
+
+.exit-confirm-btn.cancel {
+  background: rgba(255, 255, 255, 0.06);
+  color: #cbd5e1;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.exit-confirm-btn.cancel:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.exit-confirm-btn.confirm {
+  background: linear-gradient(135deg, #ff3860, #a51e3a);
+  color: white;
+  box-shadow: 0 6px 18px rgba(255, 56, 96, 0.35);
+}
+
+.exit-confirm-btn.confirm:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 26px rgba(255, 56, 96, 0.5);
+}
+
+@media (max-width: 500px) {
+  .exit-confirm-panel {
+    max-width: calc(100% - 32px);
+    margin-top: 16px;
+    padding: 22px 20px 20px;
   }
 }
